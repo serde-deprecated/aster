@@ -1,0 +1,5 @@
+[package]
+
+name = "syntax_ast_builder"
+version = "0.0.1"
+authors = ["Erick Tryzelaar <erick.tryzelaar@gmail.com>"]
