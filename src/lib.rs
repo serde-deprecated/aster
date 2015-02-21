@@ -94,6 +94,36 @@ impl<'a> IntoPath for &'a str {
 
 //////////////////////////////////////////////////////////////////////////////
 
+pub trait IntoInternedString {
+    fn into_interned_string(self) -> token::InternedString;
+}
+
+impl IntoInternedString for token::InternedString {
+    fn into_interned_string(self) -> token::InternedString {
+        self
+    }
+}
+
+impl IntoInternedString for &'static str {
+    fn into_interned_string(self) -> token::InternedString {
+        token::InternedString::new(self)
+    }
+}
+
+impl IntoInternedString for ast::Ident {
+    fn into_interned_string(self) -> token::InternedString {
+        token::get_ident(self)
+    }
+}
+
+impl IntoInternedString for ast::Name {
+    fn into_interned_string(self) -> token::InternedString {
+        token::get_name(self)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 trait Invoke<A> {
     type Result;
 
@@ -613,6 +643,11 @@ impl<'a, F: Invoke<P<ast::Lit>>> LitBuilder<'a, F> {
     pub fn u64(self, value: u64) -> F::Result {
         self.uint(value, ast::UintTy::TyU64)
     }
+
+    pub fn str(self, value: &'static str) -> F::Result {
+        let value = token::InternedString::new(value);
+        self.lit_(ast::LitStr(value, ast::CookedStr))
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -713,6 +748,10 @@ impl<'a, F: Invoke<P<ast::Expr>>> ExprBuilder<'a, F> {
         self.lit().u64(value)
     }
 
+    pub fn str(self, value: &'static str) -> F::Result {
+        self.lit().str(value)
+    }
+
     pub fn binop(self, binop: ast::BinOp_) -> ExprBuilder<'a, ExprBinopLhsBuilder<'a, F>> {
         let binop = respan(self.span, binop);
         ExprBuilder::new_with_callback(self.ctx, ExprBinopLhsBuilder {
@@ -803,6 +842,12 @@ impl<'a, F: Invoke<P<ast::Expr>>> ExprBuilder<'a, F> {
             exprs: Vec::new(),
         }
     }
+
+    pub fn call(self) -> ExprBuilder<'a, ExprCallBuilder<'a, F>> {
+        ExprBuilder::new_with_callback(self.ctx, ExprCallBuilder {
+            builder: self,
+        })
+    }
 }
 
 impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Lit>> for ExprBuilder<'a, F> {
@@ -885,6 +930,75 @@ impl<'a, F> Invoke<P<ast::Expr>> for ExprTupleBuilder<'a, F>
 
     fn invoke(self, expr: P<ast::Expr>) -> Self {
         self.expr_(expr)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprCallBuilder<'a, F> {
+    builder: ExprBuilder<'a, F>,
+}
+
+impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Expr>> for ExprCallBuilder<'a, F> {
+    type Result = ExprArgsBuilder<'a, ExprCallArgsBuilder<'a, F>>;
+
+    fn invoke(self, expr: P<ast::Expr>) -> ExprArgsBuilder<'a, ExprCallArgsBuilder<'a, F>> {
+        ExprArgsBuilder {
+            ctx: self.builder.ctx,
+            callback: ExprCallArgsBuilder {
+                builder: self.builder,
+                fn_: expr,
+            },
+            args: vec![],
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprCallArgsBuilder<'a, F> {
+    builder: ExprBuilder<'a, F>,
+    fn_: P<ast::Expr>,
+}
+
+impl<'a, F: Invoke<P<ast::Expr>>> Invoke<Vec<P<ast::Expr>>> for ExprCallArgsBuilder<'a, F> {
+    type Result = F::Result;
+
+    fn invoke(self, args: Vec<P<ast::Expr>>) -> F::Result {
+        self.builder.expr_(ast::ExprCall(self.fn_, args))
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprArgsBuilder<'a, F> {
+    ctx: &'a Ctx,
+    callback: F,
+    args: Vec<P<ast::Expr>>,
+}
+
+impl<'a, F: Invoke<Vec<P<ast::Expr>>>> ExprArgsBuilder<'a, F> {
+    pub fn arg_(mut self, expr: P<ast::Expr>) -> ExprArgsBuilder<'a, F> {
+        self.args.push(expr);
+        self
+    }
+
+    pub fn arg(self) -> ExprBuilder<'a, Self> {
+        ExprBuilder::new_with_callback(self.ctx, self)
+    }
+
+    pub fn build(self) -> F::Result {
+        self.callback.invoke(self.args)
+    }
+}
+
+impl<'a, F> Invoke<P<ast::Expr>> for ExprArgsBuilder<'a, F>
+    where F: Invoke<Vec<P<ast::Expr>>>
+{
+    type Result = ExprArgsBuilder<'a, F>;
+
+    fn invoke(self, expr: P<ast::Expr>) -> Self {
+        self.arg_(expr)
     }
 }
 
