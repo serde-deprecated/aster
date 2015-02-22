@@ -1,6 +1,10 @@
-extern crate syntax_builder;
+#![feature(rustc_private)]
+
+extern crate syntax_ast_builder;
+extern crate syntax;
 
 use syntax::print::pprust;
+use syntax_ast_builder::{Ctx, AstBuilder};
 
 #[test]
 fn test() {

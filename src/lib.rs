@@ -2,6 +2,8 @@
 
 extern crate syntax;
 
+use std::iter::IntoIterator;
+
 use syntax::abi::Abi;
 use syntax::ast;
 use syntax::codemap::{Span, DUMMY_SP, respan};
@@ -84,11 +86,21 @@ impl IntoPath for ast::Path {
     }
 }
 
+impl<'a> IntoPath for ast::Ident {
+    fn into_path(self, ctx: &Ctx) -> ast::Path {
+        PathBuilder::new(ctx).build_from_id(self)
+    }
+}
+
 impl<'a> IntoPath for &'a str {
     fn into_path(self, ctx: &Ctx) -> ast::Path {
-        PathBuilder::new(ctx)
-            .segment(self).build()
-            .build()
+        PathBuilder::new(ctx).build_from_id(self)
+    }
+}
+
+impl<'a, I, T> IntoPath for I where I: IntoIterator<Item=T>, T: ToIdent {
+    fn into_path(self, ctx: &Ctx) -> ast::Path {
+        PathBuilder::new(ctx).build_from_ids(self)
     }
 }
 
@@ -193,6 +205,27 @@ impl<'a, F: Invoke<ast::Path>> PathBuilder<'a, F> {
             global: self.global,
             segments: Vec::new(),
         })
+    }
+
+    pub fn build_from_id<T>(self, id: T) -> F::Result
+        where T: ToIdent,
+    {
+        self.segment(id).build().build()
+    }
+
+    pub fn build_from_ids<I, T>(self, ids: I) -> F::Result
+        where I: IntoIterator<Item=T>,
+              T: ToIdent,
+    {
+        let mut ids = ids.into_iter();
+        let id = ids.next().expect("passed path with no id");
+        let mut segments = self.segment(id).build();
+
+        for id in ids {
+            segments = segments.segment(id).build();
+        }
+
+        segments.build()
     }
 }
 
@@ -643,8 +676,10 @@ impl<'a, F: Invoke<P<ast::Lit>>> LitBuilder<'a, F> {
         self.uint(value, ast::UintTy::TyU64)
     }
 
-    pub fn str(self, value: &'static str) -> F::Result {
-        let value = token::InternedString::new(value);
+    pub fn str<S>(self, value: S) -> F::Result
+        where S: IntoInternedString,
+    {
+        let value = value.into_interned_string();
         self.lit_(ast::LitStr(value, ast::CookedStr))
     }
 }
@@ -747,7 +782,9 @@ impl<'a, F: Invoke<P<ast::Expr>>> ExprBuilder<'a, F> {
         self.lit().u64(value)
     }
 
-    pub fn str(self, value: &'static str) -> F::Result {
+    pub fn str<S>(self, value: S) -> F::Result
+        where S: IntoInternedString,
+    {
         self.lit().str(value)
     }
 
@@ -848,16 +885,14 @@ impl<'a, F: Invoke<P<ast::Expr>>> ExprBuilder<'a, F> {
         })
     }
 
-    pub fn method_call<I>(self, id: I) -> ExprMethodCallBuilder<'a, F>
+    pub fn method_call<I>(self, id: I) -> ExprBuilder<'a, ExprMethodCallBuilder<'a, F>>
         where I: ToIdent,
     {
         let id = respan(self.span, id.to_ident(self.ctx));
-        ExprMethodCallBuilder {
+        ExprBuilder::new_with_callback(self.ctx, ExprMethodCallBuilder {
             builder: self,
             id: id,
-            tys: vec![],
-            args: vec![],
-        }
+        })
     }
 }
 
@@ -1005,11 +1040,31 @@ impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Expr>> for ExprCallArgsBuilder<'
 pub struct ExprMethodCallBuilder<'a, F> {
     builder: ExprBuilder<'a, F>,
     id: ast::SpannedIdent,
+}
+
+impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Expr>> for ExprMethodCallBuilder<'a, F> {
+    type Result = ExprMethodCallArgsBuilder<'a, F>;
+
+    fn invoke(self, expr: P<ast::Expr>) -> ExprMethodCallArgsBuilder<'a, F> {
+        ExprMethodCallArgsBuilder {
+            builder: self.builder,
+            id: self.id,
+            tys: vec![],
+            args: vec![expr],
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprMethodCallArgsBuilder<'a, F> {
+    builder: ExprBuilder<'a, F>,
+    id: ast::SpannedIdent,
     tys: Vec<P<ast::Ty>>,
     args: Vec<P<ast::Expr>>,
 }
 
-impl<'a, F: Invoke<P<ast::Expr>>> ExprMethodCallBuilder<'a, F> {
+impl<'a, F: Invoke<P<ast::Expr>>> ExprMethodCallArgsBuilder<'a, F> {
     pub fn tys<I>(mut self, iter: I) -> Self
         where I: Iterator<Item=P<ast::Ty>>,
     {
@@ -1047,7 +1102,7 @@ impl<'a, F: Invoke<P<ast::Expr>>> ExprMethodCallBuilder<'a, F> {
     }
 }
 
-impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Ty>> for ExprMethodCallBuilder<'a, F> {
+impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Ty>> for ExprMethodCallArgsBuilder<'a, F> {
     type Result = Self;
 
     fn invoke(self, ty: P<ast::Ty>) -> Self {
@@ -1055,7 +1110,7 @@ impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Ty>> for ExprMethodCallBuilder<'
     }
 }
 
-impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Expr>> for ExprMethodCallBuilder<'a, F> {
+impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Expr>> for ExprMethodCallArgsBuilder<'a, F> {
     type Result = Self;
 
     fn invoke(self, arg: P<ast::Expr>) -> Self {
