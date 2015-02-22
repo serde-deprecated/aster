@@ -456,11 +456,10 @@ impl<'a, F: Invoke<P<ast::Ty>>> TyBuilder<'a, F> {
         self.tuple().build()
     }
 
-    pub fn tuple(self) -> TyTupleBuilder<'a, F> {
-        TyTupleBuilder {
+    pub fn tuple(self) -> TysBuilder<'a, TyTupleBuilder<'a, F>> {
+        TysBuilder::new_with_callback(self.ctx, TyTupleBuilder {
             builder: self,
-            tys: Vec::new(),
-        }
+        })
     }
 }
 
@@ -480,9 +479,7 @@ impl<'a, F: Invoke<P<ast::Ty>>> Invoke<ast::Path> for TyPathBuilder<'a, F> {
 
 pub struct TyOptionBuilder<'a, F>(TyBuilder<'a, F>);
 
-impl<'a, F: Invoke<P<ast::Ty>>> Invoke<P<ast::Ty>> for TyOptionBuilder<'a, F>
-    where F: Invoke<P<ast::Ty>>,
-{
+impl<'a, F: Invoke<P<ast::Ty>>> Invoke<P<ast::Ty>> for TyOptionBuilder<'a, F> {
     type Result = F::Result;
 
     fn invoke(self, ty: P<ast::Ty>) -> F::Result {
@@ -530,30 +527,56 @@ impl<'a, F: Invoke<P<ast::Ty>>> Invoke<P<ast::Ty>> for TyResultErrBuilder<'a, F>
 
 pub struct TyTupleBuilder<'a, F> {
     builder: TyBuilder<'a, F>,
+}
+
+impl<'a, F: Invoke<P<ast::Ty>>> Invoke<Vec<P<ast::Ty>>> for TyTupleBuilder<'a, F> {
+    type Result = F::Result;
+
+    fn invoke(self, tys: Vec<P<ast::Ty>>) -> F::Result {
+        self.builder.ty_(ast::TyTup(tys))
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct TysBuilder<'a, F> {
+    ctx: &'a Ctx,
+    callback: F,
     tys: Vec<P<ast::Ty>>,
 }
 
-impl<'a, F: Invoke<P<ast::Ty>>> TyTupleBuilder<'a, F>
-    where F: Invoke<P<ast::Ty>>
-{
-    pub fn ty_(mut self, ty: P<ast::Ty>) -> TyTupleBuilder<'a, F> {
+impl<'a, F: Invoke<Vec<P<ast::Ty>>>> TysBuilder<'a, F> {
+    pub fn new_with_callback(ctx: &'a Ctx, callback: F) -> Self {
+        TysBuilder {
+            ctx: ctx,
+            callback: callback,
+            tys: Vec::new(),
+        }
+    }
+
+    pub fn tys<I>(mut self, iter: I) -> Self
+        where I: Iterator<Item=P<ast::Ty>>,
+    {
+        self.tys.extend(iter);
+        self
+    }
+
+    pub fn ty_(mut self, ty: P<ast::Ty>) -> Self {
         self.tys.push(ty);
         self
     }
 
-    pub fn ty(self) -> TyBuilder<'a, TyTupleBuilder<'a, F>> {
-        TyBuilder::new_with_callback(self.builder.ctx, self)
+    pub fn ty(self) -> TyBuilder<'a, Self> {
+        TyBuilder::new_with_callback(self.ctx, self)
     }
 
     pub fn build(self) -> F::Result {
-        self.builder.ty_(ast::TyTup(self.tys))
+        self.callback.invoke(self.tys)
     }
 }
 
-impl<'a, F> Invoke<P<ast::Ty>> for TyTupleBuilder<'a, F>
-    where F: Invoke<P<ast::Ty>>
-{
-    type Result = TyTupleBuilder<'a, F>;
+impl<'a, F: Invoke<Vec<P<ast::Ty>>>> Invoke<P<ast::Ty>> for TysBuilder<'a, F> {
+    type Result = Self;
 
     fn invoke(self, ty: P<ast::Ty>) -> Self {
         self.ty_(ty)
@@ -848,6 +871,16 @@ impl<'a, F: Invoke<P<ast::Expr>>> ExprBuilder<'a, F> {
             builder: self,
         })
     }
+
+    pub fn method_call<I>(self, id: I) -> ExprMethodCallBuilder<'a, F>
+        where I: ToIdent,
+    {
+        let id = respan(self.span, id.to_ident(self.ctx));
+        ExprMethodCallBuilder {
+            builder: self,
+            id: id,
+        }
+    }
 }
 
 impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Lit>> for ExprBuilder<'a, F> {
@@ -966,6 +999,55 @@ impl<'a, F: Invoke<P<ast::Expr>>> Invoke<Vec<P<ast::Expr>>> for ExprCallArgsBuil
 
     fn invoke(self, args: Vec<P<ast::Expr>>) -> F::Result {
         self.builder.expr_(ast::ExprCall(self.fn_, args))
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprMethodCallBuilder<'a, F> {
+    builder: ExprBuilder<'a, F>,
+    id: ast::SpannedIdent,
+}
+
+impl<'a, F: Invoke<P<ast::Expr>>> ExprMethodCallBuilder<'a, F> {
+    pub fn ty(self) -> TysBuilder<'a, Self> {
+        TysBuilder::new_with_callback(self.builder.ctx, self)
+    }
+
+    pub fn build(self) -> F::Result {
+        self.builder.expr_(ast::ExprMethodCall(self.id, vec![], vec![]))
+    }
+}
+
+impl<'a, F: Invoke<P<ast::Expr>>> Invoke<Vec<P<ast::Ty>>> for ExprMethodCallBuilder<'a, F> {
+    type Result = ExprArgsBuilder<'a, ExprMethodCallArgsBuilder<'a, F>>;
+
+    fn invoke(self, tys: Vec<P<ast::Ty>>) -> ExprArgsBuilder<'a, ExprMethodCallArgsBuilder<'a, F>> {
+        ExprArgsBuilder {
+            ctx: self.builder.ctx,
+            callback: ExprMethodCallArgsBuilder {
+                builder: self.builder,
+                id: self.id,
+                tys: tys,
+            },
+            args: vec![],
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprMethodCallArgsBuilder<'a, F> {
+    builder: ExprBuilder<'a, F>,
+    id: ast::SpannedIdent,
+    tys: Vec<P<ast::Ty>>,
+}
+
+impl<'a, F: Invoke<P<ast::Expr>>> Invoke<Vec<P<ast::Expr>>> for ExprMethodCallArgsBuilder<'a, F> {
+    type Result = F::Result;
+
+    fn invoke(self, args: Vec<P<ast::Expr>>) -> F::Result {
+        self.builder.expr_(ast::ExprMethodCall(self.id, self.tys, args))
     }
 }
 
