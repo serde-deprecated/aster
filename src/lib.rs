@@ -879,6 +879,49 @@ impl<'a, F: Invoke<P<ast::Expr>>> ExprBuilder<'a, F> {
         }
     }
 
+    pub fn none(self) -> F::Result {
+        self.path()
+            .global()
+            .id("std").id("option").id("Option").id("None")
+            .build()
+    }
+
+    pub fn some(self) -> ExprBuilder<'a, ExprPathBuilder<'a, F>> {
+        let path = PathBuilder::new(self.ctx)
+            .global()
+            .id("std").id("option").id("Option").id("None")
+            .build();
+
+        ExprBuilder::new_with_callback(self.ctx, ExprPathBuilder {
+            builder: self,
+            path: path,
+        })
+    }
+
+    pub fn ok(self) -> ExprBuilder<'a, ExprPathBuilder<'a, F>> {
+        let path = PathBuilder::new(self.ctx)
+            .global()
+            .id("std").id("result").id("Result").id("Ok")
+            .build();
+
+        ExprBuilder::new_with_callback(self.ctx, ExprPathBuilder {
+            builder: self,
+            path: path,
+        })
+    }
+
+    pub fn err(self) -> ExprBuilder<'a, ExprPathBuilder<'a, F>> {
+        let path = PathBuilder::new(self.ctx)
+            .global()
+            .id("std").id("result").id("Result").id("Err")
+            .build();
+
+        ExprBuilder::new_with_callback(self.ctx, ExprPathBuilder {
+            builder: self,
+            path: path,
+        })
+    }
+
     pub fn call(self) -> ExprBuilder<'a, ExprCallBuilder<'a, F>> {
         ExprBuilder::new_with_callback(self.ctx, ExprCallBuilder {
             builder: self,
@@ -1115,6 +1158,24 @@ impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Expr>> for ExprMethodCallArgsBui
 
     fn invoke(self, arg: P<ast::Expr>) -> Self {
         self.arg_(arg)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprPathBuilder<'a, F> {
+    builder: ExprBuilder<'a, F>,
+    path: ast::Path,
+}
+
+impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Expr>> for ExprPathBuilder<'a, F> {
+    type Result = F::Result;
+
+    fn invoke(self, arg: P<ast::Expr>) -> F::Result {
+        self.builder.call()
+            .path_(self.path)
+            .arg_(arg)
+            .build()
     }
 }
 
