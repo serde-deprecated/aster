@@ -303,20 +303,20 @@ impl<'a, F: Invoke<ast::PathSegment>> PathSegmentBuilder<'a, F> {
     }
 
     pub fn lifetimes_<I>(mut self, iter: I) -> Self
-        where I: Iterator<Item=ast::Lifetime>,
+        where I: IntoIterator<Item=ast::Lifetime>,
     {
         self.lifetimes.extend(iter);
         self
     }
 
     pub fn lifetimes<I, N>(self, iter: I) -> Self
-        where I: Iterator<Item=N>,
+        where I: IntoIterator<Item=N>,
               N: ToName,
     {
         let span = self.span;
         let ctx = self.ctx;
 
-        let iter = iter.map(|name| {
+        let iter = iter.into_iter().map(|name| {
             ast::Lifetime {
                 id: ast::DUMMY_NODE_ID,
                 span: span,
@@ -344,7 +344,7 @@ impl<'a, F: Invoke<ast::PathSegment>> PathSegmentBuilder<'a, F> {
     }
 
     pub fn tys<I>(mut self, iter: I) -> Self
-        where I: Iterator<Item=P<ast::Ty>>,
+        where I: IntoIterator<Item=P<ast::Ty>>,
     {
         self.tys.extend(iter);
         self
@@ -564,7 +564,7 @@ pub struct TyTupleBuilder<'a, F> {
 
 impl<'a, F: Invoke<P<ast::Ty>>> TyTupleBuilder<'a, F> {
     pub fn tys<I>(mut self, iter: I) -> Self
-        where I: Iterator<Item=P<ast::Ty>>,
+        where I: IntoIterator<Item=P<ast::Ty>>,
     {
         self.tys.extend(iter);
         self
@@ -1055,7 +1055,7 @@ pub struct ExprCallArgsBuilder<'a, F> {
 
 impl<'a, F: Invoke<P<ast::Expr>>> ExprCallArgsBuilder<'a, F> {
     pub fn args<I>(mut self, iter: I) -> Self
-        where I: Iterator<Item=P<ast::Expr>>,
+        where I: IntoIterator<Item=P<ast::Expr>>,
     {
         self.args.extend(iter);
         self
@@ -1114,7 +1114,7 @@ pub struct ExprMethodCallArgsBuilder<'a, F> {
 
 impl<'a, F: Invoke<P<ast::Expr>>> ExprMethodCallArgsBuilder<'a, F> {
     pub fn tys<I>(mut self, iter: I) -> Self
-        where I: Iterator<Item=P<ast::Ty>>,
+        where I: IntoIterator<Item=P<ast::Ty>>,
     {
         self.tys.extend(iter);
         self
@@ -1130,7 +1130,7 @@ impl<'a, F: Invoke<P<ast::Expr>>> ExprMethodCallArgsBuilder<'a, F> {
     }
 
     pub fn args<I>(mut self, iter: I) -> Self
-        where I: Iterator<Item=P<ast::Expr>>,
+        where I: IntoIterator<Item=P<ast::Expr>>,
     {
         self.args.extend(iter);
         self
@@ -1245,6 +1245,10 @@ impl<'a, F: Invoke<P<ast::Stmt>>> StmtBuilder<'a, F> {
         ExprBuilder::new_with_callback(self.ctx, StmtLetIdBuilder(self, id))
     }
 
+    pub fn expr_(self, expr: P<ast::Expr>) -> F::Result {
+        self.stmt_(ast::Stmt_::StmtExpr(expr, ast::DUMMY_NODE_ID))
+    }
+
     pub fn expr(self) -> ExprBuilder<'a, StmtExprBuilder<'a, F>> {
         ExprBuilder::new_with_callback(self.ctx, StmtExprBuilder(self))
     }
@@ -1290,7 +1294,7 @@ impl<'a, F: Invoke<P<ast::Stmt>>> Invoke<P<ast::Expr>> for StmtExprBuilder<'a, F
     type Result = F::Result;
 
     fn invoke(self, expr: P<ast::Expr>) -> F::Result {
-        self.0.stmt_(ast::Stmt_::StmtExpr(expr, ast::DUMMY_NODE_ID))
+        self.0.expr_(expr)
     }
 }
 
@@ -1838,6 +1842,11 @@ impl<'a, F: Invoke<P<ast::Method>>> MethodBuilder<'a, F> {
         }
     }
 
+    pub fn span(mut self, span: Span) -> Self {
+        self.span = span;
+        self
+    }
+
     pub fn unsafe_(mut self) -> Self {
         self.unsafety = ast::Unsafety::Normal;
         self
@@ -2047,6 +2056,11 @@ impl<'a, F: Invoke<P<ast::Item>>> ItemBuilder<'a, F> {
             id: id.to_ident(ctx),
             vis: ast::Visibility::Inherited,
         }
+    }
+
+    pub fn span(mut self, span: Span) -> Self {
+        self.span = span;
+        self
     }
 
     pub fn pub_(mut self) -> Self {
@@ -2430,15 +2444,23 @@ impl<'a, F: Invoke<ast::PolyTraitRef>> Invoke<ast::LifetimeDef> for PolyTraitRef
 
 //////////////////////////////////////////////////////////////////////////////
 
+#[derive(Clone)]
 pub struct AstBuilder<'a> {
     ctx: &'a Ctx,
+    span: Span,
 }
 
 impl<'a> AstBuilder<'a> {
     pub fn new(ctx: &Ctx) -> AstBuilder {
         AstBuilder {
             ctx: ctx,
+            span: DUMMY_SP,
         }
+    }
+
+    pub fn span(mut self, span: Span) -> Self {
+        self.span = span;
+        self
     }
 
     pub fn path(&self) -> PathBuilder {
@@ -2446,42 +2468,42 @@ impl<'a> AstBuilder<'a> {
     }
 
     pub fn ty(&self) -> TyBuilder {
-        TyBuilder::new(self.ctx)
+        TyBuilder::new(self.ctx).span(self.span)
     }
 
     pub fn ty_param<I>(&self, id: I) -> TyParamBuilder
         where I: ToIdent,
     {
-        TyParamBuilder::new(self.ctx, id)
+        TyParamBuilder::new(self.ctx, id).span(self.span)
     }
 
     pub fn expr(&self) -> ExprBuilder {
-        ExprBuilder::new(self.ctx)
+        ExprBuilder::new(self.ctx).span(self.span)
     }
 
     pub fn stmt(&self) -> StmtBuilder {
-        StmtBuilder::new(self.ctx)
+        StmtBuilder::new(self.ctx).span(self.span)
     }
 
     pub fn arg<I>(&self, id: I) -> ArgBuilder
         where I: ToIdent,
     {
-        ArgBuilder::new(self.ctx, id)
+        ArgBuilder::new(self.ctx, id).span(self.span)
     }
 
     pub fn fn_decl(&self) -> FnDeclBuilder {
-        FnDeclBuilder::new(self.ctx)
+        FnDeclBuilder::new(self.ctx).span(self.span)
     }
 
     pub fn method<I>(&self, id: I) -> MethodBuilder
         where I: ToIdent,
     {
-        MethodBuilder::new(self.ctx, id)
+        MethodBuilder::new(self.ctx, id).span(self.span)
     }
 
     pub fn item<I>(&self, id: I) -> ItemBuilder
         where I: ToIdent,
     {
-        ItemBuilder::new(self.ctx, id)
+        ItemBuilder::new(self.ctx, id).span(self.span)
     }
 }
