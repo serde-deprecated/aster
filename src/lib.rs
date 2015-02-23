@@ -712,16 +712,21 @@ impl<'a, F: Invoke<P<ast::Expr>>> ExprBuilder<'a, F> {
         self
     }
 
-    pub fn expr_(self, e: ast::Expr_) -> F::Result {
-        self.callback.invoke(P(ast::Expr {
+    pub fn expr_(self, expr: P<ast::Expr>) -> F::Result {
+        self.callback.invoke(expr)
+    }
+
+    pub fn expr__(self, expr: ast::Expr_) -> F::Result {
+        let span = self.span;
+        self.expr_(P(ast::Expr {
             id: ast::DUMMY_NODE_ID,
-            node: e,
-            span: self.span,
+            node: expr,
+            span: span,
         }))
     }
 
     pub fn path_(self, path: ast::Path) -> F::Result {
-        self.expr_(ast::Expr_::ExprPath(path))
+        self.expr__(ast::Expr_::ExprPath(path))
     }
 
     pub fn path(self) -> PathBuilder<'a, Self> {
@@ -735,7 +740,7 @@ impl<'a, F: Invoke<P<ast::Expr>>> ExprBuilder<'a, F> {
     }
 
     pub fn lit_(self, lit: P<ast::Lit>) -> F::Result {
-        self.expr_(ast::Expr_::ExprLit(lit))
+        self.expr__(ast::Expr_::ExprLit(lit))
     }
 
     pub fn lit(self) -> LitBuilder<'a, Self> {
@@ -984,7 +989,7 @@ impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Expr>> for ExprBinopRhsBuilder<'
     type Result = F::Result;
 
     fn invoke(self, rhs: P<ast::Expr>) -> F::Result {
-        self.builder.expr_(ast::Expr_::ExprBinary(self.binop, self.lhs, rhs))
+        self.builder.expr__(ast::Expr_::ExprBinary(self.binop, self.lhs, rhs))
     }
 }
 
@@ -1008,7 +1013,7 @@ impl<'a, F: Invoke<P<ast::Expr>>> ExprTupleBuilder<'a, F>
     }
 
     pub fn build(self) -> F::Result {
-        self.builder.expr_(ast::ExprTup(self.exprs))
+        self.builder.expr__(ast::ExprTup(self.exprs))
     }
 }
 
@@ -1066,7 +1071,7 @@ impl<'a, F: Invoke<P<ast::Expr>>> ExprCallArgsBuilder<'a, F> {
     }
 
     pub fn build(self) -> F::Result {
-        self.builder.expr_(ast::ExprCall(self.fn_, self.args))
+        self.builder.expr__(ast::ExprCall(self.fn_, self.args))
     }
 }
 
@@ -1141,7 +1146,7 @@ impl<'a, F: Invoke<P<ast::Expr>>> ExprMethodCallArgsBuilder<'a, F> {
     }
 
     pub fn build(self) -> F::Result {
-        self.builder.expr_(ast::ExprMethodCall(self.id, self.tys, self.args))
+        self.builder.expr__(ast::ExprMethodCall(self.id, self.tys, self.args))
     }
 }
 
