@@ -88,19 +88,19 @@ impl IntoPath for ast::Path {
 
 impl<'a> IntoPath for ast::Ident {
     fn into_path(self, ctx: &Ctx) -> ast::Path {
-        PathBuilder::new(ctx).build_from_id(self)
+        PathBuilder::new(ctx).id(self).build()
     }
 }
 
 impl<'a> IntoPath for &'a str {
     fn into_path(self, ctx: &Ctx) -> ast::Path {
-        PathBuilder::new(ctx).build_from_id(self)
+        PathBuilder::new(ctx).id(self).build()
     }
 }
 
 impl<'a, I, T> IntoPath for I where I: IntoIterator<Item=T>, T: ToIdent {
     fn into_path(self, ctx: &Ctx) -> ast::Path {
-        PathBuilder::new(ctx).build_from_ids(self)
+        PathBuilder::new(ctx).ids(self).build()
     }
 }
 
@@ -188,6 +188,16 @@ impl<'a, F: Invoke<ast::Path>> PathBuilder<'a, F> {
         self
     }
 
+    pub fn ids<I, T>(self, ids: I) -> PathSegmentsBuilder<'a, F>
+        where I: IntoIterator<Item=T>,
+              T: ToIdent,
+    {
+        let mut ids = ids.into_iter();
+        let id = ids.next().expect("passed path with no id");
+
+        self.id(id).ids(ids)
+    }
+
     pub fn id<I>(self, id: I) -> PathSegmentsBuilder<'a, F>
         where I: ToIdent,
     {
@@ -206,27 +216,6 @@ impl<'a, F: Invoke<ast::Path>> PathBuilder<'a, F> {
             segments: Vec::new(),
         })
     }
-
-    pub fn build_from_id<T>(self, id: T) -> F::Result
-        where T: ToIdent,
-    {
-        self.segment(id).build().build()
-    }
-
-    pub fn build_from_ids<I, T>(self, ids: I) -> F::Result
-        where I: IntoIterator<Item=T>,
-              T: ToIdent,
-    {
-        let mut ids = ids.into_iter();
-        let id = ids.next().expect("passed path with no id");
-        let mut segments = self.segment(id).build();
-
-        for id in ids {
-            segments = segments.segment(id).build();
-        }
-
-        segments.build()
-    }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -240,14 +229,25 @@ pub struct PathSegmentsBuilder<'a, F=Identity> {
 }
 
 impl<'a, F: Invoke<ast::Path>> PathSegmentsBuilder<'a, F> {
-    pub fn id<I>(self, id: I) -> PathSegmentsBuilder<'a, F>
-        where I: ToIdent,
+    pub fn ids<I, T>(mut self, ids: I) -> PathSegmentsBuilder<'a, F>
+        where I: IntoIterator<Item=T>,
+              T: ToIdent,
+    {
+        for id in ids {
+            self = self.id(id);
+        }
+
+        self 
+    }
+
+    pub fn id<T>(self, id: T) -> PathSegmentsBuilder<'a, F>
+        where T: ToIdent,
     {
         self.segment(id).build()
     }
 
-    pub fn segment<I>(self, id: I) -> PathSegmentBuilder<'a, Self>
-        where I: ToIdent,
+    pub fn segment<T>(self, id: T) -> PathSegmentBuilder<'a, Self>
+        where T: ToIdent,
     {
         PathSegmentBuilder::new_with_callback(self.ctx, id, self)
     }
