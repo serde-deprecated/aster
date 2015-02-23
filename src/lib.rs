@@ -942,6 +942,10 @@ impl<'a, F: Invoke<P<ast::Expr>>> ExprBuilder<'a, F> {
             id: id,
         })
     }
+
+    pub fn block(self) -> BlockBuilder<'a, Self> {
+        BlockBuilder::new_with_callback(self.ctx, self)
+    }
 }
 
 impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Lit>> for ExprBuilder<'a, F> {
@@ -957,6 +961,14 @@ impl<'a, F: Invoke<P<ast::Expr>>> Invoke<ast::Path> for ExprBuilder<'a, F> {
 
     fn invoke(self, path: ast::Path) -> F::Result {
         self.path_(path)
+    }
+}
+
+impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Block>> for ExprBuilder<'a, F> {
+    type Result = F::Result;
+
+    fn invoke(self, block: P<ast::Block>) -> F::Result {
+        self.expr__(ast::ExprBlock(block))
     }
 }
 
@@ -1436,22 +1448,30 @@ impl<'a, F: Invoke<P<ast::Pat>>> PatBuilder<'a, F> {
         self.pat_(ast::Pat_::PatIdent(mode, id, sub))
     }
 
-    pub fn id<I>(self, id: I) -> F::Result where I: ToIdent {
+    pub fn id<I>(self, id: I) -> F::Result
+        where I: ToIdent
+    {
         let mode = ast::BindingMode::BindByValue(ast::Mutability::MutImmutable);
         self.id_(mode, id, None)
     }
 
-    pub fn mut_id<I>(self, id: I) -> F::Result where I: ToIdent {
+    pub fn mut_id<I>(self, id: I) -> F::Result
+        where I: ToIdent
+    {
         let mode = ast::BindingMode::BindByValue(ast::Mutability::MutMutable);
         self.id_(mode, id, None)
     }
 
-    pub fn ref_id<I>(self, id: I) -> F::Result where I: ToIdent {
+    pub fn ref_id<I>(self, id: I) -> F::Result
+        where I: ToIdent
+    {
         let mode = ast::BindingMode::BindByRef(ast::Mutability::MutImmutable);
         self.id_(mode, id, None)
     }
 
-    pub fn ref_mut_id<I>(self, id: I) -> F::Result where I: ToIdent {
+    pub fn ref_mut_id<I>(self, id: I) -> F::Result
+        where I: ToIdent
+    {
         let mode = ast::BindingMode::BindByRef(ast::Mutability::MutMutable);
         self.id_(mode, id, None)
     }
@@ -1598,6 +1618,13 @@ impl<'a, F: Invoke<P<ast::Block>>> BlockBuilder<'a, F> {
     pub fn unsafe_(mut self) -> Self {
         let source = ast::UnsafeSource::CompilerGenerated;
         self.block_check_mode = ast::BlockCheckMode::UnsafeBlock(source);
+        self
+    }
+
+    pub fn stmts<I>(mut self, iter: I) -> Self
+        where I: IntoIterator<Item=P<ast::Stmt>>
+    {
+        self.stmts.extend(iter);
         self
     }
 
@@ -2489,6 +2516,10 @@ impl<'a> AstBuilder<'a> {
         where I: ToIdent,
     {
         ArgBuilder::new(self.ctx, id).span(self.span)
+    }
+
+    pub fn block(&self) -> BlockBuilder {
+        BlockBuilder::new(self.ctx).span(self.span)
     }
 
     pub fn fn_decl(&self) -> FnDeclBuilder {
