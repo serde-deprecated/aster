@@ -793,84 +793,141 @@ impl<'a, F: Invoke<P<ast::Expr>>> ExprBuilder<'a, F> {
         self.lit().str(value)
     }
 
-    pub fn binop(self, binop: ast::BinOp_) -> ExprBuilder<'a, ExprBinopLhsBuilder<'a, F>> {
+    pub fn unary_(self, unop: ast::UnOp, expr: P<ast::Expr>) -> F::Result {
+        self.expr__(ast::ExprUnary(unop, expr))
+    }
+
+    pub fn box__(self, expr: P<ast::Expr>) -> F::Result {
+        self.unary_(ast::UnUniq, expr)
+    }
+
+    pub fn deref_(self, expr: P<ast::Expr>) -> F::Result {
+        self.unary_(ast::UnDeref, expr)
+    }
+
+    pub fn not_(self, expr: P<ast::Expr>) -> F::Result {
+        self.unary_(ast::UnNot, expr)
+    }
+
+    pub fn neg_(self, expr: P<ast::Expr>) -> F::Result {
+        self.unary_(ast::UnNeg, expr)
+    }
+
+    pub fn unary(self, unop: ast::UnOp) -> ExprBuilder<'a, ExprUnaryBuilder<'a, F>> {
+        ExprBuilder::new_with_callback(self.ctx, ExprUnaryBuilder {
+            builder: self,
+            unop: unop,
+        })
+    }
+
+    pub fn box_(self) -> ExprBuilder<'a, ExprUnaryBuilder<'a, F>> {
+        self.unary(ast::UnUniq)
+    }
+
+    pub fn deref(self) -> ExprBuilder<'a, ExprUnaryBuilder<'a, F>> {
+        self.unary(ast::UnDeref)
+    }
+
+    pub fn not(self) -> ExprBuilder<'a, ExprUnaryBuilder<'a, F>> {
+        self.unary(ast::UnNot)
+    }
+
+    pub fn neg(self) -> ExprBuilder<'a, ExprUnaryBuilder<'a, F>> {
+        self.unary(ast::UnNeg)
+    }
+
+    pub fn binary(self, binop: ast::BinOp_) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
         let binop = respan(self.span, binop);
-        ExprBuilder::new_with_callback(self.ctx, ExprBinopLhsBuilder {
+        ExprBuilder::new_with_callback(self.ctx, ExprBinaryLhsBuilder {
             builder: self,
             binop: binop,
         })
     }
 
-    pub fn add(self) -> ExprBuilder<'a, ExprBinopLhsBuilder<'a, F>> {
-        self.binop(ast::BinOp_::BiAdd)
+    pub fn add(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+        self.binary(ast::BinOp_::BiAdd)
     }
 
-    pub fn sub(self) -> ExprBuilder<'a, ExprBinopLhsBuilder<'a, F>> {
-        self.binop(ast::BinOp_::BiSub)
+    pub fn sub(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+        self.binary(ast::BinOp_::BiSub)
     }
 
-    pub fn mul(self) -> ExprBuilder<'a, ExprBinopLhsBuilder<'a, F>> {
-        self.binop(ast::BinOp_::BiMul)
+    pub fn mul(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+        self.binary(ast::BinOp_::BiMul)
     }
 
-    pub fn div(self) -> ExprBuilder<'a, ExprBinopLhsBuilder<'a, F>> {
-        self.binop(ast::BinOp_::BiDiv)
+    pub fn div(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+        self.binary(ast::BinOp_::BiDiv)
     }
 
-    pub fn rem(self) -> ExprBuilder<'a, ExprBinopLhsBuilder<'a, F>> {
-        self.binop(ast::BinOp_::BiRem)
+    pub fn rem(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+        self.binary(ast::BinOp_::BiRem)
     }
 
-    pub fn and(self) -> ExprBuilder<'a, ExprBinopLhsBuilder<'a, F>> {
-        self.binop(ast::BinOp_::BiAnd)
+    pub fn and(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+        self.binary(ast::BinOp_::BiAnd)
     }
 
-    pub fn or(self) -> ExprBuilder<'a, ExprBinopLhsBuilder<'a, F>> {
-        self.binop(ast::BinOp_::BiOr)
+    pub fn or(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+        self.binary(ast::BinOp_::BiOr)
     }
 
-    pub fn bit_xor(self) -> ExprBuilder<'a, ExprBinopLhsBuilder<'a, F>> {
-        self.binop(ast::BinOp_::BiBitXor)
+    pub fn bit_xor(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+        self.binary(ast::BinOp_::BiBitXor)
     }
 
-    pub fn bit_and(self) -> ExprBuilder<'a, ExprBinopLhsBuilder<'a, F>> {
-        self.binop(ast::BinOp_::BiBitAnd)
+    pub fn bit_and(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+        self.binary(ast::BinOp_::BiBitAnd)
     }
 
-    pub fn bit_or(self) -> ExprBuilder<'a, ExprBinopLhsBuilder<'a, F>> {
-        self.binop(ast::BinOp_::BiBitOr)
+    pub fn bit_or(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+        self.binary(ast::BinOp_::BiBitOr)
     }
 
-    pub fn shl(self) -> ExprBuilder<'a, ExprBinopLhsBuilder<'a, F>> {
-        self.binop(ast::BinOp_::BiShl)
+    pub fn shl(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+        self.binary(ast::BinOp_::BiShl)
     }
 
-    pub fn shr(self) -> ExprBuilder<'a, ExprBinopLhsBuilder<'a, F>> {
-        self.binop(ast::BinOp_::BiShr)
+    pub fn shr(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+        self.binary(ast::BinOp_::BiShr)
     }
 
-    pub fn eq(self) -> ExprBuilder<'a, ExprBinopLhsBuilder<'a, F>> {
-        self.binop(ast::BinOp_::BiEq)
+    pub fn eq(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+        self.binary(ast::BinOp_::BiEq)
     }
 
-    pub fn lt(self) -> ExprBuilder<'a, ExprBinopLhsBuilder<'a, F>> {
-        self.binop(ast::BinOp_::BiLt)
+    pub fn lt(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+        self.binary(ast::BinOp_::BiLt)
     }
 
-    pub fn le(self) -> ExprBuilder<'a, ExprBinopLhsBuilder<'a, F>> {
-        self.binop(ast::BinOp_::BiLe)
+    pub fn le(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+        self.binary(ast::BinOp_::BiLe)
     }
 
-    pub fn ne(self) -> ExprBuilder<'a, ExprBinopLhsBuilder<'a, F>> {
-        self.binop(ast::BinOp_::BiNe)
+    pub fn ne(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+        self.binary(ast::BinOp_::BiNe)
     }
 
-    pub fn ge(self) -> ExprBuilder<'a, ExprBinopLhsBuilder<'a, F>> {
-        self.binop(ast::BinOp_::BiGe)
+    pub fn ge(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+        self.binary(ast::BinOp_::BiGe)
     }
 
-    pub fn gt(self) -> ExprBuilder<'a, ExprBinopLhsBuilder<'a, F>> {
-        self.binop(ast::BinOp_::BiGt)
+    pub fn gt(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+        self.binary(ast::BinOp_::BiGt)
+    }
+
+    pub fn addr_of(self) -> ExprBuilder<'a, ExprAddrOfBuilder<'a, F>> {
+        ExprBuilder::new_with_callback(self.ctx, ExprAddrOfBuilder {
+            builder: self,
+            mutability: ast::Mutability::MutImmutable,
+        })
+    }
+
+    pub fn mut_addr_of(self) -> ExprBuilder<'a, ExprAddrOfBuilder<'a, F>> {
+        ExprBuilder::new_with_callback(self.ctx, ExprAddrOfBuilder {
+            builder: self,
+            mutability: ast::Mutability::MutMutable,
+        })
     }
 
     pub fn unit(self) -> F::Result {
@@ -974,16 +1031,31 @@ impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Block>> for ExprBuilder<'a, F> {
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ExprBinopLhsBuilder<'a, F> {
+pub struct ExprUnaryBuilder<'a, F> {
+    builder: ExprBuilder<'a, F>,
+    unop: ast::UnOp,
+}
+
+impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Expr>> for ExprUnaryBuilder<'a, F> {
+    type Result = F::Result;
+
+    fn invoke(self, expr: P<ast::Expr>) -> F::Result {
+        self.builder.unary_(self.unop, expr)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprBinaryLhsBuilder<'a, F> {
     builder: ExprBuilder<'a, F>,
     binop: ast::BinOp,
 }
 
-impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Expr>> for ExprBinopLhsBuilder<'a, F> {
-    type Result = ExprBuilder<'a, ExprBinopRhsBuilder<'a, F>>;
+impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Expr>> for ExprBinaryLhsBuilder<'a, F> {
+    type Result = ExprBuilder<'a, ExprBinaryRhsBuilder<'a, F>>;
 
-    fn invoke(self, lhs: P<ast::Expr>) -> ExprBuilder<'a, ExprBinopRhsBuilder<'a, F>> {
-        ExprBuilder::new_with_callback(self.builder.ctx, ExprBinopRhsBuilder {
+    fn invoke(self, lhs: P<ast::Expr>) -> ExprBuilder<'a, ExprBinaryRhsBuilder<'a, F>> {
+        ExprBuilder::new_with_callback(self.builder.ctx, ExprBinaryRhsBuilder {
             builder: self.builder,
             binop: self.binop,
             lhs: lhs,
@@ -991,13 +1063,13 @@ impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Expr>> for ExprBinopLhsBuilder<'
     }
 }
 
-pub struct ExprBinopRhsBuilder<'a, F> {
+pub struct ExprBinaryRhsBuilder<'a, F> {
     builder: ExprBuilder<'a, F>,
     binop: ast::BinOp,
     lhs: P<ast::Expr>,
 }
 
-impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Expr>> for ExprBinopRhsBuilder<'a, F> {
+impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Expr>> for ExprBinaryRhsBuilder<'a, F> {
     type Result = F::Result;
 
     fn invoke(self, rhs: P<ast::Expr>) -> F::Result {
@@ -1180,6 +1252,21 @@ impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Expr>> for ExprMethodCallArgsBui
 
 //////////////////////////////////////////////////////////////////////////////
 
+pub struct ExprAddrOfBuilder<'a, F> {
+    builder: ExprBuilder<'a, F>,
+    mutability: ast::Mutability,
+}
+
+impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Expr>> for ExprAddrOfBuilder<'a, F> {
+    type Result = F::Result;
+
+    fn invoke(self, expr: P<ast::Expr>) -> F::Result {
+        self.builder.expr__(ast::ExprAddrOf(self.mutability, expr))
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 pub struct ExprPathBuilder<'a, F> {
     builder: ExprBuilder<'a, F>,
     path: ast::Path,
@@ -1269,14 +1356,16 @@ impl<'a, F: Invoke<P<ast::Stmt>>> StmtBuilder<'a, F> {
         ExprBuilder::new_with_callback(self.ctx, StmtSemiBuilder(self))
     }
 
-    /*
-    pub fn item<I: ToIdent>(self, name: I) -> ItemBuilder<'a, T> {
-        Item::builder_with_callback(self.ctx, name, Box::new(move |: item| {
-            let decl = Decl::Item(item);
-            self.callback.invoke(Stmt::Decl(decl))
-        }))
+    pub fn item_(self, item: P<ast::Item>) -> F::Result {
+        let decl = respan(self.span, ast::Decl_::DeclItem(item));
+        self.stmt_(ast::StmtDecl(P(decl), ast::DUMMY_NODE_ID))
     }
-    */
+
+    pub fn item<I>(self, id: I) -> ItemBuilder<'a, StmtItemBuilder<'a, F>>
+        where I: ToIdent,
+    {
+        ItemBuilder::new_with_callback(self.ctx, id, StmtItemBuilder(self))
+    }
 }
 
 impl<'a, F: Invoke<P<ast::Stmt>>> Invoke<P<ast::Pat>> for StmtBuilder<'a, F> {
@@ -1290,6 +1379,8 @@ impl<'a, F: Invoke<P<ast::Stmt>>> Invoke<P<ast::Pat>> for StmtBuilder<'a, F> {
     }
 }
 
+//////////////////////////////////////////////////////////////////////////////
+
 pub struct StmtLetIdBuilder<'a, F>(StmtBuilder<'a, F>, ast::Ident);
 
 impl<'a, F: Invoke<P<ast::Stmt>>> Invoke<P<ast::Expr>> for StmtLetIdBuilder<'a, F> {
@@ -1300,6 +1391,8 @@ impl<'a, F: Invoke<P<ast::Stmt>>> Invoke<P<ast::Expr>> for StmtLetIdBuilder<'a, 
     }
 }
 
+//////////////////////////////////////////////////////////////////////////////
+
 pub struct StmtExprBuilder<'a, F>(StmtBuilder<'a, F>);
 
 impl<'a, F: Invoke<P<ast::Stmt>>> Invoke<P<ast::Expr>> for StmtExprBuilder<'a, F> {
@@ -1309,6 +1402,8 @@ impl<'a, F: Invoke<P<ast::Stmt>>> Invoke<P<ast::Expr>> for StmtExprBuilder<'a, F
         self.0.expr_(expr)
     }
 }
+
+//////////////////////////////////////////////////////////////////////////////
 
 pub struct StmtSemiBuilder<'a, F>(StmtBuilder<'a, F>);
 
@@ -1392,6 +1487,18 @@ impl<'a, F: Invoke<P<ast::Stmt>>> Invoke<P<ast::Expr>> for StmtLetTyBuilder<'a, 
 
     fn invoke(self, expr: P<ast::Expr>) -> F::Result {
         self.builder.let__(self.pat, Some(self.ty), Some(expr))
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct StmtItemBuilder<'a, F>(StmtBuilder<'a, F>);
+
+impl<'a, F: Invoke<P<ast::Stmt>>> Invoke<P<ast::Item>> for StmtItemBuilder<'a, F> {
+    type Result = F::Result;
+
+    fn invoke(self, item: P<ast::Item>) -> F::Result {
+        self.0.item_(item)
     }
 }
 
