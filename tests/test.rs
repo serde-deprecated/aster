@@ -114,7 +114,7 @@ fn test() {
             .build();
     println!("stmt: {}", pprust::stmt_to_string(&*stmt));
         
-    let fn_ = builder.item("foo").fn_()
+    let fn_ = builder.item().fn_("foo")
         .output().isize()
         .block()
             .stmt().let_id("x").isize(1)
@@ -122,7 +122,7 @@ fn test() {
             .expr().add().id("x").id("y");
     println!("fn: {}", pprust::item_to_string(&*fn_));
 
-    let fn_ = builder.item("bar").fn_()
+    let fn_ = builder.item().fn_("bar")
         .output().isize()
         .generics()
             .lifetime("'a").build()

@@ -175,7 +175,9 @@ impl<'a> PathBuilder<'a> {
     }
 }
 
-impl<'a, F: Invoke<ast::Path>> PathBuilder<'a, F> {
+impl<'a, F> PathBuilder<'a, F>
+    where F: Invoke<ast::Path>,
+{
     pub fn new_with_callback(ctx: &'a Ctx, callback: F) -> Self {
         PathBuilder {
             ctx: ctx,
@@ -235,7 +237,9 @@ pub struct PathSegmentsBuilder<'a, F=Identity> {
     segments: Vec<ast::PathSegment>,
 }
 
-impl<'a, F: Invoke<ast::Path>> PathSegmentsBuilder<'a, F> {
+impl<'a, F> PathSegmentsBuilder<'a, F>
+    where F: Invoke<ast::Path>,
+{
     pub fn ids<I, T>(mut self, ids: I) -> PathSegmentsBuilder<'a, F>
         where I: IntoIterator<Item=T>,
               T: ToIdent,
@@ -289,7 +293,9 @@ pub struct PathSegmentBuilder<'a, F=Identity> {
     bindings: Vec<P<ast::TypeBinding>>,
 }
 
-impl<'a, F: Invoke<ast::PathSegment>> PathSegmentBuilder<'a, F> {
+impl<'a, F> PathSegmentBuilder<'a, F>
+    where F: Invoke<ast::PathSegment>,
+{
     pub fn new_with_callback<I>(ctx: &'a Ctx, id: I, callback: F) -> Self
         where I: ToIdent,
     {
@@ -406,7 +412,9 @@ impl<'a> TyBuilder<'a> {
     }
 }
 
-impl<'a, F: Invoke<P<ast::Ty>>> TyBuilder<'a, F> {
+impl<'a, F> TyBuilder<'a, F>
+    where F: Invoke<P<ast::Ty>>,
+{
     pub fn new_with_callback(ctx: &'a Ctx, callback: F) -> Self {
         TyBuilder {
             ctx: ctx,
@@ -434,8 +442,8 @@ impl<'a, F: Invoke<P<ast::Ty>>> TyBuilder<'a, F> {
         self.path().id(id).build()
     }
 
-    pub fn build_path(self, path: ast::Path) -> F::Result {
-        self.build_ty(ast::Ty_::TyPath(path, ast::DUMMY_NODE_ID))
+    pub fn build_path(self, qself: Option<ast::QSelf>, path: ast::Path) -> F::Result {
+        self.build_ty(ast::Ty_::TyPath(qself, path))
     }
 
     pub fn path(self) -> PathBuilder<'a, TyPathBuilder<'a, F>> {
@@ -506,11 +514,13 @@ impl<'a, F: Invoke<P<ast::Ty>>> TyBuilder<'a, F> {
 
 pub struct TyPathBuilder<'a, F>(TyBuilder<'a, F>);
 
-impl<'a, F: Invoke<P<ast::Ty>>> Invoke<ast::Path> for TyPathBuilder<'a, F> {
+impl<'a, F> Invoke<ast::Path> for TyPathBuilder<'a, F>
+    where F: Invoke<P<ast::Ty>>,
+{
     type Result = F::Result;
 
     fn invoke(self, path: ast::Path) -> F::Result {
-        self.0.build_path(path)
+        self.0.build_path(None, path)
     }
 }
 
@@ -518,7 +528,9 @@ impl<'a, F: Invoke<P<ast::Ty>>> Invoke<ast::Path> for TyPathBuilder<'a, F> {
 
 pub struct TyOptionBuilder<'a, F>(TyBuilder<'a, F>);
 
-impl<'a, F: Invoke<P<ast::Ty>>> Invoke<P<ast::Ty>> for TyOptionBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Ty>> for TyOptionBuilder<'a, F>
+    where F: Invoke<P<ast::Ty>>,
+{
     type Result = F::Result;
 
     fn invoke(self, ty: P<ast::Ty>) -> F::Result {
@@ -531,7 +543,7 @@ impl<'a, F: Invoke<P<ast::Ty>>> Invoke<P<ast::Ty>> for TyOptionBuilder<'a, F> {
                 .build()
             .build();
 
-        self.0.build_path(path)
+        self.0.build_path(None, path)
     }
 }
 
@@ -539,7 +551,9 @@ impl<'a, F: Invoke<P<ast::Ty>>> Invoke<P<ast::Ty>> for TyOptionBuilder<'a, F> {
 
 pub struct TyResultOkBuilder<'a, F>(TyBuilder<'a, F>);
 
-impl<'a, F: Invoke<P<ast::Ty>>> Invoke<P<ast::Ty>> for TyResultOkBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Ty>> for TyResultOkBuilder<'a, F>
+    where F: Invoke<P<ast::Ty>>,
+{
     type Result = TyBuilder<'a, TyResultErrBuilder<'a, F>>;
 
     fn invoke(self, ty: P<ast::Ty>) -> TyBuilder<'a, TyResultErrBuilder<'a, F>> {
@@ -549,7 +563,9 @@ impl<'a, F: Invoke<P<ast::Ty>>> Invoke<P<ast::Ty>> for TyResultOkBuilder<'a, F> 
 
 pub struct TyResultErrBuilder<'a, F>(TyBuilder<'a, F>, P<ast::Ty>);
 
-impl<'a, F: Invoke<P<ast::Ty>>> Invoke<P<ast::Ty>> for TyResultErrBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Ty>> for TyResultErrBuilder<'a, F>
+    where F: Invoke<P<ast::Ty>>,
+{
     type Result = F::Result;
 
     fn invoke(self, ty: P<ast::Ty>) -> F::Result {
@@ -563,7 +579,7 @@ impl<'a, F: Invoke<P<ast::Ty>>> Invoke<P<ast::Ty>> for TyResultErrBuilder<'a, F>
                 .build()
             .build();
 
-        self.0.build_path(path)
+        self.0.build_path(None, path)
     }
 }
 
@@ -574,7 +590,9 @@ pub struct TyTupleBuilder<'a, F> {
     tys: Vec<P<ast::Ty>>,
 }
 
-impl<'a, F: Invoke<P<ast::Ty>>> TyTupleBuilder<'a, F> {
+impl<'a, F> TyTupleBuilder<'a, F>
+    where F: Invoke<P<ast::Ty>>,
+{
     pub fn with_tys<I>(mut self, iter: I) -> Self
         where I: IntoIterator<Item=P<ast::Ty>>,
     {
@@ -596,7 +614,9 @@ impl<'a, F: Invoke<P<ast::Ty>>> TyTupleBuilder<'a, F> {
     }
 }
 
-impl<'a, F: Invoke<P<ast::Ty>>> Invoke<P<ast::Ty>> for TyTupleBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Ty>> for TyTupleBuilder<'a, F>
+    where F: Invoke<P<ast::Ty>>,
+{
     type Result = Self;
 
     fn invoke(self, ty: P<ast::Ty>) -> Self {
@@ -618,7 +638,9 @@ impl<'a> LitBuilder<'a> {
     }
 }
 
-impl<'a, F: Invoke<P<ast::Lit>>> LitBuilder<'a, F> {
+impl<'a, F> LitBuilder<'a, F>
+    where F: Invoke<P<ast::Lit>>,
+{
     pub fn new_with_callback(ctx: &'a Ctx, callback: F) -> Self {
         LitBuilder {
             _ctx: ctx,
@@ -710,7 +732,9 @@ impl<'a> ExprBuilder<'a> {
     }
 }
 
-impl<'a, F: Invoke<P<ast::Expr>>> ExprBuilder<'a, F> {
+impl<'a, F> ExprBuilder<'a, F>
+    where F: Invoke<P<ast::Expr>>,
+{
     pub fn new_with_callback(ctx: &'a Ctx, callback: F) -> Self {
         ExprBuilder {
             ctx: ctx,
@@ -737,8 +761,8 @@ impl<'a, F: Invoke<P<ast::Expr>>> ExprBuilder<'a, F> {
         }))
     }
 
-    pub fn build_path(self, path: ast::Path) -> F::Result {
-        self.build_expr_(ast::Expr_::ExprPath(path))
+    pub fn build_path(self, qself: Option<ast::QSelf>, path: ast::Path) -> F::Result {
+        self.build_expr_(ast::Expr_::ExprPath(qself, path))
     }
 
     pub fn path(self) -> PathBuilder<'a, Self> {
@@ -1096,9 +1120,17 @@ impl<'a, F: Invoke<P<ast::Expr>>> ExprBuilder<'a, F> {
     pub fn block(self) -> BlockBuilder<'a, Self> {
         BlockBuilder::new_with_callback(self.ctx, self)
     }
+
+    pub fn paren(self) -> ExprBuilder<'a, ExprParenBuilder<'a, F>> {
+        ExprBuilder::new_with_callback(self.ctx, ExprParenBuilder {
+            builder: self,
+        })
+    }
 }
 
-impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Lit>> for ExprBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Lit>> for ExprBuilder<'a, F>
+    where F: Invoke<P<ast::Expr>>,
+{
     type Result = F::Result;
 
     fn invoke(self, lit: P<ast::Lit>) -> F::Result {
@@ -1106,15 +1138,19 @@ impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Lit>> for ExprBuilder<'a, F> {
     }
 }
 
-impl<'a, F: Invoke<P<ast::Expr>>> Invoke<ast::Path> for ExprBuilder<'a, F> {
+impl<'a, F> Invoke<ast::Path> for ExprBuilder<'a, F>
+    where F: Invoke<P<ast::Expr>>,
+{
     type Result = F::Result;
 
     fn invoke(self, path: ast::Path) -> F::Result {
-        self.build_path(path)
+        self.build_path(None, path)
     }
 }
 
-impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Block>> for ExprBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Block>> for ExprBuilder<'a, F>
+    where F: Invoke<P<ast::Expr>>,
+{
     type Result = F::Result;
 
     fn invoke(self, block: P<ast::Block>) -> F::Result {
@@ -1129,7 +1165,9 @@ pub struct ExprUnaryBuilder<'a, F> {
     unop: ast::UnOp,
 }
 
-impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Expr>> for ExprUnaryBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Expr>> for ExprUnaryBuilder<'a, F>
+    where F: Invoke<P<ast::Expr>>,
+{
     type Result = F::Result;
 
     fn invoke(self, expr: P<ast::Expr>) -> F::Result {
@@ -1144,7 +1182,9 @@ pub struct ExprBinaryLhsBuilder<'a, F> {
     binop: ast::BinOp_,
 }
 
-impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Expr>> for ExprBinaryLhsBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Expr>> for ExprBinaryLhsBuilder<'a, F>
+    where F: Invoke<P<ast::Expr>>,
+{
     type Result = ExprBuilder<'a, ExprBinaryRhsBuilder<'a, F>>;
 
     fn invoke(self, lhs: P<ast::Expr>) -> ExprBuilder<'a, ExprBinaryRhsBuilder<'a, F>> {
@@ -1162,7 +1202,9 @@ pub struct ExprBinaryRhsBuilder<'a, F> {
     lhs: P<ast::Expr>,
 }
 
-impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Expr>> for ExprBinaryRhsBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Expr>> for ExprBinaryRhsBuilder<'a, F>
+    where F: Invoke<P<ast::Expr>>,
+{
     type Result = F::Result;
 
     fn invoke(self, rhs: P<ast::Expr>) -> F::Result {
@@ -1217,7 +1259,9 @@ pub struct ExprCallBuilder<'a, F> {
     builder: ExprBuilder<'a, F>,
 }
 
-impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Expr>> for ExprCallBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Expr>> for ExprCallBuilder<'a, F>
+    where F: Invoke<P<ast::Expr>>,
+{
     type Result = ExprCallArgsBuilder<'a, F>;
 
     fn invoke(self, expr: P<ast::Expr>) -> ExprCallArgsBuilder<'a, F> {
@@ -1237,7 +1281,9 @@ pub struct ExprCallArgsBuilder<'a, F> {
     args: Vec<P<ast::Expr>>,
 }
 
-impl<'a, F: Invoke<P<ast::Expr>>> ExprCallArgsBuilder<'a, F> {
+impl<'a, F> ExprCallArgsBuilder<'a, F>
+    where F: Invoke<P<ast::Expr>>,
+{
     pub fn with_args<I>(mut self, iter: I) -> Self
         where I: IntoIterator<Item=P<ast::Expr>>,
     {
@@ -1259,7 +1305,9 @@ impl<'a, F: Invoke<P<ast::Expr>>> ExprCallArgsBuilder<'a, F> {
     }
 }
 
-impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Expr>> for ExprCallArgsBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Expr>> for ExprCallArgsBuilder<'a, F>
+    where F: Invoke<P<ast::Expr>>,
+{
     type Result = Self;
 
     fn invoke(self, arg: P<ast::Expr>) -> Self {
@@ -1274,7 +1322,9 @@ pub struct ExprMethodCallBuilder<'a, F> {
     id: ast::SpannedIdent,
 }
 
-impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Expr>> for ExprMethodCallBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Expr>> for ExprMethodCallBuilder<'a, F>
+    where F: Invoke<P<ast::Expr>>,
+{
     type Result = ExprMethodCallArgsBuilder<'a, F>;
 
     fn invoke(self, expr: P<ast::Expr>) -> ExprMethodCallArgsBuilder<'a, F> {
@@ -1296,7 +1346,9 @@ pub struct ExprMethodCallArgsBuilder<'a, F> {
     args: Vec<P<ast::Expr>>,
 }
 
-impl<'a, F: Invoke<P<ast::Expr>>> ExprMethodCallArgsBuilder<'a, F> {
+impl<'a, F> ExprMethodCallArgsBuilder<'a, F>
+    where F: Invoke<P<ast::Expr>>,
+{
     pub fn with_tys<I>(mut self, iter: I) -> Self
         where I: IntoIterator<Item=P<ast::Ty>>,
     {
@@ -1334,7 +1386,9 @@ impl<'a, F: Invoke<P<ast::Expr>>> ExprMethodCallArgsBuilder<'a, F> {
     }
 }
 
-impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Ty>> for ExprMethodCallArgsBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Ty>> for ExprMethodCallArgsBuilder<'a, F>
+    where F: Invoke<P<ast::Expr>>,
+{
     type Result = Self;
 
     fn invoke(self, ty: P<ast::Ty>) -> Self {
@@ -1342,7 +1396,9 @@ impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Ty>> for ExprMethodCallArgsBuild
     }
 }
 
-impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Expr>> for ExprMethodCallArgsBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Expr>> for ExprMethodCallArgsBuilder<'a, F>
+    where F: Invoke<P<ast::Expr>>,
+{
     type Result = Self;
 
     fn invoke(self, arg: P<ast::Expr>) -> Self {
@@ -1357,7 +1413,9 @@ pub struct ExprAddrOfBuilder<'a, F> {
     mutability: ast::Mutability,
 }
 
-impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Expr>> for ExprAddrOfBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Expr>> for ExprAddrOfBuilder<'a, F>
+    where F: Invoke<P<ast::Expr>>,
+{
     type Result = F::Result;
 
     fn invoke(self, expr: P<ast::Expr>) -> F::Result {
@@ -1372,14 +1430,32 @@ pub struct ExprPathBuilder<'a, F> {
     path: ast::Path,
 }
 
-impl<'a, F: Invoke<P<ast::Expr>>> Invoke<P<ast::Expr>> for ExprPathBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Expr>> for ExprPathBuilder<'a, F>
+    where F: Invoke<P<ast::Expr>>,
+{
     type Result = F::Result;
 
     fn invoke(self, arg: P<ast::Expr>) -> F::Result {
         self.builder.call()
-            .build_path(self.path)
+            .build_path(None, self.path)
             .with_arg(arg)
             .build()
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprParenBuilder<'a, F> {
+    builder: ExprBuilder<'a, F>,
+}
+
+impl<'a, F> Invoke<P<ast::Expr>> for ExprParenBuilder<'a, F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, expr: P<ast::Expr>) -> F::Result {
+        self.builder.build_expr_(ast::ExprParen(expr))
     }
 }
 
@@ -1397,7 +1473,9 @@ impl<'a> StmtBuilder<'a> {
     }
 }
 
-impl<'a, F: Invoke<P<ast::Stmt>>> StmtBuilder<'a, F> {
+impl<'a, F> StmtBuilder<'a, F>
+    where F: Invoke<P<ast::Stmt>>,
+{
     pub fn new_with_callback(ctx: &'a Ctx, callback: F) -> Self {
         StmtBuilder {
             ctx: ctx,
@@ -1466,7 +1544,9 @@ impl<'a, F: Invoke<P<ast::Stmt>>> StmtBuilder<'a, F> {
     }
 }
 
-impl<'a, F: Invoke<P<ast::Stmt>>> Invoke<P<ast::Pat>> for StmtBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Pat>> for StmtBuilder<'a, F>
+    where F: Invoke<P<ast::Stmt>>,
+{
     type Result = StmtLetBuilder<'a, F>;
 
     fn invoke(self, pat: P<ast::Pat>) -> StmtLetBuilder<'a, F> {
@@ -1481,7 +1561,9 @@ impl<'a, F: Invoke<P<ast::Stmt>>> Invoke<P<ast::Pat>> for StmtBuilder<'a, F> {
 
 pub struct StmtLetIdBuilder<'a, F>(StmtBuilder<'a, F>, ast::Ident);
 
-impl<'a, F: Invoke<P<ast::Stmt>>> Invoke<P<ast::Expr>> for StmtLetIdBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Expr>> for StmtLetIdBuilder<'a, F>
+    where F: Invoke<P<ast::Stmt>>,
+{
     type Result = F::Result;
 
     fn invoke(self, expr: P<ast::Expr>) -> F::Result {
@@ -1493,7 +1575,9 @@ impl<'a, F: Invoke<P<ast::Stmt>>> Invoke<P<ast::Expr>> for StmtLetIdBuilder<'a, 
 
 pub struct StmtExprBuilder<'a, F>(StmtBuilder<'a, F>);
 
-impl<'a, F: Invoke<P<ast::Stmt>>> Invoke<P<ast::Expr>> for StmtExprBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Expr>> for StmtExprBuilder<'a, F>
+    where F: Invoke<P<ast::Stmt>>,
+{
     type Result = F::Result;
 
     fn invoke(self, expr: P<ast::Expr>) -> F::Result {
@@ -1505,7 +1589,9 @@ impl<'a, F: Invoke<P<ast::Stmt>>> Invoke<P<ast::Expr>> for StmtExprBuilder<'a, F
 
 pub struct StmtSemiBuilder<'a, F>(StmtBuilder<'a, F>);
 
-impl<'a, F: Invoke<P<ast::Stmt>>> Invoke<P<ast::Expr>> for StmtSemiBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Expr>> for StmtSemiBuilder<'a, F>
+    where F: Invoke<P<ast::Stmt>>,
+{
     type Result = F::Result;
 
     fn invoke(self, expr: P<ast::Expr>) -> F::Result {
@@ -1520,7 +1606,9 @@ pub struct StmtLetBuilder<'a, F> {
     pat: P<ast::Pat>,
 }
 
-impl<'a, F: Invoke<P<ast::Stmt>>> StmtLetBuilder<'a, F> {
+impl<'a, F> StmtLetBuilder<'a, F>
+    where F: Invoke<P<ast::Stmt>>,
+{
     fn build_ty(self, ty: P<ast::Ty>) -> StmtLetTyBuilder<'a, F> {
         StmtLetTyBuilder {
             builder: self.builder,
@@ -1546,7 +1634,9 @@ impl<'a, F: Invoke<P<ast::Stmt>>> StmtLetBuilder<'a, F> {
     }
 }
 
-impl<'a, F: Invoke<P<ast::Stmt>>> Invoke<P<ast::Ty>> for StmtLetBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Ty>> for StmtLetBuilder<'a, F>
+    where F: Invoke<P<ast::Stmt>>,
+{
     type Result = StmtLetTyBuilder<'a, F>;
 
     fn invoke(self, ty: P<ast::Ty>) -> StmtLetTyBuilder<'a, F> {
@@ -1554,7 +1644,9 @@ impl<'a, F: Invoke<P<ast::Stmt>>> Invoke<P<ast::Ty>> for StmtLetBuilder<'a, F> {
     }
 }
 
-impl<'a, F: Invoke<P<ast::Stmt>>> Invoke<P<ast::Expr>> for StmtLetBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Expr>> for StmtLetBuilder<'a, F>
+    where F: Invoke<P<ast::Stmt>>,
+{
     type Result = F::Result;
 
     fn invoke(self, expr: P<ast::Expr>) -> F::Result {
@@ -1570,7 +1662,9 @@ pub struct StmtLetTyBuilder<'a, F> {
     ty: P<ast::Ty>,
 }
 
-impl<'a, F: Invoke<P<ast::Stmt>>> StmtLetTyBuilder<'a, F> {
+impl<'a, F> StmtLetTyBuilder<'a, F>
+    where F: Invoke<P<ast::Stmt>>,
+{
     pub fn expr(self) -> ExprBuilder<'a, Self> {
         ExprBuilder::new_with_callback(self.builder.ctx, self)
     }
@@ -1580,7 +1674,9 @@ impl<'a, F: Invoke<P<ast::Stmt>>> StmtLetTyBuilder<'a, F> {
     }
 }
 
-impl<'a, F: Invoke<P<ast::Stmt>>> Invoke<P<ast::Expr>> for StmtLetTyBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Expr>> for StmtLetTyBuilder<'a, F>
+    where F: Invoke<P<ast::Stmt>>,
+{
     type Result = F::Result;
 
     fn invoke(self, expr: P<ast::Expr>) -> F::Result {
@@ -1592,7 +1688,9 @@ impl<'a, F: Invoke<P<ast::Stmt>>> Invoke<P<ast::Expr>> for StmtLetTyBuilder<'a, 
 
 pub struct StmtItemBuilder<'a, F>(StmtBuilder<'a, F>);
 
-impl<'a, F: Invoke<P<ast::Stmt>>> Invoke<P<ast::Item>> for StmtItemBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Item>> for StmtItemBuilder<'a, F>
+    where F: Invoke<P<ast::Stmt>>,
+{
     type Result = F::Result;
 
     fn invoke(self, item: P<ast::Item>) -> F::Result {
@@ -1615,7 +1713,9 @@ impl<'a> PatBuilder<'a> {
 }
 
 
-impl<'a, F: Invoke<P<ast::Pat>>> PatBuilder<'a, F> {
+impl<'a, F> PatBuilder<'a, F>
+    where F: Invoke<P<ast::Pat>>,
+{
     pub fn new_with_callback(ctx: &'a Ctx, callback: F) -> Self {
         PatBuilder {
             ctx: ctx,
@@ -1721,7 +1821,9 @@ pub struct PatEnumBuilder<'a, F> {
     pats: Vec<P<ast::Pat>>,
 }
 
-impl<'a, F: Invoke<P<ast::Pat>>> PatEnumBuilder<'a, F> {
+impl<'a, F> PatEnumBuilder<'a, F>
+    where F: Invoke<P<ast::Pat>>,
+{
     pub fn pat(self) -> PatBuilder<'a, Self> {
         PatBuilder::new_with_callback(self.builder.ctx, self)
     }
@@ -1733,7 +1835,9 @@ impl<'a, F: Invoke<P<ast::Pat>>> PatEnumBuilder<'a, F> {
     }
 }
 
-impl<'a, F: Invoke<P<ast::Pat>>> Invoke<P<ast::Pat>> for PatEnumBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Pat>> for PatEnumBuilder<'a, F>
+    where F: Invoke<P<ast::Pat>>,
+{
     type Result = Self;
 
     fn invoke(mut self, pat: P<ast::Pat>) -> Self {
@@ -1746,7 +1850,9 @@ impl<'a, F: Invoke<P<ast::Pat>>> Invoke<P<ast::Pat>> for PatEnumBuilder<'a, F> {
 
 pub struct PatExprBuilder<'a, F>(PatBuilder<'a, F>);
 
-impl<'a, F: Invoke<P<ast::Pat>>> Invoke<P<ast::Expr>> for PatExprBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Expr>> for PatExprBuilder<'a, F>
+    where F: Invoke<P<ast::Pat>>,
+{
     type Result = F::Result;
 
     fn invoke(self, expr: P<ast::Expr>) -> F::Result {
@@ -1804,7 +1910,9 @@ impl<'a> BlockBuilder<'a> {
     }
 }
 
-impl<'a, F: Invoke<P<ast::Block>>> BlockBuilder<'a, F> {
+impl<'a, F> BlockBuilder<'a, F>
+    where F: Invoke<P<ast::Block>>,
+{
     pub fn new_with_callback(ctx: &'a Ctx, callback: F) -> Self {
         BlockBuilder {
             ctx: ctx,
@@ -1865,7 +1973,9 @@ impl<'a, F: Invoke<P<ast::Block>>> BlockBuilder<'a, F> {
     }
 }
 
-impl<'a, F: Invoke<P<ast::Block>>> Invoke<P<ast::Stmt>> for BlockBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Stmt>> for BlockBuilder<'a, F>
+    where F: Invoke<P<ast::Block>>,
+{
     type Result = Self;
 
     fn invoke(self, stmt: P<ast::Stmt>) -> Self {
@@ -1873,7 +1983,9 @@ impl<'a, F: Invoke<P<ast::Block>>> Invoke<P<ast::Stmt>> for BlockBuilder<'a, F> 
     }
 }
 
-impl<'a, F: Invoke<P<ast::Block>>> Invoke<P<ast::Expr>> for BlockBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Expr>> for BlockBuilder<'a, F>
+    where F: Invoke<P<ast::Block>>,
+{
     type Result = F::Result;
 
     fn invoke(self, expr: P<ast::Expr>) -> F::Result {
@@ -1896,7 +2008,9 @@ impl<'a> ArgBuilder<'a> {
     }
 }
 
-impl<'a, F: Invoke<ast::Arg>> ArgBuilder<'a, F> {
+impl<'a, F> ArgBuilder<'a, F>
+    where F: Invoke<ast::Arg>,
+{
     pub fn new_with_callback<I>(ctx: &'a Ctx, id: I, callback: F) -> ArgBuilder<'a, F>
         where I: ToIdent,
     {
@@ -1965,7 +2079,9 @@ impl<'a> FnDeclBuilder<'a> {
     }
 }
 
-impl<'a, F: Invoke<P<ast::FnDecl>>> FnDeclBuilder<'a, F> {
+impl<'a, F> FnDeclBuilder<'a, F>
+    where F: Invoke<P<ast::FnDecl>>,
+{
     pub fn new_with_callback(ctx: &'a Ctx, callback: F) -> Self {
         FnDeclBuilder {
             ctx: ctx,
@@ -2029,7 +2145,9 @@ impl<'a, F> Invoke<ast::Arg> for FnDeclBuilder<'a, F>
     }
 }
 
-impl<'a, F: Invoke<P<ast::FnDecl>>> Invoke<P<ast::Ty>> for FnDeclBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Ty>> for FnDeclBuilder<'a, F>
+    where F: Invoke<P<ast::FnDecl>>,
+{
     type Result = F::Result;
 
     fn invoke(self, ty: P<ast::Ty>) -> F::Result {
@@ -2057,7 +2175,9 @@ impl<'a> MethodBuilder<'a> {
     }
 }
 
-impl<'a, F: Invoke<P<ast::Method>>> MethodBuilder<'a, F> {
+impl<'a, F> MethodBuilder<'a, F>
+    where F: Invoke<P<ast::Method>>,
+{
     pub fn new_with_callback<I>(ctx: &'a Ctx, id: I, callback: F) -> Self
         where I: ToIdent,
     {
@@ -2114,7 +2234,9 @@ impl<'a, F: Invoke<P<ast::Method>>> MethodBuilder<'a, F> {
     */
 }
 
-impl<'a, F: Invoke<P<ast::Method>>> Invoke<ast::Generics> for MethodBuilder<'a, F> {
+impl<'a, F> Invoke<ast::Generics> for MethodBuilder<'a, F>
+    where F: Invoke<P<ast::Method>>,
+{
     type Result = Self;
 
     fn invoke(self, generics: ast::Generics) -> Self {
@@ -2122,7 +2244,9 @@ impl<'a, F: Invoke<P<ast::Method>>> Invoke<ast::Generics> for MethodBuilder<'a, 
     }
 }
 
-impl<'a, F: Invoke<P<ast::Method>>> Invoke<ast::ExplicitSelf> for MethodBuilder<'a, F> {
+impl<'a, F> Invoke<ast::ExplicitSelf> for MethodBuilder<'a, F>
+    where F: Invoke<P<ast::Method>>,
+{
     type Result = MethodSelfBuilder<'a, F>;
 
     fn invoke(self, self_: ast::ExplicitSelf) -> MethodSelfBuilder<'a, F> {
@@ -2138,7 +2262,9 @@ pub struct MethodSelfBuilder<'a, F> {
     self_: ast::ExplicitSelf,
 }
 
-impl<'a, F: Invoke<P<ast::Method>>> Invoke<P<ast::FnDecl>> for MethodSelfBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::FnDecl>> for MethodSelfBuilder<'a, F>
+    where F: Invoke<P<ast::Method>>,
+{
     type Result = MethodSelfFnDeclBuilder<'a, F>;
 
     fn invoke(self, fn_decl: P<ast::FnDecl>) -> MethodSelfFnDeclBuilder<'a, F> {
@@ -2156,7 +2282,9 @@ pub struct MethodSelfFnDeclBuilder<'a, F> {
     fn_decl: P<ast::FnDecl>,
 }
 
-impl<'a, F: Invoke<P<ast::Method>>> Invoke<P<ast::Block>> for MethodSelfFnDeclBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Block>> for MethodSelfFnDeclBuilder<'a, F>
+    where F: Invoke<P<ast::Method>>,
+{
     type Result = F::Result;
 
     fn invoke(self, block: P<ast::Block>) -> F::Result {
@@ -2181,7 +2309,9 @@ impl<'a, F: Invoke<P<ast::Method>>> Invoke<P<ast::Block>> for MethodSelfFnDeclBu
 }
 
 /*
-impl<'a, F: Invoke<P<ast::Method>>> Invoke<ast::Block> for MethodBuilder<'a, F> {
+impl<'a, F> Invoke<ast::Block> for MethodBuilder<'a, F>
+    where F: Invoke<P<ast::Method>>,
+{
     type Result = F::Result;
 
     fn invoke(self, block: P<ast::Block>) -> F::Result {
@@ -2214,7 +2344,9 @@ pub struct SelfBuilder<'a, F> {
     span: Span,
 }
 
-impl<'a, F: Invoke<ast::ExplicitSelf>> SelfBuilder<'a, F> {
+impl<'a, F> SelfBuilder<'a, F>
+    where F: Invoke<ast::ExplicitSelf>,
+{
     pub fn new_with_callback(ctx: &'a Ctx, callback: F) -> Self {
         SelfBuilder {
             ctx: ctx,
@@ -2252,7 +2384,9 @@ impl<'a, F: Invoke<ast::ExplicitSelf>> SelfBuilder<'a, F> {
     */
 }
 
-impl<'a, F: Invoke<ast::ExplicitSelf>> Invoke<P<ast::Ty>> for SelfBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Ty>> for SelfBuilder<'a, F>
+    where F: Invoke<ast::ExplicitSelf>,
+{
     type Result = F::Result;
 
     fn invoke(self, ty: P<ast::Ty>) -> F::Result {
@@ -2277,7 +2411,9 @@ impl<'a> ItemBuilder<'a> {
     }
 }
 
-impl<'a, F: Invoke<P<ast::Item>>> ItemBuilder<'a, F> {
+impl<'a, F> ItemBuilder<'a, F>
+    where F: Invoke<P<ast::Item>>,
+{
     pub fn new_with_callback(ctx: &'a Ctx, callback: F) -> Self {
         ItemBuilder {
             ctx: ctx,
@@ -2345,7 +2481,9 @@ impl<'a, F: Invoke<P<ast::Item>>> ItemBuilder<'a, F> {
     }
 }
 
-impl<'a, F: Invoke<P<ast::Item>>> Invoke<ast::Attribute> for ItemBuilder<'a, F> {
+impl<'a, F> Invoke<ast::Attribute> for ItemBuilder<'a, F>
+    where F: Invoke<P<ast::Item>>,
+{
     type Result = Self;
 
     fn invoke(self, attr: ast::Attribute) -> Self {
@@ -2361,7 +2499,9 @@ pub struct ItemFnDeclBuilder<'a, F> {
     id: ast::Ident,
 }
 
-impl<'a, F: Invoke<P<ast::Item>>> Invoke<P<ast::FnDecl>> for ItemFnDeclBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::FnDecl>> for ItemFnDeclBuilder<'a, F>
+    where F: Invoke<P<ast::Item>>,
+{
     type Result = ItemFnBuilder<'a, F>;
 
     fn invoke(self, fn_decl: P<ast::FnDecl>) -> ItemFnBuilder<'a, F> {
@@ -2390,7 +2530,9 @@ pub struct ItemFnBuilder<'a, F> {
     generics: ast::Generics,
 }
 
-impl<'a, F: Invoke<P<ast::Item>>> ItemFnBuilder<'a, F> {
+impl<'a, F> ItemFnBuilder<'a, F>
+    where F: Invoke<P<ast::Item>>,
+{
     pub fn unsafe_(mut self) -> Self {
         self.unsafety = ast::Unsafety::Normal;
         self
@@ -2415,7 +2557,9 @@ impl<'a, F: Invoke<P<ast::Item>>> ItemFnBuilder<'a, F> {
     }
 }
 
-impl<'a, F: Invoke<P<ast::Item>>> Invoke<ast::Generics> for ItemFnBuilder<'a, F> {
+impl<'a, F> Invoke<ast::Generics> for ItemFnBuilder<'a, F>
+    where F: Invoke<P<ast::Item>>,
+{
     type Result = Self;
 
     fn invoke(self, generics: ast::Generics) -> Self {
@@ -2423,7 +2567,9 @@ impl<'a, F: Invoke<P<ast::Item>>> Invoke<ast::Generics> for ItemFnBuilder<'a, F>
     }
 }
 
-impl<'a, F: Invoke<P<ast::Item>>> Invoke<P<ast::Block>> for ItemFnBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::Block>> for ItemFnBuilder<'a, F>
+    where F: Invoke<P<ast::Item>>,
+{
     type Result = F::Result;
 
     fn invoke(self, block: P<ast::Block>) -> F::Result {
@@ -2441,7 +2587,9 @@ impl<'a, F: Invoke<P<ast::Item>>> Invoke<P<ast::Block>> for ItemFnBuilder<'a, F>
 
 pub struct ItemUseGlobBuilder<'a, F>(ItemBuilder<'a, F>);
 
-impl<'a, F: Invoke<P<ast::Item>>> Invoke<ast::Path> for ItemUseGlobBuilder<'a, F> {
+impl<'a, F> Invoke<ast::Path> for ItemUseGlobBuilder<'a, F>
+    where F: Invoke<P<ast::Item>>,
+{
     type Result = F::Result;
 
     fn invoke(self, path: ast::Path) -> F::Result {
@@ -2457,7 +2605,9 @@ pub struct AttrBuilder<'a, F> {
     span: Span,
 }
 
-impl<'a, F: Invoke<ast::Attribute>> AttrBuilder<'a, F> {
+impl<'a, F> AttrBuilder<'a, F>
+    where F: Invoke<ast::Attribute>,
+{
     pub fn new_with_callback(ctx: &'a Ctx, callback: F) -> Self {
         AttrBuilder {
             ctx: ctx,
@@ -2511,6 +2661,10 @@ impl<'a, F: Invoke<ast::Attribute>> AttrBuilder<'a, F> {
         self.word("inline")
     }
 
+    pub fn test(self) -> F::Result {
+        self.word("test")
+    }
+
     pub fn build_allow<I, T>(self, iter: I) -> F::Result
         where I: IntoIterator<Item=T>,
               T: ToInternedString,
@@ -2547,7 +2701,9 @@ impl<'a, F: Invoke<ast::Attribute>> AttrBuilder<'a, F> {
     }
 }
 
-impl<'a, F: Invoke<ast::Attribute>> Invoke<P<ast::MetaItem>> for AttrBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::MetaItem>> for AttrBuilder<'a, F>
+    where F: Invoke<ast::Attribute>,
+{
     type Result = F::Result;
 
     fn invoke(self, item: P<ast::MetaItem>) -> F::Result {
@@ -2555,7 +2711,9 @@ impl<'a, F: Invoke<ast::Attribute>> Invoke<P<ast::MetaItem>> for AttrBuilder<'a,
     }
 }
 
-impl<'a, F: Invoke<ast::Attribute>> Invoke<ast::MetaItem_> for AttrBuilder<'a, F> {
+impl<'a, F> Invoke<ast::MetaItem_> for AttrBuilder<'a, F>
+    where F: Invoke<ast::Attribute>,
+{
     type Result = F::Result;
 
     fn invoke(self, item: ast::MetaItem_) -> F::Result {
@@ -2573,7 +2731,9 @@ pub struct AttrListBuilder<'a, F> {
     items: Vec<P<ast::MetaItem>>,
 }
 
-impl<'a, F: Invoke<P<ast::MetaItem>>> AttrListBuilder<'a, F> {
+impl<'a, F> AttrListBuilder<'a, F>
+    where F: Invoke<P<ast::MetaItem>>,
+{
     pub fn new_with_callback<T>(ctx: &'a Ctx, name: T, callback: F) -> Self
         where T: ToInternedString,
     {
@@ -2651,7 +2811,9 @@ impl<'a, F: Invoke<P<ast::MetaItem>>> AttrListBuilder<'a, F> {
     }
 }
 
-impl<'a, F: Invoke<P<ast::MetaItem>>> Invoke<P<ast::MetaItem>> for AttrListBuilder<'a, F> {
+impl<'a, F> Invoke<P<ast::MetaItem>> for AttrListBuilder<'a, F>
+    where F: Invoke<P<ast::MetaItem>>,
+{
     type Result = Self;
 
     fn invoke(self, item: P<ast::MetaItem>) -> Self {
@@ -2659,7 +2821,9 @@ impl<'a, F: Invoke<P<ast::MetaItem>>> Invoke<P<ast::MetaItem>> for AttrListBuild
     }
 }
 
-impl<'a, F: Invoke<P<ast::MetaItem>>> Invoke<ast::MetaItem_> for AttrListBuilder<'a, F> {
+impl<'a, F> Invoke<ast::MetaItem_> for AttrListBuilder<'a, F>
+    where F: Invoke<P<ast::MetaItem>>,
+{
     type Result = Self;
 
     fn invoke(self, item: ast::MetaItem_) -> Self {
@@ -2700,7 +2864,9 @@ impl<'a> GenericsBuilder<'a> {
     }
 }
 
-impl<'a, F: Invoke<ast::Generics>> GenericsBuilder<'a, F> {
+impl<'a, F> GenericsBuilder<'a, F>
+    where F: Invoke<ast::Generics>,
+{
     pub fn new_with_callback(ctx: &'a Ctx, callback: F) -> Self {
         GenericsBuilder {
             ctx: ctx,
@@ -2752,7 +2918,9 @@ impl<'a, F: Invoke<ast::Generics>> GenericsBuilder<'a, F> {
     }
 }
 
-impl<'a, F: Invoke<ast::Generics>> Invoke<ast::LifetimeDef> for GenericsBuilder<'a, F> {
+impl<'a, F> Invoke<ast::LifetimeDef> for GenericsBuilder<'a, F>
+    where F: Invoke<ast::Generics>,
+{
     type Result = Self;
 
     fn invoke(self, lifetime: ast::LifetimeDef) -> Self {
@@ -2760,7 +2928,9 @@ impl<'a, F: Invoke<ast::Generics>> Invoke<ast::LifetimeDef> for GenericsBuilder<
     }
 }
 
-impl<'a, F: Invoke<ast::Generics>> Invoke<ast::TyParam> for GenericsBuilder<'a, F> {
+impl<'a, F> Invoke<ast::TyParam> for GenericsBuilder<'a, F>
+    where F: Invoke<ast::Generics>,
+{
     type Result = Self;
 
     fn invoke(self, ty_param: ast::TyParam) -> Self {
@@ -2777,7 +2947,9 @@ pub struct LifetimeDefBuilder<'a, F> {
     bounds: Vec<ast::Lifetime>,
 }
 
-impl<'a, F: Invoke<ast::LifetimeDef>> LifetimeDefBuilder<'a, F> {
+impl<'a, F> LifetimeDefBuilder<'a, F>
+    where F: Invoke<ast::LifetimeDef>,
+{
     pub fn new_with_callback<N>(ctx: &'a Ctx, name: N, callback: F) -> Self
         where N: ToName
     {
@@ -2835,7 +3007,9 @@ impl<'a> TyParamBuilder<'a> {
     }
 }
 
-impl<'a, F: Invoke<ast::TyParam>> TyParamBuilder<'a, F> {
+impl<'a, F> TyParamBuilder<'a, F>
+    where F: Invoke<ast::TyParam>,
+{
     pub fn new_with_callback<I>(ctx: &'a Ctx, id: I, callback: F) -> Self
         where I: ToIdent
     {
@@ -2897,7 +3071,9 @@ impl<'a, F: Invoke<ast::TyParam>> TyParamBuilder<'a, F> {
     }
 }
 
-impl<'a, F: Invoke<ast::TyParam>> Invoke<ast::PolyTraitRef> for TyParamBuilder<'a, F> {
+impl<'a, F> Invoke<ast::PolyTraitRef> for TyParamBuilder<'a, F>
+    where F: Invoke<ast::TyParam>,
+{
     type Result = Self;
 
     fn invoke(self, trait_ref: ast::PolyTraitRef) -> Self {
@@ -2916,7 +3092,9 @@ pub struct PolyTraitRefBuilder<'a, F> {
     lifetimes: Vec<ast::LifetimeDef>,
 }
 
-impl<'a, F: Invoke<ast::PolyTraitRef>> PolyTraitRefBuilder<'a, F> {
+impl<'a, F> PolyTraitRefBuilder<'a, F>
+    where F: Invoke<ast::PolyTraitRef>,
+{
     pub fn new_with_callback<P>(ctx: &'a Ctx, path: P, callback: F) -> Self
         where P: IntoPath,
     {
@@ -2959,7 +3137,9 @@ impl<'a, F: Invoke<ast::PolyTraitRef>> PolyTraitRefBuilder<'a, F> {
     }
 }
 
-impl<'a, F: Invoke<ast::PolyTraitRef>> Invoke<ast::LifetimeDef> for PolyTraitRefBuilder<'a, F> {
+impl<'a, F> Invoke<ast::LifetimeDef> for PolyTraitRefBuilder<'a, F>
+    where F: Invoke<ast::PolyTraitRef>,
+{
     type Result = Self;
 
     fn invoke(self, lifetime: ast::LifetimeDef) -> Self {
