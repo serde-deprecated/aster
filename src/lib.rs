@@ -7,7 +7,7 @@ use std::iter::IntoIterator;
 use syntax::abi::Abi;
 use syntax::ast;
 use syntax::attr;
-use syntax::codemap::{DUMMY_SP, Span, respan};
+use syntax::codemap::{DUMMY_SP, Span, Spanned, respan};
 use syntax::owned_slice::OwnedSlice;
 use syntax::parse::token;
 use syntax::ptr::P;
@@ -138,6 +138,55 @@ impl ToInternedString for ast::Name {
 impl<'a, T> ToInternedString for &'a T where T: ToInternedString {
     fn into_interned_string(&self) -> token::InternedString {
         (**self).into_interned_string()
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub trait IntoLifetime {
+    fn into_lifetime(self, ctx: &Ctx) -> ast::Lifetime;
+}
+
+impl IntoLifetime for ast::Lifetime {
+    fn into_lifetime(self, _ctx: &Ctx) -> ast::Lifetime {
+        self
+    }
+}
+
+impl<'a> IntoLifetime for &'a str {
+    fn into_lifetime(self, ctx: &Ctx) -> ast::Lifetime {
+        ast::Lifetime {
+            id: ast::DUMMY_NODE_ID,
+            span: DUMMY_SP,
+            name: self.to_name(ctx),
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub trait IntoLifetimeDef {
+    fn into_lifetime_def(self, ctx: &Ctx) -> ast::LifetimeDef;
+}
+
+impl IntoLifetimeDef for ast::LifetimeDef {
+    fn into_lifetime_def(self, _ctx: &Ctx) -> ast::LifetimeDef {
+        self
+    }
+}
+
+impl IntoLifetimeDef for ast::Lifetime {
+    fn into_lifetime_def(self, _ctx: &Ctx) -> ast::LifetimeDef {
+        ast::LifetimeDef {
+            lifetime: self,
+            bounds: vec![],
+        }
+    }
+}
+
+impl<'a> IntoLifetimeDef for &'a str {
+    fn into_lifetime_def(self, ctx: &Ctx) -> ast::LifetimeDef {
+        self.into_lifetime(ctx).into_lifetime_def(ctx)
     }
 }
 
@@ -315,33 +364,35 @@ impl<'a, F> PathSegmentBuilder<'a, F>
         self
     }
 
-    pub fn with_lifetimes_<I>(mut self, iter: I) -> Self
-        where I: IntoIterator<Item=ast::Lifetime>,
+    pub fn with_generics(self, generics: ast::Generics) -> Self {
+        let ctx = self.ctx;
+
+        // Strip off the bounds.
+        let lifetimes = generics.lifetimes.iter()
+            .map(|lifetime_def| lifetime_def.lifetime);
+
+        let tys = generics.ty_params.iter()
+            .map(|ty_param| TyBuilder::new(ctx).id(ty_param.ident));
+
+        self.with_lifetimes(lifetimes)
+            .with_tys(tys)
+    }
+
+
+    pub fn with_lifetimes<I, L>(mut self, iter: I) -> Self
+        where I: IntoIterator<Item=L>,
+              L: IntoLifetime,
     {
+        let ctx = self.ctx;
+        let iter = iter.into_iter().map(|lifetime| lifetime.into_lifetime(ctx));
         self.lifetimes.extend(iter);
         self
     }
 
-    pub fn with_lifetimes<I, N>(self, iter: I) -> Self
-        where I: IntoIterator<Item=N>,
-              N: ToName,
+    pub fn with_lifetime<L>(mut self, lifetime: L) -> Self
+        where L: IntoLifetime,
     {
-        let span = self.span;
-        let ctx = self.ctx;
-
-        let iter = iter.into_iter().map(|name| {
-            ast::Lifetime {
-                id: ast::DUMMY_NODE_ID,
-                span: span,
-                name: name.to_name(ctx),
-            }
-        });
-
-        self.with_lifetimes_(iter)
-    }
-
-    pub fn with_lifetime(mut self, lifetime: ast::Lifetime) -> Self {
-        self.lifetimes.push(lifetime);
+        self.lifetimes.push(lifetime.into_lifetime(self.ctx));
         self
     }
 
@@ -423,12 +474,12 @@ impl<'a, F> TyBuilder<'a, F>
         }
     }
 
-    pub fn span(mut self, span: Span) -> TyBuilder<'a, F> {
+    pub fn span(mut self, span: Span) -> Self {
         self.span = span;
         self
     }
 
-    pub fn build_ty(self, ty_: ast::Ty_) -> F::Result {
+    pub fn build_ty_(self, ty_: ast::Ty_) -> F::Result {
         self.callback.invoke(P(ast::Ty {
             id: ast::DUMMY_NODE_ID,
             node: ty_,
@@ -443,7 +494,7 @@ impl<'a, F> TyBuilder<'a, F>
     }
 
     pub fn build_path(self, qself: Option<ast::QSelf>, path: ast::Path) -> F::Result {
-        self.build_ty(ast::Ty_::TyPath(qself, path))
+        self.build_ty_(ast::Ty_::TyPath(qself, path))
     }
 
     pub fn path(self) -> PathBuilder<'a, TyPathBuilder<'a, F>> {
@@ -508,6 +559,14 @@ impl<'a, F> TyBuilder<'a, F>
             tys: vec![],
         }
     }
+
+    pub fn ref_(self) -> TyRefBuilder<'a, F> {
+        TyRefBuilder {
+            builder: self,
+            lifetime: None,
+            mutability: ast::MutImmutable,
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -521,6 +580,52 @@ impl<'a, F> Invoke<ast::Path> for TyPathBuilder<'a, F>
 
     fn invoke(self, path: ast::Path) -> F::Result {
         self.0.build_path(None, path)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct TyRefBuilder<'a, F> {
+    builder: TyBuilder<'a, F>,
+    lifetime: Option<ast::Lifetime>,
+    mutability: ast::Mutability,
+}
+
+impl<'a, F> TyRefBuilder<'a, F>
+    where F: Invoke<P<ast::Ty>>,
+{
+    pub fn mut_(mut self) -> Self {
+        self.mutability = ast::MutMutable;
+        self
+    }
+
+    pub fn lifetime<N>(mut self, name: N) -> Self
+        where N: ToName,
+    {
+        self.lifetime = Some(ast::Lifetime {
+            id: ast::DUMMY_NODE_ID,
+            span: self.builder.span,
+            name: name.to_name(self.builder.ctx),
+        });
+        self
+    }
+
+    pub fn ty(self) -> TyBuilder<'a, Self> {
+        TyBuilder::new_with_callback(self.builder.ctx, self)
+    }
+}
+
+impl<'a, F> Invoke<P<ast::Ty>> for TyRefBuilder<'a, F>
+    where F: Invoke<P<ast::Ty>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, ty: P<ast::Ty>) -> F::Result {
+        let ty = ast::MutTy {
+            ty: ty,
+            mutbl: self.mutability,
+        };
+        self.builder.build_ty_(ast::TyRptr(self.lifetime, ty))
     }
 }
 
@@ -610,7 +715,7 @@ impl<'a, F> TyTupleBuilder<'a, F>
     }
 
     pub fn build(self) -> F::Result {
-        self.builder.build_ty(ast::TyTup(self.tys))
+        self.builder.build_ty_(ast::TyTup(self.tys))
     }
 }
 
@@ -659,6 +764,10 @@ impl<'a, F> LitBuilder<'a, F>
             span: self.span,
             node: lit,
         }))
+    }
+
+    pub fn bool(self, value: bool) -> F::Result {
+        self.build_lit(ast::LitBool(value))
     }
 
     pub fn int(self, value: i64, ty: ast::IntTy) -> F::Result {
@@ -781,6 +890,10 @@ impl<'a, F> ExprBuilder<'a, F>
 
     pub fn lit(self) -> LitBuilder<'a, Self> {
         LitBuilder::new_with_callback(self.ctx, self)
+    }
+
+    pub fn bool(self, value: bool) -> F::Result {
+        self.lit().bool(value)
     }
 
     pub fn isize(self, value: isize) -> F::Result {
@@ -1058,6 +1171,10 @@ impl<'a, F> ExprBuilder<'a, F>
         }
     }
 
+    pub fn self_(self) -> F::Result {
+        self.id("self")
+    }
+
     pub fn none(self) -> F::Result {
         self.path()
             .global()
@@ -1124,6 +1241,24 @@ impl<'a, F> ExprBuilder<'a, F>
     pub fn paren(self) -> ExprBuilder<'a, ExprParenBuilder<'a, F>> {
         ExprBuilder::new_with_callback(self.ctx, ExprParenBuilder {
             builder: self,
+        })
+    }
+
+    pub fn field<I>(self, id: I) -> ExprBuilder<'a, ExprFieldBuilder<'a, F>>
+        where I: ToIdent,
+    {
+        let id = respan(self.span, id.to_ident(self.ctx));
+        ExprBuilder::new_with_callback(self.ctx, ExprFieldBuilder {
+            builder: self,
+            id: id,
+        })
+    }
+
+    pub fn tup_field(self, index: usize) -> ExprBuilder<'a, ExprTupFieldBuilder<'a, F>> {
+        let index = respan(self.span, index);
+        ExprBuilder::new_with_callback(self.ctx, ExprTupFieldBuilder {
+            builder: self,
+            index: index,
         })
     }
 }
@@ -1456,6 +1591,40 @@ impl<'a, F> Invoke<P<ast::Expr>> for ExprParenBuilder<'a, F>
 
     fn invoke(self, expr: P<ast::Expr>) -> F::Result {
         self.builder.build_expr_(ast::ExprParen(expr))
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprFieldBuilder<'a, F> {
+    builder: ExprBuilder<'a, F>,
+    id: ast::SpannedIdent,
+}
+
+impl<'a, F> Invoke<P<ast::Expr>> for ExprFieldBuilder<'a, F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, expr: P<ast::Expr>) -> F::Result {
+        self.builder.build_expr_(ast::ExprField(expr, self.id))
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprTupFieldBuilder<'a, F> {
+    builder: ExprBuilder<'a, F>,
+    index: Spanned<usize>,
+}
+
+impl<'a, F> Invoke<P<ast::Expr>> for ExprTupFieldBuilder<'a, F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, expr: P<ast::Expr>) -> F::Result {
+        self.builder.build_expr_(ast::ExprTupField(expr, self.index))
     }
 }
 
@@ -2479,6 +2648,20 @@ impl<'a, F> ItemBuilder<'a, F>
     pub fn use_glob(self) -> PathBuilder<'a, ItemUseGlobBuilder<'a, F>> {
         PathBuilder::new_with_callback(self.ctx, ItemUseGlobBuilder(self))
     }
+
+    pub fn struct_<T>(self, id: T) -> ItemStructBuilder<'a, F>
+        where T: ToIdent,
+    {
+        let id = id.to_ident(self.ctx);
+        let generics = GenericsBuilder::new(self.ctx).build();
+
+        ItemStructBuilder {
+            builder: self,
+            id: id,
+            generics: generics,
+            fields: vec![],
+        }
+    }
 }
 
 impl<'a, F> Invoke<ast::Attribute> for ItemBuilder<'a, F>
@@ -2490,7 +2673,6 @@ impl<'a, F> Invoke<ast::Attribute> for ItemBuilder<'a, F>
         self.with_attr(attr)
     }
 }
-
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -2594,6 +2776,135 @@ impl<'a, F> Invoke<ast::Path> for ItemUseGlobBuilder<'a, F>
 
     fn invoke(self, path: ast::Path) -> F::Result {
         self.0.build_use(ast::ViewPathGlob(path))
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ItemStructBuilder<'a, F> {
+    builder: ItemBuilder<'a, F>,
+    id: ast::Ident,
+    generics: ast::Generics,
+    fields: Vec<ast::StructField>,
+}
+
+impl<'a, F> ItemStructBuilder<'a, F>
+    where F: Invoke<P<ast::Item>>,
+{
+    pub fn with_generics(mut self, generics: ast::Generics) -> Self {
+        self.generics = generics;
+        self
+    }
+
+    pub fn generics(self) -> GenericsBuilder<'a, Self> {
+        GenericsBuilder::new_with_callback(self.builder.ctx, self)
+    }
+
+    pub fn with_field(mut self, field: ast::StructField) -> Self {
+        self.fields.push(field);
+        self
+    }
+
+    pub fn field<T>(self, id: T) -> TyBuilder<'a, ItemStructFieldBuilder<'a, Self>>
+        where T: ToIdent,
+    {
+        let id = id.to_ident(self.builder.ctx);
+        let span = self.builder.span;
+
+        TyBuilder::new_with_callback(self.builder.ctx, ItemStructFieldBuilder {
+            ctx: self.builder.ctx,
+            callback: self,
+            span: span,
+            kind: ast::StructFieldKind::NamedField(id, ast::Inherited),
+            attrs: vec![],
+        })
+    }
+
+    pub fn build(self) -> F::Result {
+        let struct_def = ast::StructDef {
+            fields: self.fields,
+            ctor_id: None,
+        };
+        let struct_ = ast::ItemStruct(P(struct_def), self.generics);
+        self.builder.build_item_(self.id, struct_)
+    }
+}
+
+impl<'a, F> Invoke<ast::Generics> for ItemStructBuilder<'a, F>
+    where F: Invoke<P<ast::Item>>,
+{
+    type Result = Self;
+
+    fn invoke(self, generics: ast::Generics) -> Self {
+        self.with_generics(generics)
+    }
+}
+
+impl<'a, F> Invoke<ast::StructField> for ItemStructBuilder<'a, F>
+    where F: Invoke<P<ast::Item>>,
+{
+    type Result = Self;
+
+    fn invoke(self, field: ast::StructField) -> Self {
+        self.with_field(field)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ItemStructFieldBuilder<'a, F> {
+    ctx: &'a Ctx,
+    callback: F,
+    span: Span,
+    kind: ast::StructFieldKind,
+    attrs: Vec<ast::Attribute>,
+}
+
+impl<'a, F> ItemStructFieldBuilder<'a, F>
+    where F: Invoke<ast::StructField>,
+{
+    pub fn span(mut self, span: Span) -> Self {
+        self.span = span;
+        self
+    }
+
+    pub fn attr(self) -> AttrBuilder<'a, Self> {
+        let span = self.span;
+        AttrBuilder::new_with_callback(self.ctx, self).span(span)
+    }
+
+    pub fn build_ty(self, ty: P<ast::Ty>) -> F::Result {
+        let field = ast::StructField_ {
+            kind: self.kind,
+            id: ast::DUMMY_NODE_ID,
+            ty: ty,
+            attrs: self.attrs,
+        };
+        self.callback.invoke(respan(self.span, field))
+    }
+
+    pub fn ty(self) -> TyBuilder<'a, Self> {
+        let span = self.span;
+        TyBuilder::new_with_callback(self.ctx, self).span(span)
+    }
+}
+
+impl<'a, F> Invoke<ast::Attribute> for ItemStructFieldBuilder<'a, F> {
+    type Result = Self;
+
+    fn invoke(mut self, attr: ast::Attribute) -> Self {
+        self.attrs.push(attr);
+        self
+    }
+}
+
+impl<'a, F> Invoke<P<ast::Ty>> for ItemStructFieldBuilder<'a, F>
+    where F: Invoke<ast::StructField>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, ty: P<ast::Ty>) -> F::Result {
+        self.build_ty(ty)
     }
 }
 
@@ -2862,6 +3173,10 @@ impl<'a> GenericsBuilder<'a> {
     pub fn new(ctx: &'a Ctx) -> Self {
         GenericsBuilder::new_with_callback(ctx, Identity)
     }
+
+    pub fn from_generics(ctx: &'a Ctx, generics: ast::Generics) -> Self {
+        GenericsBuilder::from_generics_with_callback(ctx, Identity, generics)
+    }
 }
 
 impl<'a, F> GenericsBuilder<'a, F>
@@ -2878,9 +3193,51 @@ impl<'a, F> GenericsBuilder<'a, F>
         }
     }
 
+    pub fn from_generics_with_callback(ctx: &'a Ctx, callback: F, generics: ast::Generics) -> Self {
+        GenericsBuilder {
+            ctx: ctx,
+            callback: callback,
+            span: DUMMY_SP,
+            lifetimes: generics.lifetimes,
+            ty_params: generics.ty_params.into_vec(),
+            predicates: generics.where_clause.predicates,
+        }
+    }
+
+    pub fn span(mut self, span: Span) -> Self {
+        self.span = span;
+        self
+    }
+
+    pub fn with_lifetimes<I, L>(mut self, iter: I) -> Self
+        where I: IntoIterator<Item=L>,
+              L: IntoLifetimeDef,
+    {
+        let ctx = self.ctx;
+        let iter = iter.into_iter().map(|lifetime_def| lifetime_def.into_lifetime_def(ctx));
+        self.lifetimes.extend(iter);
+        self
+    }
+
+    pub fn with_lifetime_names<I, N>(mut self, iter: I) -> Self
+        where I: IntoIterator<Item=N>,
+              N: ToName,
+    {
+        for name in iter {
+            self = self.lifetime_name(name);
+        }
+        self
+    }
+
     pub fn with_lifetime(mut self, lifetime: ast::LifetimeDef) -> Self {
         self.lifetimes.push(lifetime);
         self
+    }
+
+    pub fn lifetime_name<N>(self, name: N) -> Self
+        where N: ToName,
+    {
+        self.lifetime(name).build()
     }
 
     pub fn lifetime<N>(self, name: N) -> LifetimeDefBuilder<'a, Self>
@@ -2889,9 +3246,32 @@ impl<'a, F> GenericsBuilder<'a, F>
         LifetimeDefBuilder::new_with_callback(self.ctx, name, self)
     }
 
+    pub fn with_ty_params<I>(mut self, iter: I) -> Self
+        where I: IntoIterator<Item=ast::TyParam>,
+    {
+        self.ty_params.extend(iter);
+        self
+    }
+
+    pub fn with_ty_param_ids<I, T>(mut self, iter: I) -> Self
+        where I: IntoIterator<Item=T>,
+              T: ToIdent,
+    {
+        for id in iter {
+            self = self.ty_param_id(id);
+        }
+        self
+    }
+
     pub fn with_ty_param(mut self, ty_param: ast::TyParam) -> Self {
         self.ty_params.push(ty_param);
         self
+    }
+
+    pub fn ty_param_id<I>(self, id: I) -> Self
+        where I: ToIdent,
+    {
+        self.ty_param(id).build()
     }
 
     pub fn ty_param<I>(self, id: I) -> TyParamBuilder<'a, Self>
@@ -2901,8 +3281,61 @@ impl<'a, F> GenericsBuilder<'a, F>
         TyParamBuilder::new_with_callback(self.ctx, id, self).span(span)
     }
 
+    pub fn with_predicates<I>(mut self, iter: I) -> Self
+        where I: IntoIterator<Item=ast::WherePredicate>,
+    {
+        self.predicates.extend(iter);
+        self
+    }
+
     pub fn with_predicate(mut self, predicate: ast::WherePredicate) -> Self {
         self.predicates.push(predicate);
+        self
+    }
+
+    pub fn add_lifetime_bound<L>(mut self, lifetime: L) -> Self
+        where L: IntoLifetime,
+    {
+        let lifetime = lifetime.into_lifetime(self.ctx);
+
+        for lifetime_def in self.lifetimes.iter_mut() {
+            lifetime_def.bounds.push(lifetime.clone());
+        }
+
+        for ty_param in self.ty_params.iter_mut() {
+            *ty_param = TyParamBuilder::from_ty_param(self.ctx, ty_param.clone())
+                .lifetime_bound(lifetime.clone())
+                .build();
+        }
+
+        self 
+    }
+
+    pub fn add_ty_param_bound<P>(mut self, path: P) -> Self
+        where P: IntoPath,
+    {
+        let path = path.into_path(self.ctx);
+
+        for ty_param in self.ty_params.iter_mut() {
+            *ty_param = TyParamBuilder::from_ty_param(self.ctx, ty_param.clone())
+                .trait_bound(path.clone()).build()
+                .build();
+        }
+
+        self 
+    }
+
+    pub fn strip_bounds(mut self) -> Self {
+        for lifetime in self.lifetimes.iter_mut() {
+            lifetime.bounds = vec![];
+        }
+
+        for ty_param in self.ty_params.iter_mut() {
+            ty_param.bounds = OwnedSlice::empty();
+        }
+
+        self.predicates = vec![];
+
         self
     }
 
@@ -2940,18 +3373,26 @@ impl<'a, F> Invoke<ast::TyParam> for GenericsBuilder<'a, F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct LifetimeDefBuilder<'a, F> {
+pub struct LifetimeDefBuilder<'a, F=Identity> {
     ctx: &'a Ctx,
     callback: F,
     lifetime: ast::Lifetime,
     bounds: Vec<ast::Lifetime>,
 }
 
+impl<'a> LifetimeDefBuilder<'a> {
+    pub fn new<N>(ctx: &'a Ctx, name: N) -> Self
+        where N: ToName,
+    {
+        LifetimeDefBuilder::new_with_callback(ctx, name, Identity)
+    }
+}
+
 impl<'a, F> LifetimeDefBuilder<'a, F>
     where F: Invoke<ast::LifetimeDef>,
 {
     pub fn new_with_callback<N>(ctx: &'a Ctx, name: N, callback: F) -> Self
-        where N: ToName
+        where N: ToName,
     {
         let lifetime = ast::Lifetime {
             id: ast::DUMMY_NODE_ID,
@@ -3005,6 +3446,10 @@ impl<'a> TyParamBuilder<'a> {
     {
         TyParamBuilder::new_with_callback(ctx, id, Identity)
     }
+
+    pub fn from_ty_param(ctx: &'a Ctx, ty_param: ast::TyParam) -> Self {
+        TyParamBuilder::from_ty_param_with_callback(ctx, Identity, ty_param)
+    }
 }
 
 impl<'a, F> TyParamBuilder<'a, F>
@@ -3020,6 +3465,17 @@ impl<'a, F> TyParamBuilder<'a, F>
             id: id.to_ident(ctx),
             bounds: Vec::new(),
             default: None,
+        }
+    }
+
+    pub fn from_ty_param_with_callback(ctx: &'a Ctx, callback: F, ty_param: ast::TyParam) -> Self {
+        TyParamBuilder {
+            ctx: ctx,
+            callback: callback,
+            span: ty_param.span,
+            id: ty_param.ident,
+            bounds: ty_param.bounds.into_vec(),
+            default: ty_param.default,
         }
     }
 
@@ -3047,14 +3503,10 @@ impl<'a, F> TyParamBuilder<'a, F>
         PolyTraitRefBuilder::new_with_callback(self.ctx, path, self)
     }
 
-    pub fn lifetime_bound<N>(mut self, name: N) -> Self
-        where N: ToName,
+    pub fn lifetime_bound<L>(mut self, lifetime: L) -> Self
+        where L: IntoLifetime,
     {
-        let lifetime = ast::Lifetime {
-            id: ast::DUMMY_NODE_ID,
-            span: DUMMY_SP,
-            name: name.to_name(self.ctx),
-        };
+        let lifetime = lifetime.into_lifetime(self.ctx);
 
         self.bounds.push(ast::TyParamBound::RegionTyParamBound(lifetime));
         self
@@ -3080,7 +3532,6 @@ impl<'a, F> Invoke<ast::PolyTraitRef> for TyParamBuilder<'a, F>
         self.with_trait_bound(trait_ref)
     }
 }
-
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -3117,8 +3568,10 @@ impl<'a, F> PolyTraitRefBuilder<'a, F>
         self
     }
 
-    pub fn with_lifetime(mut self, lifetime: ast::LifetimeDef) -> Self {
-        self.lifetimes.push(lifetime);
+    pub fn with_lifetime<L>(mut self, lifetime: L) -> Self
+        where L: IntoLifetimeDef,
+    {
+        self.lifetimes.push(lifetime.into_lifetime_def(self.ctx));
         self
     }
 
@@ -3180,6 +3633,18 @@ impl<'a> AstBuilder<'a> {
         where I: ToIdent,
     {
         TyParamBuilder::new(self.ctx, id).span(self.span)
+    }
+
+    pub fn from_ty_param(&self, ty_param: ast::TyParam) -> TyParamBuilder {
+        TyParamBuilder::from_ty_param(self.ctx, ty_param)
+    }
+
+    pub fn generics(&self) -> GenericsBuilder {
+        GenericsBuilder::new(self.ctx).span(self.span)
+    }
+
+    pub fn from_generics(&self, generics: ast::Generics) -> GenericsBuilder {
+        GenericsBuilder::from_generics(self.ctx, generics).span(self.span)
     }
 
     pub fn expr(&self) -> ExprBuilder {
