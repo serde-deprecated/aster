@@ -69,6 +69,12 @@ impl<'a> ToIdent for &'a str {
     }
 }
 
+impl ToIdent for String {
+    fn to_ident(&self, ctx: &Ctx) -> ast::Ident {
+        (&**self).to_ident(ctx)
+    }
+}
+
 impl<'a, T> ToIdent for &'a T where T: ToIdent {
     fn to_ident(&self, ctx: &Ctx) -> ast::Ident {
         (**self).to_ident(ctx)
@@ -96,6 +102,12 @@ impl<'a> IntoPath for ast::Ident {
 impl<'a> IntoPath for &'a str {
     fn into_path(self, ctx: &Ctx) -> ast::Path {
         PathBuilder::new(ctx).id(self).build()
+    }
+}
+
+impl IntoPath for String {
+    fn into_path(self, ctx: &Ctx) -> ast::Path {
+        (&*self).into_path(ctx)
     }
 }
 
@@ -479,11 +491,17 @@ impl<'a, F> TyBuilder<'a, F>
         self
     }
 
+    pub fn build_ty(self, ty: P<ast::Ty>) -> F::Result {
+        self.callback.invoke(ty)
+    }
+
+
     pub fn build_ty_(self, ty_: ast::Ty_) -> F::Result {
-        self.callback.invoke(P(ast::Ty {
+        let span = self.span;
+        self.build_ty(P(ast::Ty {
             id: ast::DUMMY_NODE_ID,
             node: ty_,
-            span: self.span,
+            span: span,
         }))
     }
 
@@ -610,6 +628,14 @@ impl<'a, F> TyRefBuilder<'a, F>
         self
     }
 
+    pub fn build_ty(self, ty: P<ast::Ty>) -> F::Result {
+        let ty = ast::MutTy {
+            ty: ty,
+            mutbl: self.mutability,
+        };
+        self.builder.build_ty_(ast::TyRptr(self.lifetime, ty))
+    }
+
     pub fn ty(self) -> TyBuilder<'a, Self> {
         TyBuilder::new_with_callback(self.builder.ctx, self)
     }
@@ -621,11 +647,7 @@ impl<'a, F> Invoke<P<ast::Ty>> for TyRefBuilder<'a, F>
     type Result = F::Result;
 
     fn invoke(self, ty: P<ast::Ty>) -> F::Result {
-        let ty = ast::MutTy {
-            ty: ty,
-            mutbl: self.mutability,
-        };
-        self.builder.build_ty_(ast::TyRptr(self.lifetime, ty))
+        self.build_ty(ty)
     }
 }
 
@@ -1171,6 +1193,25 @@ impl<'a, F> ExprBuilder<'a, F>
         }
     }
 
+    pub fn struct_path<P>(self, path: P) -> ExprStructPathBuilder<'a, F>
+        where P: IntoPath,
+    {
+        let span = self.span;
+        let path = path.into_path(self.ctx);
+        ExprStructPathBuilder {
+            builder: self,
+            span: span,
+            path: path,
+            fields: vec![],
+        }
+    }
+
+    pub fn struct_(self) -> PathBuilder<'a, ExprStructBuilder<'a, F>> {
+        PathBuilder::new_with_callback(self.ctx, ExprStructBuilder {
+            builder: self,
+        })
+    }
+
     pub fn self_(self) -> F::Result {
         self.id("self")
     }
@@ -1385,6 +1426,109 @@ impl<'a, F> Invoke<P<ast::Expr>> for ExprTupleBuilder<'a, F>
 
     fn invoke(self, expr: P<ast::Expr>) -> Self {
         self.with_expr(expr)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprStructBuilder<'a, F> {
+    builder: ExprBuilder<'a, F>,
+}
+
+impl<'a, F> Invoke<ast::Path> for ExprStructBuilder<'a, F>
+    where F: Invoke<P<ast::Expr>>
+{
+    type Result = ExprStructPathBuilder<'a, F>;
+
+    fn invoke(self, path: ast::Path) -> ExprStructPathBuilder<'a, F> {
+        self.builder.struct_path(path)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprStructPathBuilder<'a, F> {
+    builder: ExprBuilder<'a, F>,
+    span: Span,
+    path: ast::Path,
+    fields: Vec<ast::Field>,
+}
+
+impl<'a, F> ExprStructPathBuilder<'a, F>
+    where F: Invoke<P<ast::Expr>>
+{
+    pub fn span(mut self, span: Span) -> Self {
+        self.span = span;
+        self
+    }
+
+    pub fn with_fields<I>(mut self, iter: I) -> Self
+        where I: IntoIterator<Item=ast::Field>,
+    {
+        self.fields.extend(iter);
+        self
+    }
+
+    pub fn with_field<I>(mut self, id: I, expr: P<ast::Expr>) -> Self
+        where I: ToIdent,
+    {
+        let span = self.span;
+        let id = respan(span, id.to_ident(self.builder.ctx));
+        self.fields.push(ast::Field {
+            ident: id,
+            expr: expr,
+            span: span,
+        });
+        self
+    }
+
+    pub fn field<I>(self, id: I) -> ExprBuilder<'a, ExprStructFieldBuilder<'a, I, F>>
+        where I: ToIdent,
+    {
+        ExprBuilder::new_with_callback(self.builder.ctx, ExprStructFieldBuilder {
+            builder: self,
+            id: id,
+        })
+    }
+
+    pub fn build_expr(self, expr: P<ast::Expr>) -> F::Result {
+        let expr_ = ast::ExprStruct(self.path, self.fields, Some(expr));
+        self.builder.build_expr_(expr_)
+    }
+
+    pub fn expr(self) -> ExprBuilder<'a, Self> {
+        ExprBuilder::new_with_callback(self.builder.ctx, self)
+    }
+
+    pub fn build(self) -> F::Result {
+        let expr_ = ast::ExprStruct(self.path, self.fields, None);
+        self.builder.build_expr_(expr_)
+    }
+}
+
+impl<'a, F> Invoke<P<ast::Expr>> for ExprStructPathBuilder<'a, F>
+    where F: Invoke<P<ast::Expr>>
+{
+    type Result = F::Result;
+
+    fn invoke(self, expr: P<ast::Expr>) -> F::Result {
+        self.build_expr(expr)
+    }
+}
+
+pub struct ExprStructFieldBuilder<'a, I, F> {
+    builder: ExprStructPathBuilder<'a, F>,
+    id: I,
+}
+
+impl<'a, I, F> Invoke<P<ast::Expr>> for ExprStructFieldBuilder<'a, I, F>
+    where I: ToIdent,
+          F: Invoke<P<ast::Expr>>,
+{
+    type Result = ExprStructPathBuilder<'a, F>;
+
+    fn invoke(self, expr: P<ast::Expr>) -> ExprStructPathBuilder<'a, F> {
+        self.builder.with_field(self.id, expr)
     }
 }
 
@@ -3619,6 +3763,18 @@ impl<'a> AstBuilder<'a> {
     pub fn span(mut self, span: Span) -> Self {
         self.span = span;
         self
+    }
+
+    pub fn id<I>(&self, id: I) -> ast::Ident
+        where I: ToIdent
+    {
+        id.to_ident(self.ctx)
+    }
+
+    pub fn name<N>(&self, name: N) -> ast::Name
+        where N: ToName
+    {
+        name.to_name(self.ctx)
     }
 
     pub fn path(&self) -> PathBuilder {
