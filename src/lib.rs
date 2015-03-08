@@ -567,6 +567,10 @@ impl<'a, F> TyBuilder<'a, F>
         TyBuilder::new_with_callback(self.ctx, TyResultOkBuilder(self))
     }
 
+    pub fn phantom_data(self) -> TyBuilder<'a, TyPhantomDataBuilder<'a, F>> {
+        TyBuilder::new_with_callback(self.ctx, TyPhantomDataBuilder(self))
+    }
+
     pub fn unit(self) -> F::Result {
         self.tuple().build()
     }
@@ -702,6 +706,29 @@ impl<'a, F> Invoke<P<ast::Ty>> for TyResultErrBuilder<'a, F>
             .id("result")
             .segment("Result")
                 .with_ty(self.1)
+                .with_ty(ty)
+                .build()
+            .build();
+
+        self.0.build_path(None, path)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct TyPhantomDataBuilder<'a, F>(TyBuilder<'a, F>);
+
+impl<'a, F> Invoke<P<ast::Ty>> for TyPhantomDataBuilder<'a, F>
+    where F: Invoke<P<ast::Ty>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, ty: P<ast::Ty>) -> F::Result {
+        let path = PathBuilder::new(self.0.ctx)
+            .global()
+            .id("std")
+            .id("marker")
+            .segment("PhantomData")
                 .with_ty(ty)
                 .build()
             .build();
@@ -1257,6 +1284,13 @@ impl<'a, F> ExprBuilder<'a, F>
             builder: self,
             path: path,
         })
+    }
+
+    pub fn phantom_data(self) -> F::Result {
+        self.path()
+            .global()
+            .ids(&["std", "marker", "PhantomData"])
+            .build()
     }
 
     pub fn call(self) -> ExprBuilder<'a, ExprCallBuilder<'a, F>> {
@@ -2806,6 +2840,20 @@ impl<'a, F> ItemBuilder<'a, F>
             fields: vec![],
         }
     }
+
+    pub fn tuple_struct<T>(self, id: T) -> ItemTupleStructBuilder<'a, F>
+        where T: ToIdent,
+    {
+        let id = id.to_ident(self.ctx);
+        let generics = GenericsBuilder::new(self.ctx).build();
+
+        ItemTupleStructBuilder {
+            builder: self,
+            id: id,
+            generics: generics,
+            fields: vec![],
+        }
+    }
 }
 
 impl<'a, F> Invoke<ast::Attribute> for ItemBuilder<'a, F>
@@ -2985,6 +3033,101 @@ impl<'a, F> Invoke<ast::Generics> for ItemStructBuilder<'a, F>
 }
 
 impl<'a, F> Invoke<ast::StructField> for ItemStructBuilder<'a, F>
+    where F: Invoke<P<ast::Item>>,
+{
+    type Result = Self;
+
+    fn invoke(self, field: ast::StructField) -> Self {
+        self.with_field(field)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ItemTupleStructBuilder<'a, F> {
+    builder: ItemBuilder<'a, F>,
+    id: ast::Ident,
+    generics: ast::Generics,
+    fields: Vec<ast::StructField>,
+}
+
+impl<'a, F> ItemTupleStructBuilder<'a, F>
+    where F: Invoke<P<ast::Item>>,
+{
+    pub fn with_generics(mut self, generics: ast::Generics) -> Self {
+        self.generics = generics;
+        self
+    }
+
+    pub fn generics(self) -> GenericsBuilder<'a, Self> {
+        GenericsBuilder::new_with_callback(self.builder.ctx, self)
+    }
+
+    pub fn with_field(mut self, field: ast::StructField) -> Self {
+        self.fields.push(field);
+        self
+    }
+
+    pub fn with_tys<I>(mut self, iter: I) -> Self
+        where I: IntoIterator<Item=P<ast::Ty>>,
+    {
+        for ty in iter {
+            self = self.with_ty(ty);
+        }
+        self
+    }
+
+    pub fn with_ty(self, ty: P<ast::Ty>) -> Self {
+        self.field().build_ty(ty)
+    }
+
+    pub fn ty(self) -> TyBuilder<'a, Self> {
+        TyBuilder::new_with_callback(self.builder.ctx, self)
+    }
+
+    pub fn field(self) -> TyBuilder<'a, ItemStructFieldBuilder<'a, Self>> {
+        let span = self.builder.span;
+
+        TyBuilder::new_with_callback(self.builder.ctx, ItemStructFieldBuilder {
+            ctx: self.builder.ctx,
+            callback: self,
+            span: span,
+            kind: ast::StructFieldKind::UnnamedField(ast::Inherited),
+            attrs: vec![],
+        })
+    }
+
+    pub fn build(self) -> F::Result {
+        let struct_def = ast::StructDef {
+            fields: self.fields,
+            ctor_id: Some(ast::DUMMY_NODE_ID),
+        };
+        let struct_ = ast::ItemStruct(P(struct_def), self.generics);
+        self.builder.build_item_(self.id, struct_)
+    }
+}
+
+impl<'a, F> Invoke<ast::Generics> for ItemTupleStructBuilder<'a, F>
+    where F: Invoke<P<ast::Item>>,
+{
+    type Result = Self;
+
+    fn invoke(self, generics: ast::Generics) -> Self {
+        self.with_generics(generics)
+    }
+}
+
+impl<'a, F> Invoke<P<ast::Ty>> for ItemTupleStructBuilder<'a, F>
+    where F: Invoke<P<ast::Item>>,
+{
+    type Result = Self;
+
+    fn invoke(self, ty: P<ast::Ty>) -> Self {
+        self.with_ty(ty)
+    }
+}
+
+impl<'a, F> Invoke<ast::StructField> for ItemTupleStructBuilder<'a, F>
     where F: Invoke<P<ast::Item>>,
 {
     type Result = Self;
