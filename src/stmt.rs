@@ -67,8 +67,8 @@ impl<F> StmtBuilder<F>
     pub fn let_id<I>(self, id: I) -> ExprBuilder<StmtLetIdBuilder<F>>
         where I: ToIdent,
     {
-        let id = id.to_ident();
-        ExprBuilder::new_with_callback(StmtLetIdBuilder(self, id))
+        let span = self.span;
+        ExprBuilder::new_with_callback(StmtLetIdBuilder(self, id.to_ident())).span(span)
     }
 
     pub fn build_expr(self, expr: P<ast::Expr>) -> F::Result {
@@ -76,11 +76,13 @@ impl<F> StmtBuilder<F>
     }
 
     pub fn expr(self) -> ExprBuilder<StmtExprBuilder<F>> {
-        ExprBuilder::new_with_callback(StmtExprBuilder(self))
+        let span = self.span;
+        ExprBuilder::new_with_callback(StmtExprBuilder(self)).span(span)
     }
 
     pub fn semi(self) -> ExprBuilder<StmtSemiBuilder<F>> {
-        ExprBuilder::new_with_callback(StmtSemiBuilder(self))
+        let span = self.span;
+        ExprBuilder::new_with_callback(StmtSemiBuilder(self)).span(span)
     }
 
     pub fn build_item(self, item: P<ast::Item>) -> F::Result {
@@ -89,7 +91,8 @@ impl<F> StmtBuilder<F>
     }
 
     pub fn item(self) -> ItemBuilder<StmtItemBuilder<F>> {
-        ItemBuilder::new_with_callback(StmtItemBuilder(self))
+        let span = self.span;
+        ItemBuilder::new_with_callback(StmtItemBuilder(self)).span(span)
     }
 }
 
