@@ -1,8 +1,8 @@
 [package]
 
-name = "syntax_ast_builder"
-version = "0.1.1"
+name = "aster"
+version = "0.1.2"
 authors = ["Erick Tryzelaar <erick.tryzelaar@gmail.com>"]
 license = "MIT/Apache-2.0"
 description = "A libsyntax ast builder"
-repository = "https://github.com/erickt/rust-ast-builder"
+repository = "https://github.com/erickt/rust-aster"
