@@ -511,8 +511,12 @@ impl<'a, F> TyBuilder<'a, F>
         self.path().id(id).build()
     }
 
-    pub fn build_path(self, qself: Option<ast::QSelf>, path: ast::Path) -> F::Result {
-        self.build_ty_(ast::Ty_::TyPath(qself, path))
+    pub fn build_path(self, path: ast::Path) -> F::Result {
+        self.build_ty_(ast::Ty_::TyPath(None, path))
+    }
+
+    pub fn build_qpath(self, qself: ast::QSelf, path: ast::Path) -> F::Result {
+        self.build_ty_(ast::Ty_::TyPath(Some(qself), path))
     }
 
     pub fn path(self) -> PathBuilder<'a, TyPathBuilder<'a, F>> {
@@ -601,7 +605,7 @@ impl<'a, F> Invoke<ast::Path> for TyPathBuilder<'a, F>
     type Result = F::Result;
 
     fn invoke(self, path: ast::Path) -> F::Result {
-        self.0.build_path(None, path)
+        self.0.build_path(path)
     }
 }
 
@@ -674,7 +678,7 @@ impl<'a, F> Invoke<P<ast::Ty>> for TyOptionBuilder<'a, F>
                 .build()
             .build();
 
-        self.0.build_path(None, path)
+        self.0.build_path(path)
     }
 }
 
@@ -710,7 +714,7 @@ impl<'a, F> Invoke<P<ast::Ty>> for TyResultErrBuilder<'a, F>
                 .build()
             .build();
 
-        self.0.build_path(None, path)
+        self.0.build_path(path)
     }
 }
 
@@ -733,7 +737,7 @@ impl<'a, F> Invoke<P<ast::Ty>> for TyPhantomDataBuilder<'a, F>
                 .build()
             .build();
 
-        self.0.build_path(None, path)
+        self.0.build_path(path)
     }
 }
 
@@ -919,8 +923,12 @@ impl<'a, F> ExprBuilder<'a, F>
         }))
     }
 
-    pub fn build_path(self, qself: Option<ast::QSelf>, path: ast::Path) -> F::Result {
-        self.build_expr_(ast::Expr_::ExprPath(qself, path))
+    pub fn build_path(self, path: ast::Path) -> F::Result {
+        self.build_expr_(ast::Expr_::ExprPath(None, path))
+    }
+
+    pub fn build_qpath(self, qself: ast::QSelf, path: ast::Path) -> F::Result {
+        self.build_expr_(ast::Expr_::ExprPath(Some(qself), path))
     }
 
     pub fn path(self) -> PathBuilder<'a, Self> {
@@ -1354,7 +1362,7 @@ impl<'a, F> Invoke<ast::Path> for ExprBuilder<'a, F>
     type Result = F::Result;
 
     fn invoke(self, path: ast::Path) -> F::Result {
-        self.build_path(None, path)
+        self.build_path(path)
     }
 }
 
@@ -1750,7 +1758,7 @@ impl<'a, F> Invoke<P<ast::Expr>> for ExprPathBuilder<'a, F>
 
     fn invoke(self, arg: P<ast::Expr>) -> F::Result {
         self.builder.call()
-            .build_path(None, self.path)
+            .build_path(self.path)
             .with_arg(arg)
             .build()
     }
