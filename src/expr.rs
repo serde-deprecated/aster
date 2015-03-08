@@ -40,13 +40,13 @@ impl<F> ExprBuilder<F>
         self
     }
 
-    pub fn build_expr(self, expr: P<ast::Expr>) -> F::Result {
+    pub fn build(self, expr: P<ast::Expr>) -> F::Result {
         self.callback.invoke(expr)
     }
 
     pub fn build_expr_(self, expr: ast::Expr_) -> F::Result {
         let span = self.span;
-        self.build_expr(P(ast::Expr {
+        self.build(P(ast::Expr {
             id: ast::DUMMY_NODE_ID,
             node: expr,
             span: span,
@@ -663,11 +663,6 @@ impl<F> ExprStructPathBuilder<F>
         })
     }
 
-    pub fn build_expr(self, expr: P<ast::Expr>) -> F::Result {
-        let expr_ = ast::ExprStruct(self.path, self.fields, Some(expr));
-        self.builder.build_expr_(expr_)
-    }
-
     pub fn expr(self) -> ExprBuilder<Self> {
         ExprBuilder::new_with_callback(self)
     }
@@ -684,7 +679,8 @@ impl<F> Invoke<P<ast::Expr>> for ExprStructPathBuilder<F>
     type Result = F::Result;
 
     fn invoke(self, expr: P<ast::Expr>) -> F::Result {
-        self.build_expr(expr)
+        let expr_ = ast::ExprStruct(self.path, self.fields, Some(expr));
+        self.builder.build_expr_(expr_)
     }
 }
 
