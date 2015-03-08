@@ -5,7 +5,6 @@ use syntax::codemap::{DUMMY_SP, Span, Spanned, respan};
 use syntax::ptr::P;
 
 use block::BlockBuilder;
-use ctx::Ctx;
 use ident::ToIdent;
 use invoke::{Invoke, Identity};
 use lit::LitBuilder;
@@ -15,24 +14,22 @@ use ty::TyBuilder;
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ExprBuilder<'a, F=Identity> {
-    ctx: &'a Ctx,
+pub struct ExprBuilder<F=Identity> {
     callback: F,
     span: Span,
 }
 
-impl<'a> ExprBuilder<'a> {
-    pub fn new(ctx: &'a Ctx) -> Self {
-        ExprBuilder::new_with_callback(ctx, Identity)
+impl ExprBuilder {
+    pub fn new() -> Self {
+        ExprBuilder::new_with_callback(Identity)
     }
 }
 
-impl<'a, F> ExprBuilder<'a, F>
+impl<F> ExprBuilder<F>
     where F: Invoke<P<ast::Expr>>,
 {
-    pub fn new_with_callback(ctx: &'a Ctx, callback: F) -> Self {
+    pub fn new_with_callback(callback: F) -> Self {
         ExprBuilder {
-            ctx: ctx,
             callback: callback,
             span: DUMMY_SP,
         }
@@ -64,8 +61,8 @@ impl<'a, F> ExprBuilder<'a, F>
         self.build_expr_(ast::Expr_::ExprPath(Some(qself), path))
     }
 
-    pub fn path(self) -> PathBuilder<'a, Self> {
-        PathBuilder::new_with_callback(self.ctx, self)
+    pub fn path(self) -> PathBuilder<Self> {
+        PathBuilder::new_with_callback(self)
     }
 
     pub fn id<I>(self, id: I) -> F::Result
@@ -78,8 +75,8 @@ impl<'a, F> ExprBuilder<'a, F>
         self.build_expr_(ast::Expr_::ExprLit(lit))
     }
 
-    pub fn lit(self) -> LitBuilder<'a, Self> {
-        LitBuilder::new_with_callback(self.ctx, self)
+    pub fn lit(self) -> LitBuilder<Self> {
+        LitBuilder::new_with_callback(self)
     }
 
     pub fn bool(self, value: bool) -> F::Result {
@@ -152,26 +149,26 @@ impl<'a, F> ExprBuilder<'a, F>
         self.build_unary(ast::UnNeg, expr)
     }
 
-    pub fn unary(self, unop: ast::UnOp) -> ExprBuilder<'a, ExprUnaryBuilder<'a, F>> {
-        ExprBuilder::new_with_callback(self.ctx, ExprUnaryBuilder {
+    pub fn unary(self, unop: ast::UnOp) -> ExprBuilder<ExprUnaryBuilder<F>> {
+        ExprBuilder::new_with_callback(ExprUnaryBuilder {
             builder: self,
             unop: unop,
         })
     }
 
-    pub fn box_(self) -> ExprBuilder<'a, ExprUnaryBuilder<'a, F>> {
+    pub fn box_(self) -> ExprBuilder<ExprUnaryBuilder<F>> {
         self.unary(ast::UnUniq)
     }
 
-    pub fn deref(self) -> ExprBuilder<'a, ExprUnaryBuilder<'a, F>> {
+    pub fn deref(self) -> ExprBuilder<ExprUnaryBuilder<F>> {
         self.unary(ast::UnDeref)
     }
 
-    pub fn not(self) -> ExprBuilder<'a, ExprUnaryBuilder<'a, F>> {
+    pub fn not(self) -> ExprBuilder<ExprUnaryBuilder<F>> {
         self.unary(ast::UnNot)
     }
 
-    pub fn neg(self) -> ExprBuilder<'a, ExprUnaryBuilder<'a, F>> {
+    pub fn neg(self) -> ExprBuilder<ExprUnaryBuilder<F>> {
         self.unary(ast::UnNeg)
     }
 
@@ -257,94 +254,94 @@ impl<'a, F> ExprBuilder<'a, F>
         self.build_binary(ast::BinOp_::BiGt, lhs, rhs)
     }
 
-    pub fn binary(self, binop: ast::BinOp_) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
-        ExprBuilder::new_with_callback(self.ctx, ExprBinaryLhsBuilder {
+    pub fn binary(self, binop: ast::BinOp_) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
+        ExprBuilder::new_with_callback(ExprBinaryLhsBuilder {
             builder: self,
             binop: binop,
         })
     }
 
-    pub fn add(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+    pub fn add(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
         self.binary(ast::BinOp_::BiAdd)
     }
 
-    pub fn sub(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+    pub fn sub(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
         self.binary(ast::BinOp_::BiSub)
     }
 
-    pub fn mul(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+    pub fn mul(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
         self.binary(ast::BinOp_::BiMul)
     }
 
-    pub fn div(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+    pub fn div(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
         self.binary(ast::BinOp_::BiDiv)
     }
 
-    pub fn rem(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+    pub fn rem(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
         self.binary(ast::BinOp_::BiRem)
     }
 
-    pub fn and(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+    pub fn and(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
         self.binary(ast::BinOp_::BiAnd)
     }
 
-    pub fn or(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+    pub fn or(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
         self.binary(ast::BinOp_::BiOr)
     }
 
-    pub fn bit_xor(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+    pub fn bit_xor(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
         self.binary(ast::BinOp_::BiBitXor)
     }
 
-    pub fn bit_and(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+    pub fn bit_and(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
         self.binary(ast::BinOp_::BiBitAnd)
     }
 
-    pub fn bit_or(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+    pub fn bit_or(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
         self.binary(ast::BinOp_::BiBitOr)
     }
 
-    pub fn shl(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+    pub fn shl(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
         self.binary(ast::BinOp_::BiShl)
     }
 
-    pub fn shr(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+    pub fn shr(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
         self.binary(ast::BinOp_::BiShr)
     }
 
-    pub fn eq(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+    pub fn eq(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
         self.binary(ast::BinOp_::BiEq)
     }
 
-    pub fn lt(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+    pub fn lt(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
         self.binary(ast::BinOp_::BiLt)
     }
 
-    pub fn le(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+    pub fn le(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
         self.binary(ast::BinOp_::BiLe)
     }
 
-    pub fn ne(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+    pub fn ne(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
         self.binary(ast::BinOp_::BiNe)
     }
 
-    pub fn ge(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+    pub fn ge(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
         self.binary(ast::BinOp_::BiGe)
     }
 
-    pub fn gt(self) -> ExprBuilder<'a, ExprBinaryLhsBuilder<'a, F>> {
+    pub fn gt(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
         self.binary(ast::BinOp_::BiGt)
     }
 
-    pub fn addr_of(self) -> ExprBuilder<'a, ExprAddrOfBuilder<'a, F>> {
-        ExprBuilder::new_with_callback(self.ctx, ExprAddrOfBuilder {
+    pub fn addr_of(self) -> ExprBuilder<ExprAddrOfBuilder<F>> {
+        ExprBuilder::new_with_callback(ExprAddrOfBuilder {
             builder: self,
             mutability: ast::Mutability::MutImmutable,
         })
     }
 
-    pub fn mut_addr_of(self) -> ExprBuilder<'a, ExprAddrOfBuilder<'a, F>> {
-        ExprBuilder::new_with_callback(self.ctx, ExprAddrOfBuilder {
+    pub fn mut_addr_of(self) -> ExprBuilder<ExprAddrOfBuilder<F>> {
+        ExprBuilder::new_with_callback(ExprAddrOfBuilder {
             builder: self,
             mutability: ast::Mutability::MutMutable,
         })
@@ -354,18 +351,18 @@ impl<'a, F> ExprBuilder<'a, F>
         self.tuple().build()
     }
 
-    pub fn tuple(self) -> ExprTupleBuilder<'a, F> {
+    pub fn tuple(self) -> ExprTupleBuilder<F> {
         ExprTupleBuilder {
             builder: self,
             exprs: Vec::new(),
         }
     }
 
-    pub fn struct_path<P>(self, path: P) -> ExprStructPathBuilder<'a, F>
+    pub fn struct_path<P>(self, path: P) -> ExprStructPathBuilder<F>
         where P: IntoPath,
     {
         let span = self.span;
-        let path = path.into_path(self.ctx);
+        let path = path.into_path();
         ExprStructPathBuilder {
             builder: self,
             span: span,
@@ -374,8 +371,8 @@ impl<'a, F> ExprBuilder<'a, F>
         }
     }
 
-    pub fn struct_(self) -> PathBuilder<'a, ExprStructBuilder<'a, F>> {
-        PathBuilder::new_with_callback(self.ctx, ExprStructBuilder {
+    pub fn struct_(self) -> PathBuilder<ExprStructBuilder<F>> {
+        PathBuilder::new_with_callback(ExprStructBuilder {
             builder: self,
         })
     }
@@ -391,37 +388,37 @@ impl<'a, F> ExprBuilder<'a, F>
             .build()
     }
 
-    pub fn some(self) -> ExprBuilder<'a, ExprPathBuilder<'a, F>> {
-        let path = PathBuilder::new(self.ctx)
+    pub fn some(self) -> ExprBuilder<ExprPathBuilder<F>> {
+        let path = PathBuilder::new()
             .global()
             .id("std").id("option").id("Option").id("None")
             .build();
 
-        ExprBuilder::new_with_callback(self.ctx, ExprPathBuilder {
+        ExprBuilder::new_with_callback(ExprPathBuilder {
             builder: self,
             path: path,
         })
     }
 
-    pub fn ok(self) -> ExprBuilder<'a, ExprPathBuilder<'a, F>> {
-        let path = PathBuilder::new(self.ctx)
+    pub fn ok(self) -> ExprBuilder<ExprPathBuilder<F>> {
+        let path = PathBuilder::new()
             .global()
             .id("std").id("result").id("Result").id("Ok")
             .build();
 
-        ExprBuilder::new_with_callback(self.ctx, ExprPathBuilder {
+        ExprBuilder::new_with_callback(ExprPathBuilder {
             builder: self,
             path: path,
         })
     }
 
-    pub fn err(self) -> ExprBuilder<'a, ExprPathBuilder<'a, F>> {
-        let path = PathBuilder::new(self.ctx)
+    pub fn err(self) -> ExprBuilder<ExprPathBuilder<F>> {
+        let path = PathBuilder::new()
             .global()
             .id("std").id("result").id("Result").id("Err")
             .build();
 
-        ExprBuilder::new_with_callback(self.ctx, ExprPathBuilder {
+        ExprBuilder::new_with_callback(ExprPathBuilder {
             builder: self,
             path: path,
         })
@@ -434,52 +431,52 @@ impl<'a, F> ExprBuilder<'a, F>
             .build()
     }
 
-    pub fn call(self) -> ExprBuilder<'a, ExprCallBuilder<'a, F>> {
-        ExprBuilder::new_with_callback(self.ctx, ExprCallBuilder {
+    pub fn call(self) -> ExprBuilder<ExprCallBuilder<F>> {
+        ExprBuilder::new_with_callback(ExprCallBuilder {
             builder: self,
         })
     }
 
-    pub fn method_call<I>(self, id: I) -> ExprBuilder<'a, ExprMethodCallBuilder<'a, F>>
+    pub fn method_call<I>(self, id: I) -> ExprBuilder<ExprMethodCallBuilder<F>>
         where I: ToIdent,
     {
-        let id = respan(self.span, id.to_ident(self.ctx));
-        ExprBuilder::new_with_callback(self.ctx, ExprMethodCallBuilder {
+        let id = respan(self.span, id.to_ident());
+        ExprBuilder::new_with_callback(ExprMethodCallBuilder {
             builder: self,
             id: id,
         })
     }
 
-    pub fn block(self) -> BlockBuilder<'a, Self> {
-        BlockBuilder::new_with_callback(self.ctx, self)
+    pub fn block(self) -> BlockBuilder<Self> {
+        BlockBuilder::new_with_callback(self)
     }
 
-    pub fn paren(self) -> ExprBuilder<'a, ExprParenBuilder<'a, F>> {
-        ExprBuilder::new_with_callback(self.ctx, ExprParenBuilder {
+    pub fn paren(self) -> ExprBuilder<ExprParenBuilder<F>> {
+        ExprBuilder::new_with_callback(ExprParenBuilder {
             builder: self,
         })
     }
 
-    pub fn field<I>(self, id: I) -> ExprBuilder<'a, ExprFieldBuilder<'a, F>>
+    pub fn field<I>(self, id: I) -> ExprBuilder<ExprFieldBuilder<F>>
         where I: ToIdent,
     {
-        let id = respan(self.span, id.to_ident(self.ctx));
-        ExprBuilder::new_with_callback(self.ctx, ExprFieldBuilder {
+        let id = respan(self.span, id.to_ident());
+        ExprBuilder::new_with_callback(ExprFieldBuilder {
             builder: self,
             id: id,
         })
     }
 
-    pub fn tup_field(self, index: usize) -> ExprBuilder<'a, ExprTupFieldBuilder<'a, F>> {
+    pub fn tup_field(self, index: usize) -> ExprBuilder<ExprTupFieldBuilder<F>> {
         let index = respan(self.span, index);
-        ExprBuilder::new_with_callback(self.ctx, ExprTupFieldBuilder {
+        ExprBuilder::new_with_callback(ExprTupFieldBuilder {
             builder: self,
             index: index,
         })
     }
 }
 
-impl<'a, F> Invoke<P<ast::Lit>> for ExprBuilder<'a, F>
+impl<F> Invoke<P<ast::Lit>> for ExprBuilder<F>
     where F: Invoke<P<ast::Expr>>,
 {
     type Result = F::Result;
@@ -489,7 +486,7 @@ impl<'a, F> Invoke<P<ast::Lit>> for ExprBuilder<'a, F>
     }
 }
 
-impl<'a, F> Invoke<ast::Path> for ExprBuilder<'a, F>
+impl<F> Invoke<ast::Path> for ExprBuilder<F>
     where F: Invoke<P<ast::Expr>>,
 {
     type Result = F::Result;
@@ -499,7 +496,7 @@ impl<'a, F> Invoke<ast::Path> for ExprBuilder<'a, F>
     }
 }
 
-impl<'a, F> Invoke<P<ast::Block>> for ExprBuilder<'a, F>
+impl<F> Invoke<P<ast::Block>> for ExprBuilder<F>
     where F: Invoke<P<ast::Expr>>,
 {
     type Result = F::Result;
@@ -511,12 +508,12 @@ impl<'a, F> Invoke<P<ast::Block>> for ExprBuilder<'a, F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ExprUnaryBuilder<'a, F> {
-    builder: ExprBuilder<'a, F>,
+pub struct ExprUnaryBuilder<F> {
+    builder: ExprBuilder<F>,
     unop: ast::UnOp,
 }
 
-impl<'a, F> Invoke<P<ast::Expr>> for ExprUnaryBuilder<'a, F>
+impl<F> Invoke<P<ast::Expr>> for ExprUnaryBuilder<F>
     where F: Invoke<P<ast::Expr>>,
 {
     type Result = F::Result;
@@ -528,18 +525,18 @@ impl<'a, F> Invoke<P<ast::Expr>> for ExprUnaryBuilder<'a, F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ExprBinaryLhsBuilder<'a, F> {
-    builder: ExprBuilder<'a, F>,
+pub struct ExprBinaryLhsBuilder<F> {
+    builder: ExprBuilder<F>,
     binop: ast::BinOp_,
 }
 
-impl<'a, F> Invoke<P<ast::Expr>> for ExprBinaryLhsBuilder<'a, F>
+impl<F> Invoke<P<ast::Expr>> for ExprBinaryLhsBuilder<F>
     where F: Invoke<P<ast::Expr>>,
 {
-    type Result = ExprBuilder<'a, ExprBinaryRhsBuilder<'a, F>>;
+    type Result = ExprBuilder<ExprBinaryRhsBuilder<F>>;
 
-    fn invoke(self, lhs: P<ast::Expr>) -> ExprBuilder<'a, ExprBinaryRhsBuilder<'a, F>> {
-        ExprBuilder::new_with_callback(self.builder.ctx, ExprBinaryRhsBuilder {
+    fn invoke(self, lhs: P<ast::Expr>) -> ExprBuilder<ExprBinaryRhsBuilder<F>> {
+        ExprBuilder::new_with_callback(ExprBinaryRhsBuilder {
             builder: self.builder,
             binop: self.binop,
             lhs: lhs,
@@ -547,13 +544,13 @@ impl<'a, F> Invoke<P<ast::Expr>> for ExprBinaryLhsBuilder<'a, F>
     }
 }
 
-pub struct ExprBinaryRhsBuilder<'a, F> {
-    builder: ExprBuilder<'a, F>,
+pub struct ExprBinaryRhsBuilder<F> {
+    builder: ExprBuilder<F>,
     binop: ast::BinOp_,
     lhs: P<ast::Expr>,
 }
 
-impl<'a, F> Invoke<P<ast::Expr>> for ExprBinaryRhsBuilder<'a, F>
+impl<F> Invoke<P<ast::Expr>> for ExprBinaryRhsBuilder<F>
     where F: Invoke<P<ast::Expr>>,
 {
     type Result = F::Result;
@@ -565,12 +562,12 @@ impl<'a, F> Invoke<P<ast::Expr>> for ExprBinaryRhsBuilder<'a, F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ExprTupleBuilder<'a, F> {
-    builder: ExprBuilder<'a, F>,
+pub struct ExprTupleBuilder<F> {
+    builder: ExprBuilder<F>,
     exprs: Vec<P<ast::Expr>>,
 }
 
-impl<'a, F: Invoke<P<ast::Expr>>> ExprTupleBuilder<'a, F>
+impl<F: Invoke<P<ast::Expr>>> ExprTupleBuilder<F>
     where F: Invoke<P<ast::Expr>>
 {
     pub fn with_exprs<I>(mut self, iter: I) -> Self
@@ -585,8 +582,8 @@ impl<'a, F: Invoke<P<ast::Expr>>> ExprTupleBuilder<'a, F>
         self
     }
 
-    pub fn expr(self) -> ExprBuilder<'a, Self> {
-        ExprBuilder::new_with_callback(self.builder.ctx, self)
+    pub fn expr(self) -> ExprBuilder<Self> {
+        ExprBuilder::new_with_callback(self)
     }
 
     pub fn build(self) -> F::Result {
@@ -594,10 +591,10 @@ impl<'a, F: Invoke<P<ast::Expr>>> ExprTupleBuilder<'a, F>
     }
 }
 
-impl<'a, F> Invoke<P<ast::Expr>> for ExprTupleBuilder<'a, F>
+impl<F> Invoke<P<ast::Expr>> for ExprTupleBuilder<F>
     where F: Invoke<P<ast::Expr>>
 {
-    type Result = ExprTupleBuilder<'a, F>;
+    type Result = ExprTupleBuilder<F>;
 
     fn invoke(self, expr: P<ast::Expr>) -> Self {
         self.with_expr(expr)
@@ -606,30 +603,30 @@ impl<'a, F> Invoke<P<ast::Expr>> for ExprTupleBuilder<'a, F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ExprStructBuilder<'a, F> {
-    builder: ExprBuilder<'a, F>,
+pub struct ExprStructBuilder<F> {
+    builder: ExprBuilder<F>,
 }
 
-impl<'a, F> Invoke<ast::Path> for ExprStructBuilder<'a, F>
+impl<F> Invoke<ast::Path> for ExprStructBuilder<F>
     where F: Invoke<P<ast::Expr>>
 {
-    type Result = ExprStructPathBuilder<'a, F>;
+    type Result = ExprStructPathBuilder<F>;
 
-    fn invoke(self, path: ast::Path) -> ExprStructPathBuilder<'a, F> {
+    fn invoke(self, path: ast::Path) -> ExprStructPathBuilder<F> {
         self.builder.struct_path(path)
     }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ExprStructPathBuilder<'a, F> {
-    builder: ExprBuilder<'a, F>,
+pub struct ExprStructPathBuilder<F> {
+    builder: ExprBuilder<F>,
     span: Span,
     path: ast::Path,
     fields: Vec<ast::Field>,
 }
 
-impl<'a, F> ExprStructPathBuilder<'a, F>
+impl<F> ExprStructPathBuilder<F>
     where F: Invoke<P<ast::Expr>>
 {
     pub fn span(mut self, span: Span) -> Self {
@@ -648,7 +645,7 @@ impl<'a, F> ExprStructPathBuilder<'a, F>
         where I: ToIdent,
     {
         let span = self.span;
-        let id = respan(span, id.to_ident(self.builder.ctx));
+        let id = respan(span, id.to_ident());
         self.fields.push(ast::Field {
             ident: id,
             expr: expr,
@@ -657,10 +654,10 @@ impl<'a, F> ExprStructPathBuilder<'a, F>
         self
     }
 
-    pub fn field<I>(self, id: I) -> ExprBuilder<'a, ExprStructFieldBuilder<'a, I, F>>
+    pub fn field<I>(self, id: I) -> ExprBuilder<ExprStructFieldBuilder<I, F>>
         where I: ToIdent,
     {
-        ExprBuilder::new_with_callback(self.builder.ctx, ExprStructFieldBuilder {
+        ExprBuilder::new_with_callback(ExprStructFieldBuilder {
             builder: self,
             id: id,
         })
@@ -671,8 +668,8 @@ impl<'a, F> ExprStructPathBuilder<'a, F>
         self.builder.build_expr_(expr_)
     }
 
-    pub fn expr(self) -> ExprBuilder<'a, Self> {
-        ExprBuilder::new_with_callback(self.builder.ctx, self)
+    pub fn expr(self) -> ExprBuilder<Self> {
+        ExprBuilder::new_with_callback(self)
     }
 
     pub fn build(self) -> F::Result {
@@ -681,7 +678,7 @@ impl<'a, F> ExprStructPathBuilder<'a, F>
     }
 }
 
-impl<'a, F> Invoke<P<ast::Expr>> for ExprStructPathBuilder<'a, F>
+impl<F> Invoke<P<ast::Expr>> for ExprStructPathBuilder<F>
     where F: Invoke<P<ast::Expr>>
 {
     type Result = F::Result;
@@ -691,34 +688,34 @@ impl<'a, F> Invoke<P<ast::Expr>> for ExprStructPathBuilder<'a, F>
     }
 }
 
-pub struct ExprStructFieldBuilder<'a, I, F> {
-    builder: ExprStructPathBuilder<'a, F>,
+pub struct ExprStructFieldBuilder<I, F> {
+    builder: ExprStructPathBuilder<F>,
     id: I,
 }
 
-impl<'a, I, F> Invoke<P<ast::Expr>> for ExprStructFieldBuilder<'a, I, F>
+impl<I, F> Invoke<P<ast::Expr>> for ExprStructFieldBuilder<I, F>
     where I: ToIdent,
           F: Invoke<P<ast::Expr>>,
 {
-    type Result = ExprStructPathBuilder<'a, F>;
+    type Result = ExprStructPathBuilder<F>;
 
-    fn invoke(self, expr: P<ast::Expr>) -> ExprStructPathBuilder<'a, F> {
+    fn invoke(self, expr: P<ast::Expr>) -> ExprStructPathBuilder<F> {
         self.builder.with_field(self.id, expr)
     }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ExprCallBuilder<'a, F> {
-    builder: ExprBuilder<'a, F>,
+pub struct ExprCallBuilder<F> {
+    builder: ExprBuilder<F>,
 }
 
-impl<'a, F> Invoke<P<ast::Expr>> for ExprCallBuilder<'a, F>
+impl<F> Invoke<P<ast::Expr>> for ExprCallBuilder<F>
     where F: Invoke<P<ast::Expr>>,
 {
-    type Result = ExprCallArgsBuilder<'a, F>;
+    type Result = ExprCallArgsBuilder<F>;
 
-    fn invoke(self, expr: P<ast::Expr>) -> ExprCallArgsBuilder<'a, F> {
+    fn invoke(self, expr: P<ast::Expr>) -> ExprCallArgsBuilder<F> {
         ExprCallArgsBuilder {
             builder: self.builder,
             fn_: expr,
@@ -729,13 +726,13 @@ impl<'a, F> Invoke<P<ast::Expr>> for ExprCallBuilder<'a, F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ExprCallArgsBuilder<'a, F> {
-    builder: ExprBuilder<'a, F>,
+pub struct ExprCallArgsBuilder<F> {
+    builder: ExprBuilder<F>,
     fn_: P<ast::Expr>,
     args: Vec<P<ast::Expr>>,
 }
 
-impl<'a, F> ExprCallArgsBuilder<'a, F>
+impl<F> ExprCallArgsBuilder<F>
     where F: Invoke<P<ast::Expr>>,
 {
     pub fn with_args<I>(mut self, iter: I) -> Self
@@ -750,8 +747,8 @@ impl<'a, F> ExprCallArgsBuilder<'a, F>
         self
     }
 
-    pub fn arg(self) -> ExprBuilder<'a, Self> {
-        ExprBuilder::new_with_callback(self.builder.ctx, self)
+    pub fn arg(self) -> ExprBuilder<Self> {
+        ExprBuilder::new_with_callback(self)
     }
 
     pub fn build(self) -> F::Result {
@@ -759,7 +756,7 @@ impl<'a, F> ExprCallArgsBuilder<'a, F>
     }
 }
 
-impl<'a, F> Invoke<P<ast::Expr>> for ExprCallArgsBuilder<'a, F>
+impl<F> Invoke<P<ast::Expr>> for ExprCallArgsBuilder<F>
     where F: Invoke<P<ast::Expr>>,
 {
     type Result = Self;
@@ -771,17 +768,17 @@ impl<'a, F> Invoke<P<ast::Expr>> for ExprCallArgsBuilder<'a, F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ExprMethodCallBuilder<'a, F> {
-    builder: ExprBuilder<'a, F>,
+pub struct ExprMethodCallBuilder<F> {
+    builder: ExprBuilder<F>,
     id: ast::SpannedIdent,
 }
 
-impl<'a, F> Invoke<P<ast::Expr>> for ExprMethodCallBuilder<'a, F>
+impl<F> Invoke<P<ast::Expr>> for ExprMethodCallBuilder<F>
     where F: Invoke<P<ast::Expr>>,
 {
-    type Result = ExprMethodCallArgsBuilder<'a, F>;
+    type Result = ExprMethodCallArgsBuilder<F>;
 
-    fn invoke(self, expr: P<ast::Expr>) -> ExprMethodCallArgsBuilder<'a, F> {
+    fn invoke(self, expr: P<ast::Expr>) -> ExprMethodCallArgsBuilder<F> {
         ExprMethodCallArgsBuilder {
             builder: self.builder,
             id: self.id,
@@ -793,14 +790,14 @@ impl<'a, F> Invoke<P<ast::Expr>> for ExprMethodCallBuilder<'a, F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ExprMethodCallArgsBuilder<'a, F> {
-    builder: ExprBuilder<'a, F>,
+pub struct ExprMethodCallArgsBuilder<F> {
+    builder: ExprBuilder<F>,
     id: ast::SpannedIdent,
     tys: Vec<P<ast::Ty>>,
     args: Vec<P<ast::Expr>>,
 }
 
-impl<'a, F> ExprMethodCallArgsBuilder<'a, F>
+impl<F> ExprMethodCallArgsBuilder<F>
     where F: Invoke<P<ast::Expr>>,
 {
     pub fn with_tys<I>(mut self, iter: I) -> Self
@@ -815,8 +812,8 @@ impl<'a, F> ExprMethodCallArgsBuilder<'a, F>
         self
     }
 
-    pub fn ty(self) -> TyBuilder<'a, Self> {
-        TyBuilder::new_with_callback(self.builder.ctx, self)
+    pub fn ty(self) -> TyBuilder<Self> {
+        TyBuilder::new_with_callback(self)
     }
 
     pub fn with_args<I>(mut self, iter: I) -> Self
@@ -831,8 +828,8 @@ impl<'a, F> ExprMethodCallArgsBuilder<'a, F>
         self
     }
 
-    pub fn arg(self) -> ExprBuilder<'a, Self> {
-        ExprBuilder::new_with_callback(self.builder.ctx, self)
+    pub fn arg(self) -> ExprBuilder<Self> {
+        ExprBuilder::new_with_callback(self)
     }
 
     pub fn build(self) -> F::Result {
@@ -840,7 +837,7 @@ impl<'a, F> ExprMethodCallArgsBuilder<'a, F>
     }
 }
 
-impl<'a, F> Invoke<P<ast::Ty>> for ExprMethodCallArgsBuilder<'a, F>
+impl<F> Invoke<P<ast::Ty>> for ExprMethodCallArgsBuilder<F>
     where F: Invoke<P<ast::Expr>>,
 {
     type Result = Self;
@@ -850,7 +847,7 @@ impl<'a, F> Invoke<P<ast::Ty>> for ExprMethodCallArgsBuilder<'a, F>
     }
 }
 
-impl<'a, F> Invoke<P<ast::Expr>> for ExprMethodCallArgsBuilder<'a, F>
+impl<F> Invoke<P<ast::Expr>> for ExprMethodCallArgsBuilder<F>
     where F: Invoke<P<ast::Expr>>,
 {
     type Result = Self;
@@ -862,12 +859,12 @@ impl<'a, F> Invoke<P<ast::Expr>> for ExprMethodCallArgsBuilder<'a, F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ExprAddrOfBuilder<'a, F> {
-    builder: ExprBuilder<'a, F>,
+pub struct ExprAddrOfBuilder<F> {
+    builder: ExprBuilder<F>,
     mutability: ast::Mutability,
 }
 
-impl<'a, F> Invoke<P<ast::Expr>> for ExprAddrOfBuilder<'a, F>
+impl<F> Invoke<P<ast::Expr>> for ExprAddrOfBuilder<F>
     where F: Invoke<P<ast::Expr>>,
 {
     type Result = F::Result;
@@ -879,12 +876,12 @@ impl<'a, F> Invoke<P<ast::Expr>> for ExprAddrOfBuilder<'a, F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ExprPathBuilder<'a, F> {
-    builder: ExprBuilder<'a, F>,
+pub struct ExprPathBuilder<F> {
+    builder: ExprBuilder<F>,
     path: ast::Path,
 }
 
-impl<'a, F> Invoke<P<ast::Expr>> for ExprPathBuilder<'a, F>
+impl<F> Invoke<P<ast::Expr>> for ExprPathBuilder<F>
     where F: Invoke<P<ast::Expr>>,
 {
     type Result = F::Result;
@@ -899,11 +896,11 @@ impl<'a, F> Invoke<P<ast::Expr>> for ExprPathBuilder<'a, F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ExprParenBuilder<'a, F> {
-    builder: ExprBuilder<'a, F>,
+pub struct ExprParenBuilder<F> {
+    builder: ExprBuilder<F>,
 }
 
-impl<'a, F> Invoke<P<ast::Expr>> for ExprParenBuilder<'a, F>
+impl<F> Invoke<P<ast::Expr>> for ExprParenBuilder<F>
     where F: Invoke<P<ast::Expr>>,
 {
     type Result = F::Result;
@@ -915,12 +912,12 @@ impl<'a, F> Invoke<P<ast::Expr>> for ExprParenBuilder<'a, F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ExprFieldBuilder<'a, F> {
-    builder: ExprBuilder<'a, F>,
+pub struct ExprFieldBuilder<F> {
+    builder: ExprBuilder<F>,
     id: ast::SpannedIdent,
 }
 
-impl<'a, F> Invoke<P<ast::Expr>> for ExprFieldBuilder<'a, F>
+impl<F> Invoke<P<ast::Expr>> for ExprFieldBuilder<F>
     where F: Invoke<P<ast::Expr>>,
 {
     type Result = F::Result;
@@ -932,12 +929,12 @@ impl<'a, F> Invoke<P<ast::Expr>> for ExprFieldBuilder<'a, F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ExprTupFieldBuilder<'a, F> {
-    builder: ExprBuilder<'a, F>,
+pub struct ExprTupFieldBuilder<F> {
+    builder: ExprBuilder<F>,
     index: Spanned<usize>,
 }
 
-impl<'a, F> Invoke<P<ast::Expr>> for ExprTupFieldBuilder<'a, F>
+impl<F> Invoke<P<ast::Expr>> for ExprTupFieldBuilder<F>
     where F: Invoke<P<ast::Expr>>,
 {
     type Result = F::Result;

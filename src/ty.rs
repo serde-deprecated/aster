@@ -4,33 +4,29 @@ use syntax::ast;
 use syntax::codemap::{DUMMY_SP, Span};
 use syntax::ptr::P;
 
-use invoke::{Invoke, Identity};
-
-use ctx::Ctx;
 use ident::ToIdent;
+use invoke::{Invoke, Identity};
 use name::ToName;
 use path::PathBuilder;
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct TyBuilder<'a, F=Identity> {
-    ctx: &'a Ctx,
+pub struct TyBuilder<F=Identity> {
     callback: F,
     span: Span,
 }
 
-impl<'a> TyBuilder<'a> {
-    pub fn new(ctx: &'a Ctx) -> Self {
-        TyBuilder::new_with_callback(ctx, Identity)
+impl TyBuilder {
+    pub fn new() -> Self {
+        TyBuilder::new_with_callback(Identity)
     }
 }
 
-impl<'a, F> TyBuilder<'a, F>
+impl<F> TyBuilder<F>
     where F: Invoke<P<ast::Ty>>,
 {
-    pub fn new_with_callback(ctx: &'a Ctx, callback: F) -> Self {
+    pub fn new_with_callback(callback: F) -> Self {
         TyBuilder {
-            ctx: ctx,
             callback: callback,
             span: DUMMY_SP,
         }
@@ -69,8 +65,8 @@ impl<'a, F> TyBuilder<'a, F>
         self.build_ty_(ast::Ty_::TyPath(Some(qself), path))
     }
 
-    pub fn path(self) -> PathBuilder<'a, TyPathBuilder<'a, F>> {
-        PathBuilder::new_with_callback(self.ctx, TyPathBuilder(self))
+    pub fn path(self) -> PathBuilder<TyPathBuilder<F>> {
+        PathBuilder::new_with_callback(TyPathBuilder(self))
     }
 
     pub fn isize(self) -> F::Result {
@@ -113,30 +109,30 @@ impl<'a, F> TyBuilder<'a, F>
         self.id("u64")
     }
 
-    pub fn option(self) -> TyBuilder<'a, TyOptionBuilder<'a, F>> {
-        TyBuilder::new_with_callback(self.ctx, TyOptionBuilder(self))
+    pub fn option(self) -> TyBuilder<TyOptionBuilder<F>> {
+        TyBuilder::new_with_callback(TyOptionBuilder(self))
     }
 
-    pub fn result(self) -> TyBuilder<'a, TyResultOkBuilder<'a, F>> {
-        TyBuilder::new_with_callback(self.ctx, TyResultOkBuilder(self))
+    pub fn result(self) -> TyBuilder<TyResultOkBuilder<F>> {
+        TyBuilder::new_with_callback(TyResultOkBuilder(self))
     }
 
-    pub fn phantom_data(self) -> TyBuilder<'a, TyPhantomDataBuilder<'a, F>> {
-        TyBuilder::new_with_callback(self.ctx, TyPhantomDataBuilder(self))
+    pub fn phantom_data(self) -> TyBuilder<TyPhantomDataBuilder<F>> {
+        TyBuilder::new_with_callback(TyPhantomDataBuilder(self))
     }
 
     pub fn unit(self) -> F::Result {
         self.tuple().build()
     }
 
-    pub fn tuple(self) -> TyTupleBuilder<'a, F> {
+    pub fn tuple(self) -> TyTupleBuilder<F> {
         TyTupleBuilder {
             builder: self,
             tys: vec![],
         }
     }
 
-    pub fn ref_(self) -> TyRefBuilder<'a, F> {
+    pub fn ref_(self) -> TyRefBuilder<F> {
         TyRefBuilder {
             builder: self,
             lifetime: None,
@@ -147,9 +143,9 @@ impl<'a, F> TyBuilder<'a, F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct TyPathBuilder<'a, F>(TyBuilder<'a, F>);
+pub struct TyPathBuilder<F>(TyBuilder<F>);
 
-impl<'a, F> Invoke<ast::Path> for TyPathBuilder<'a, F>
+impl<F> Invoke<ast::Path> for TyPathBuilder<F>
     where F: Invoke<P<ast::Ty>>,
 {
     type Result = F::Result;
@@ -161,13 +157,13 @@ impl<'a, F> Invoke<ast::Path> for TyPathBuilder<'a, F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct TyRefBuilder<'a, F> {
-    builder: TyBuilder<'a, F>,
+pub struct TyRefBuilder<F> {
+    builder: TyBuilder<F>,
     lifetime: Option<ast::Lifetime>,
     mutability: ast::Mutability,
 }
 
-impl<'a, F> TyRefBuilder<'a, F>
+impl<F> TyRefBuilder<F>
     where F: Invoke<P<ast::Ty>>,
 {
     pub fn mut_(mut self) -> Self {
@@ -181,7 +177,7 @@ impl<'a, F> TyRefBuilder<'a, F>
         self.lifetime = Some(ast::Lifetime {
             id: ast::DUMMY_NODE_ID,
             span: self.builder.span,
-            name: name.to_name(self.builder.ctx),
+            name: name.to_name(),
         });
         self
     }
@@ -194,12 +190,12 @@ impl<'a, F> TyRefBuilder<'a, F>
         self.builder.build_ty_(ast::TyRptr(self.lifetime, ty))
     }
 
-    pub fn ty(self) -> TyBuilder<'a, Self> {
-        TyBuilder::new_with_callback(self.builder.ctx, self)
+    pub fn ty(self) -> TyBuilder<Self> {
+        TyBuilder::new_with_callback(self)
     }
 }
 
-impl<'a, F> Invoke<P<ast::Ty>> for TyRefBuilder<'a, F>
+impl<F> Invoke<P<ast::Ty>> for TyRefBuilder<F>
     where F: Invoke<P<ast::Ty>>,
 {
     type Result = F::Result;
@@ -211,15 +207,15 @@ impl<'a, F> Invoke<P<ast::Ty>> for TyRefBuilder<'a, F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct TyOptionBuilder<'a, F>(TyBuilder<'a, F>);
+pub struct TyOptionBuilder<F>(TyBuilder<F>);
 
-impl<'a, F> Invoke<P<ast::Ty>> for TyOptionBuilder<'a, F>
+impl<F> Invoke<P<ast::Ty>> for TyOptionBuilder<F>
     where F: Invoke<P<ast::Ty>>,
 {
     type Result = F::Result;
 
     fn invoke(self, ty: P<ast::Ty>) -> F::Result {
-        let path = PathBuilder::new(self.0.ctx)
+        let path = PathBuilder::new()
             .global()
             .id("std")
             .id("option")
@@ -234,27 +230,27 @@ impl<'a, F> Invoke<P<ast::Ty>> for TyOptionBuilder<'a, F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct TyResultOkBuilder<'a, F>(TyBuilder<'a, F>);
+pub struct TyResultOkBuilder<F>(TyBuilder<F>);
 
-impl<'a, F> Invoke<P<ast::Ty>> for TyResultOkBuilder<'a, F>
+impl<F> Invoke<P<ast::Ty>> for TyResultOkBuilder<F>
     where F: Invoke<P<ast::Ty>>,
 {
-    type Result = TyBuilder<'a, TyResultErrBuilder<'a, F>>;
+    type Result = TyBuilder<TyResultErrBuilder<F>>;
 
-    fn invoke(self, ty: P<ast::Ty>) -> TyBuilder<'a, TyResultErrBuilder<'a, F>> {
-        TyBuilder::new_with_callback(self.0.ctx, TyResultErrBuilder(self.0, ty))
+    fn invoke(self, ty: P<ast::Ty>) -> TyBuilder<TyResultErrBuilder<F>> {
+        TyBuilder::new_with_callback(TyResultErrBuilder(self.0, ty))
     }
 }
 
-pub struct TyResultErrBuilder<'a, F>(TyBuilder<'a, F>, P<ast::Ty>);
+pub struct TyResultErrBuilder<F>(TyBuilder<F>, P<ast::Ty>);
 
-impl<'a, F> Invoke<P<ast::Ty>> for TyResultErrBuilder<'a, F>
+impl<F> Invoke<P<ast::Ty>> for TyResultErrBuilder<F>
     where F: Invoke<P<ast::Ty>>,
 {
     type Result = F::Result;
 
     fn invoke(self, ty: P<ast::Ty>) -> F::Result {
-        let path = PathBuilder::new(self.0.ctx)
+        let path = PathBuilder::new()
             .global()
             .id("std")
             .id("result")
@@ -270,15 +266,15 @@ impl<'a, F> Invoke<P<ast::Ty>> for TyResultErrBuilder<'a, F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct TyPhantomDataBuilder<'a, F>(TyBuilder<'a, F>);
+pub struct TyPhantomDataBuilder<F>(TyBuilder<F>);
 
-impl<'a, F> Invoke<P<ast::Ty>> for TyPhantomDataBuilder<'a, F>
+impl<F> Invoke<P<ast::Ty>> for TyPhantomDataBuilder<F>
     where F: Invoke<P<ast::Ty>>,
 {
     type Result = F::Result;
 
     fn invoke(self, ty: P<ast::Ty>) -> F::Result {
-        let path = PathBuilder::new(self.0.ctx)
+        let path = PathBuilder::new()
             .global()
             .id("std")
             .id("marker")
@@ -293,12 +289,12 @@ impl<'a, F> Invoke<P<ast::Ty>> for TyPhantomDataBuilder<'a, F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct TyTupleBuilder<'a, F> {
-    builder: TyBuilder<'a, F>,
+pub struct TyTupleBuilder<F> {
+    builder: TyBuilder<F>,
     tys: Vec<P<ast::Ty>>,
 }
 
-impl<'a, F> TyTupleBuilder<'a, F>
+impl<F> TyTupleBuilder<F>
     where F: Invoke<P<ast::Ty>>,
 {
     pub fn with_tys<I>(mut self, iter: I) -> Self
@@ -313,8 +309,8 @@ impl<'a, F> TyTupleBuilder<'a, F>
         self
     }
 
-    pub fn ty(self) -> TyBuilder<'a, Self> {
-        TyBuilder::new_with_callback(self.builder.ctx, self)
+    pub fn ty(self) -> TyBuilder<Self> {
+        TyBuilder::new_with_callback(self)
     }
 
     pub fn build(self) -> F::Result {
@@ -322,7 +318,7 @@ impl<'a, F> TyTupleBuilder<'a, F>
     }
 }
 
-impl<'a, F> Invoke<P<ast::Ty>> for TyTupleBuilder<'a, F>
+impl<F> Invoke<P<ast::Ty>> for TyTupleBuilder<F>
     where F: Invoke<P<ast::Ty>>,
 {
     type Result = Self;

@@ -4,33 +4,30 @@ use syntax::ast;
 use syntax::codemap::{DUMMY_SP, Span};
 use syntax::ptr::P;
 
-use ctx::Ctx;
 use expr::ExprBuilder;
 use invoke::{Invoke, Identity};
 use stmt::StmtBuilder;
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct BlockBuilder<'a, F=Identity> {
-    ctx: &'a Ctx,
+pub struct BlockBuilder<F=Identity> {
     callback: F,
     span: Span,
     stmts: Vec<P<ast::Stmt>>,
     block_check_mode: ast::BlockCheckMode,
 }
 
-impl<'a> BlockBuilder<'a> {
-    pub fn new(ctx: &'a Ctx) -> Self {
-        BlockBuilder::new_with_callback(ctx, Identity)
+impl BlockBuilder {
+    pub fn new() -> Self {
+        BlockBuilder::new_with_callback(Identity)
     }
 }
 
-impl<'a, F> BlockBuilder<'a, F>
+impl<F> BlockBuilder<F>
     where F: Invoke<P<ast::Block>>,
 {
-    pub fn new_with_callback(ctx: &'a Ctx, callback: F) -> Self {
+    pub fn new_with_callback(callback: F) -> Self {
         BlockBuilder {
-            ctx: ctx,
             callback: callback,
             span: DUMMY_SP,
             stmts: Vec::new(),
@@ -61,16 +58,16 @@ impl<'a, F> BlockBuilder<'a, F>
         self
     }
 
-    pub fn stmt(self) -> StmtBuilder<'a, Self> {
-        StmtBuilder::new_with_callback(self.ctx, self)
+    pub fn stmt(self) -> StmtBuilder<Self> {
+        StmtBuilder::new_with_callback(self)
     }
 
     pub fn build_expr(self, expr: P<ast::Expr>) -> F::Result {
         self.build_(Some(expr))
     }
 
-    pub fn expr(self) -> ExprBuilder<'a, Self> {
-        ExprBuilder::new_with_callback(self.ctx, self)
+    pub fn expr(self) -> ExprBuilder<Self> {
+        ExprBuilder::new_with_callback(self)
     }
 
     pub fn build(self) -> F::Result {
@@ -88,7 +85,7 @@ impl<'a, F> BlockBuilder<'a, F>
     }
 }
 
-impl<'a, F> Invoke<P<ast::Stmt>> for BlockBuilder<'a, F>
+impl<F> Invoke<P<ast::Stmt>> for BlockBuilder<F>
     where F: Invoke<P<ast::Block>>,
 {
     type Result = Self;
@@ -98,7 +95,7 @@ impl<'a, F> Invoke<P<ast::Stmt>> for BlockBuilder<'a, F>
     }
 }
 
-impl<'a, F> Invoke<P<ast::Expr>> for BlockBuilder<'a, F>
+impl<F> Invoke<P<ast::Expr>> for BlockBuilder<F>
     where F: Invoke<P<ast::Block>>,
 {
     type Result = F::Result;

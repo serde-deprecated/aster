@@ -2,33 +2,30 @@ use syntax::ast;
 use syntax::codemap::{DUMMY_SP, Span, respan};
 use syntax::ptr::P;
 
-use ctx::Ctx;
 use ident::ToIdent;
 use invoke::{Invoke, Identity};
 use ty::TyBuilder;
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct FnDeclBuilder<'a, F=Identity> {
-    ctx: &'a Ctx,
+pub struct FnDeclBuilder<F=Identity> {
     callback: F,
     span: Span,
     args: Vec<ast::Arg>,
     variadic: bool,
 }
 
-impl<'a> FnDeclBuilder<'a> {
-    pub fn new(ctx: &'a Ctx) -> FnDeclBuilder<'a> {
-        FnDeclBuilder::new_with_callback(ctx, Identity)
+impl FnDeclBuilder {
+    pub fn new() -> FnDeclBuilder {
+        FnDeclBuilder::new_with_callback(Identity)
     }
 }
 
-impl<'a, F> FnDeclBuilder<'a, F>
+impl<F> FnDeclBuilder<F>
     where F: Invoke<P<ast::FnDecl>>,
 {
-    pub fn new_with_callback(ctx: &'a Ctx, callback: F) -> Self {
+    pub fn new_with_callback(callback: F) -> Self {
         FnDeclBuilder {
-            ctx: ctx,
             callback: callback,
             span: DUMMY_SP,
             args: Vec::new(),
@@ -51,10 +48,10 @@ impl<'a, F> FnDeclBuilder<'a, F>
         self
     }
 
-    pub fn arg<I>(self, id: I) -> ArgBuilder<'a, Self>
+    pub fn arg<I>(self, id: I) -> ArgBuilder<Self>
         where I: ToIdent,
     {
-        ArgBuilder::new_with_callback(self.ctx, id, self)
+        ArgBuilder::new_with_callback(id, self)
     }
 
     pub fn no_return(self) -> F::Result {
@@ -66,8 +63,8 @@ impl<'a, F> FnDeclBuilder<'a, F>
         self.build(ast::FunctionRetTy::Return(ty))
     }
 
-    pub fn output(self) -> TyBuilder<'a, Self> {
-        TyBuilder::new_with_callback(self.ctx, self)
+    pub fn output(self) -> TyBuilder<Self> {
+        TyBuilder::new_with_callback(self)
     }
 
     pub fn build(self, output: ast::FunctionRetTy) -> F::Result {
@@ -79,7 +76,7 @@ impl<'a, F> FnDeclBuilder<'a, F>
     }
 }
 
-impl<'a, F> Invoke<ast::Arg> for FnDeclBuilder<'a, F>
+impl<F> Invoke<ast::Arg> for FnDeclBuilder<F>
     where F: Invoke<P<ast::FnDecl>>
 {
     type Result = Self;
@@ -89,7 +86,7 @@ impl<'a, F> Invoke<ast::Arg> for FnDeclBuilder<'a, F>
     }
 }
 
-impl<'a, F> Invoke<P<ast::Ty>> for FnDeclBuilder<'a, F>
+impl<F> Invoke<P<ast::Ty>> for FnDeclBuilder<F>
     where F: Invoke<P<ast::FnDecl>>,
 {
     type Result = F::Result;
@@ -101,30 +98,28 @@ impl<'a, F> Invoke<P<ast::Ty>> for FnDeclBuilder<'a, F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ArgBuilder<'a, F=Identity> {
-    ctx: &'a Ctx,
+pub struct ArgBuilder<F=Identity> {
     callback: F,
     span: Span,
     id: ast::Ident,
 }
 
-impl<'a> ArgBuilder<'a> {
-    pub fn new<I>(ctx: &'a Ctx, id: I) -> Self where I: ToIdent {
-        ArgBuilder::new_with_callback(ctx, id, Identity)
+impl ArgBuilder {
+    pub fn new<I>(id: I) -> Self where I: ToIdent {
+        ArgBuilder::new_with_callback(id, Identity)
     }
 }
 
-impl<'a, F> ArgBuilder<'a, F>
+impl<F> ArgBuilder<F>
     where F: Invoke<ast::Arg>,
 {
-    pub fn new_with_callback<I>(ctx: &'a Ctx, id: I, callback: F) -> ArgBuilder<'a, F>
+    pub fn new_with_callback<I>(id: I, callback: F) -> ArgBuilder<F>
         where I: ToIdent,
     {
         ArgBuilder {
-            ctx: ctx,
             callback: callback,
             span: DUMMY_SP,
-            id: id.to_ident(ctx),
+            id: id.to_ident(),
         }
     }
 
@@ -151,16 +146,16 @@ impl<'a, F> ArgBuilder<'a, F>
         })
     }
 
-    pub fn ty(self) -> TyBuilder<'a, ArgTyBuilder<'a, F>> {
-        TyBuilder::new_with_callback(self.ctx, ArgTyBuilder(self))
+    pub fn ty(self) -> TyBuilder<ArgTyBuilder<F>> {
+        TyBuilder::new_with_callback(ArgTyBuilder(self))
     }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ArgTyBuilder<'a, F>(ArgBuilder<'a, F>);
+pub struct ArgTyBuilder<F>(ArgBuilder<F>);
 
-impl<'a, F: Invoke<ast::Arg>> Invoke<P<ast::Ty>> for ArgTyBuilder<'a, F>
+impl<F: Invoke<ast::Arg>> Invoke<P<ast::Ty>> for ArgTyBuilder<F>
 {
     type Result = F::Result;
 

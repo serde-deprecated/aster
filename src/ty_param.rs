@@ -3,7 +3,6 @@ use syntax::codemap::{DUMMY_SP, Span};
 use syntax::owned_slice::OwnedSlice;
 use syntax::ptr::P;
 
-use ctx::Ctx;
 use ident::ToIdent;
 use invoke::{Invoke, Identity};
 use lifetime::{IntoLifetime, IntoLifetimeDef, LifetimeDefBuilder};
@@ -12,8 +11,7 @@ use path::IntoPath;
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct TyParamBuilder<'a, F=Identity> {
-    ctx: &'a Ctx,
+pub struct TyParamBuilder<F=Identity> {
     callback: F,
     span: Span,
     id: ast::Ident,
@@ -21,37 +19,35 @@ pub struct TyParamBuilder<'a, F=Identity> {
     default: Option<P<ast::Ty>>,
 }
 
-impl<'a> TyParamBuilder<'a> {
-    pub fn new<I>(ctx: &'a Ctx, id: I) -> Self
+impl TyParamBuilder {
+    pub fn new<I>(id: I) -> Self
         where I: ToIdent,
     {
-        TyParamBuilder::new_with_callback(ctx, id, Identity)
+        TyParamBuilder::new_with_callback(id, Identity)
     }
 
-    pub fn from_ty_param(ctx: &'a Ctx, ty_param: ast::TyParam) -> Self {
-        TyParamBuilder::from_ty_param_with_callback(ctx, Identity, ty_param)
+    pub fn from_ty_param(ty_param: ast::TyParam) -> Self {
+        TyParamBuilder::from_ty_param_with_callback(Identity, ty_param)
     }
 }
 
-impl<'a, F> TyParamBuilder<'a, F>
+impl<F> TyParamBuilder<F>
     where F: Invoke<ast::TyParam>,
 {
-    pub fn new_with_callback<I>(ctx: &'a Ctx, id: I, callback: F) -> Self
+    pub fn new_with_callback<I>(id: I, callback: F) -> Self
         where I: ToIdent
     {
         TyParamBuilder {
-            ctx: ctx,
             callback: callback,
             span: DUMMY_SP,
-            id: id.to_ident(ctx),
+            id: id.to_ident(),
             bounds: Vec::new(),
             default: None,
         }
     }
 
-    pub fn from_ty_param_with_callback(ctx: &'a Ctx, callback: F, ty_param: ast::TyParam) -> Self {
+    pub fn from_ty_param_with_callback(callback: F, ty_param: ast::TyParam) -> Self {
         TyParamBuilder {
-            ctx: ctx,
             callback: callback,
             span: ty_param.span,
             id: ty_param.ident,
@@ -78,16 +74,16 @@ impl<'a, F> TyParamBuilder<'a, F>
         self
     }
 
-    pub fn trait_bound<P>(self, path: P) -> PolyTraitRefBuilder<'a, Self>
+    pub fn trait_bound<P>(self, path: P) -> PolyTraitRefBuilder<Self>
         where P: IntoPath,
     {
-        PolyTraitRefBuilder::new_with_callback(self.ctx, path, self)
+        PolyTraitRefBuilder::new_with_callback(path, self)
     }
 
     pub fn lifetime_bound<L>(mut self, lifetime: L) -> Self
         where L: IntoLifetime,
     {
-        let lifetime = lifetime.into_lifetime(self.ctx);
+        let lifetime = lifetime.into_lifetime();
 
         self.bounds.push(ast::TyParamBound::RegionTyParamBound(lifetime));
         self
@@ -104,7 +100,7 @@ impl<'a, F> TyParamBuilder<'a, F>
     }
 }
 
-impl<'a, F> Invoke<ast::PolyTraitRef> for TyParamBuilder<'a, F>
+impl<F> Invoke<ast::PolyTraitRef> for TyParamBuilder<F>
     where F: Invoke<ast::TyParam>,
 {
     type Result = Self;
@@ -116,27 +112,25 @@ impl<'a, F> Invoke<ast::PolyTraitRef> for TyParamBuilder<'a, F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct PolyTraitRefBuilder<'a, F> {
-    ctx: &'a Ctx,
+pub struct PolyTraitRefBuilder<F> {
     callback: F,
     span: Span,
     trait_ref: ast::TraitRef,
     lifetimes: Vec<ast::LifetimeDef>,
 }
 
-impl<'a, F> PolyTraitRefBuilder<'a, F>
+impl<F> PolyTraitRefBuilder<F>
     where F: Invoke<ast::PolyTraitRef>,
 {
-    pub fn new_with_callback<P>(ctx: &'a Ctx, path: P, callback: F) -> Self
+    pub fn new_with_callback<P>(path: P, callback: F) -> Self
         where P: IntoPath,
     {
         let trait_ref = ast::TraitRef {
-            path: path.into_path(ctx),
+            path: path.into_path(),
             ref_id: ast::DUMMY_NODE_ID,
         };
 
         PolyTraitRefBuilder {
-            ctx: ctx,
             callback: callback,
             span: DUMMY_SP,
             trait_ref: trait_ref,
@@ -152,14 +146,14 @@ impl<'a, F> PolyTraitRefBuilder<'a, F>
     pub fn with_lifetime<L>(mut self, lifetime: L) -> Self
         where L: IntoLifetimeDef,
     {
-        self.lifetimes.push(lifetime.into_lifetime_def(self.ctx));
+        self.lifetimes.push(lifetime.into_lifetime_def());
         self
     }
 
-    pub fn lifetime<N>(self, name: N) -> LifetimeDefBuilder<'a, Self>
+    pub fn lifetime<N>(self, name: N) -> LifetimeDefBuilder<Self>
         where N: ToName,
     {
-        LifetimeDefBuilder::new_with_callback(self.ctx, name, self)
+        LifetimeDefBuilder::new_with_callback(name, self)
     }
 
     pub fn build(self) -> F::Result {
@@ -171,7 +165,7 @@ impl<'a, F> PolyTraitRefBuilder<'a, F>
     }
 }
 
-impl<'a, F> Invoke<ast::LifetimeDef> for PolyTraitRefBuilder<'a, F>
+impl<F> Invoke<ast::LifetimeDef> for PolyTraitRefBuilder<F>
     where F: Invoke<ast::PolyTraitRef>,
 {
     type Result = Self;

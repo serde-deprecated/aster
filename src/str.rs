@@ -1,7 +1,6 @@
 use syntax::ast;
 use syntax::parse::token;
 
-pub use ctx::Ctx;
 pub use expr::ExprBuilder;
 pub use ident::ToIdent;
 pub use name::ToName;

@@ -4,12 +4,11 @@ extern crate aster;
 extern crate syntax;
 
 use syntax::print::pprust;
-use aster::{Ctx, AstBuilder};
+use aster::AstBuilder;
 
 #[test]
 fn test() {
-    let ctx = Ctx::new();
-    let builder = AstBuilder::new(&ctx);
+    let builder = AstBuilder::new();
 
     // path: `isize`
     let path = builder.path().id("isize").build();

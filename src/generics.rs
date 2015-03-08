@@ -4,7 +4,6 @@ use syntax::ast;
 use syntax::codemap::{DUMMY_SP, Span};
 use syntax::owned_slice::OwnedSlice;
 
-use ctx::Ctx;
 use ident::ToIdent;
 use invoke::{Invoke, Identity};
 use lifetime::{IntoLifetime, IntoLifetimeDef, LifetimeDefBuilder};
@@ -14,8 +13,7 @@ use ty_param::TyParamBuilder;
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct GenericsBuilder<'a, F=Identity> {
-    ctx: &'a Ctx,
+pub struct GenericsBuilder<F=Identity> {
     callback: F,
     span: Span,
     lifetimes: Vec<ast::LifetimeDef>,
@@ -23,22 +21,21 @@ pub struct GenericsBuilder<'a, F=Identity> {
     predicates: Vec<ast::WherePredicate>,
 }
 
-impl<'a> GenericsBuilder<'a> {
-    pub fn new(ctx: &'a Ctx) -> Self {
-        GenericsBuilder::new_with_callback(ctx, Identity)
+impl GenericsBuilder {
+    pub fn new() -> Self {
+        GenericsBuilder::new_with_callback(Identity)
     }
 
-    pub fn from_generics(ctx: &'a Ctx, generics: ast::Generics) -> Self {
-        GenericsBuilder::from_generics_with_callback(ctx, Identity, generics)
+    pub fn from_generics(generics: ast::Generics) -> Self {
+        GenericsBuilder::from_generics_with_callback(Identity, generics)
     }
 }
 
-impl<'a, F> GenericsBuilder<'a, F>
+impl<F> GenericsBuilder<F>
     where F: Invoke<ast::Generics>,
 {
-    pub fn new_with_callback(ctx: &'a Ctx, callback: F) -> Self {
+    pub fn new_with_callback(callback: F) -> Self {
         GenericsBuilder {
-            ctx: ctx,
             callback: callback,
             span: DUMMY_SP,
             lifetimes: Vec::new(),
@@ -47,9 +44,8 @@ impl<'a, F> GenericsBuilder<'a, F>
         }
     }
 
-    pub fn from_generics_with_callback(ctx: &'a Ctx, callback: F, generics: ast::Generics) -> Self {
+    pub fn from_generics_with_callback(callback: F, generics: ast::Generics) -> Self {
         GenericsBuilder {
-            ctx: ctx,
             callback: callback,
             span: DUMMY_SP,
             lifetimes: generics.lifetimes,
@@ -67,8 +63,7 @@ impl<'a, F> GenericsBuilder<'a, F>
         where I: IntoIterator<Item=L>,
               L: IntoLifetimeDef,
     {
-        let ctx = self.ctx;
-        let iter = iter.into_iter().map(|lifetime_def| lifetime_def.into_lifetime_def(ctx));
+        let iter = iter.into_iter().map(|lifetime_def| lifetime_def.into_lifetime_def());
         self.lifetimes.extend(iter);
         self
     }
@@ -94,10 +89,10 @@ impl<'a, F> GenericsBuilder<'a, F>
         self.lifetime(name).build()
     }
 
-    pub fn lifetime<N>(self, name: N) -> LifetimeDefBuilder<'a, Self>
+    pub fn lifetime<N>(self, name: N) -> LifetimeDefBuilder<Self>
         where N: ToName,
     {
-        LifetimeDefBuilder::new_with_callback(self.ctx, name, self)
+        LifetimeDefBuilder::new_with_callback(name, self)
     }
 
     pub fn with_ty_params<I>(mut self, iter: I) -> Self
@@ -128,11 +123,11 @@ impl<'a, F> GenericsBuilder<'a, F>
         self.ty_param(id).build()
     }
 
-    pub fn ty_param<I>(self, id: I) -> TyParamBuilder<'a, Self>
+    pub fn ty_param<I>(self, id: I) -> TyParamBuilder<Self>
         where I: ToIdent,
     {
         let span = self.span;
-        TyParamBuilder::new_with_callback(self.ctx, id, self).span(span)
+        TyParamBuilder::new_with_callback(id, self).span(span)
     }
 
     pub fn with_predicates<I>(mut self, iter: I) -> Self
@@ -150,14 +145,14 @@ impl<'a, F> GenericsBuilder<'a, F>
     pub fn add_lifetime_bound<L>(mut self, lifetime: L) -> Self
         where L: IntoLifetime,
     {
-        let lifetime = lifetime.into_lifetime(self.ctx);
+        let lifetime = lifetime.into_lifetime();
 
         for lifetime_def in self.lifetimes.iter_mut() {
             lifetime_def.bounds.push(lifetime.clone());
         }
 
         for ty_param in self.ty_params.iter_mut() {
-            *ty_param = TyParamBuilder::from_ty_param(self.ctx, ty_param.clone())
+            *ty_param = TyParamBuilder::from_ty_param(ty_param.clone())
                 .lifetime_bound(lifetime.clone())
                 .build();
         }
@@ -168,10 +163,10 @@ impl<'a, F> GenericsBuilder<'a, F>
     pub fn add_ty_param_bound<P>(mut self, path: P) -> Self
         where P: IntoPath,
     {
-        let path = path.into_path(self.ctx);
+        let path = path.into_path();
 
         for ty_param in self.ty_params.iter_mut() {
-            *ty_param = TyParamBuilder::from_ty_param(self.ctx, ty_param.clone())
+            *ty_param = TyParamBuilder::from_ty_param(ty_param.clone())
                 .trait_bound(path.clone()).build()
                 .build();
         }
@@ -205,7 +200,7 @@ impl<'a, F> GenericsBuilder<'a, F>
     }
 }
 
-impl<'a, F> Invoke<ast::LifetimeDef> for GenericsBuilder<'a, F>
+impl<F> Invoke<ast::LifetimeDef> for GenericsBuilder<F>
     where F: Invoke<ast::Generics>,
 {
     type Result = Self;
@@ -215,7 +210,7 @@ impl<'a, F> Invoke<ast::LifetimeDef> for GenericsBuilder<'a, F>
     }
 }
 
-impl<'a, F> Invoke<ast::TyParam> for GenericsBuilder<'a, F>
+impl<F> Invoke<ast::TyParam> for GenericsBuilder<F>
     where F: Invoke<ast::Generics>,
 {
     type Result = Self;

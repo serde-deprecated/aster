@@ -8,7 +8,6 @@ use syntax::ptr::P;
 
 use attr::AttrBuilder;
 use block::BlockBuilder;
-use ctx::Ctx;
 use generics::GenericsBuilder;
 use ident::ToIdent;
 use invoke::{Invoke, Identity};
@@ -18,26 +17,24 @@ use fn_decl::FnDeclBuilder;
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ItemBuilder<'a, F=Identity> {
-    ctx: &'a Ctx,
+pub struct ItemBuilder<F=Identity> {
     callback: F,
     span: Span,
     attrs: Vec<ast::Attribute>,
     vis: ast::Visibility,
 }
 
-impl<'a> ItemBuilder<'a> {
-    pub fn new(ctx: &'a Ctx) -> Self {
-        ItemBuilder::new_with_callback(ctx, Identity)
+impl ItemBuilder {
+    pub fn new() -> Self {
+        ItemBuilder::new_with_callback(Identity)
     }
 }
 
-impl<'a, F> ItemBuilder<'a, F>
+impl<F> ItemBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
-    pub fn new_with_callback(ctx: &'a Ctx, callback: F) -> Self {
+    pub fn new_with_callback(callback: F) -> Self {
         ItemBuilder {
-            ctx: ctx,
             callback: callback,
             span: DUMMY_SP,
             attrs: vec![],
@@ -55,8 +52,8 @@ impl<'a, F> ItemBuilder<'a, F>
         self
     }
 
-    pub fn attr(self) -> AttrBuilder<'a, Self> {
-        AttrBuilder::new_with_callback(self.ctx, self)
+    pub fn attr(self) -> AttrBuilder<Self> {
+        AttrBuilder::new_with_callback(self)
     }
 
     pub fn pub_(mut self) -> Self {
@@ -72,7 +69,7 @@ impl<'a, F> ItemBuilder<'a, F>
         where T: ToIdent,
     {
         let item = ast::Item {
-            ident: id.to_ident(self.ctx),
+            ident: id.to_ident(),
             attrs: self.attrs,
             id: ast::DUMMY_NODE_ID,
             node: item_,
@@ -82,11 +79,11 @@ impl<'a, F> ItemBuilder<'a, F>
         self.callback.invoke(P(item))
     }
 
-    pub fn fn_<T>(self, id: T) -> FnDeclBuilder<'a, ItemFnDeclBuilder<'a, F>>
+    pub fn fn_<T>(self, id: T) -> FnDeclBuilder<ItemFnDeclBuilder<F>>
         where T: ToIdent,
     {
-        let id = id.to_ident(self.ctx);
-        FnDeclBuilder::new_with_callback(self.ctx, ItemFnDeclBuilder {
+        let id = id.to_ident();
+        FnDeclBuilder::new_with_callback(ItemFnDeclBuilder {
             builder: self,
             id: id,
         })
@@ -97,15 +94,15 @@ impl<'a, F> ItemBuilder<'a, F>
         self.build_item_(token::special_idents::invalid, item)
     }
 
-    pub fn use_glob(self) -> PathBuilder<'a, ItemUseGlobBuilder<'a, F>> {
-        PathBuilder::new_with_callback(self.ctx, ItemUseGlobBuilder(self))
+    pub fn use_glob(self) -> PathBuilder<ItemUseGlobBuilder<F>> {
+        PathBuilder::new_with_callback(ItemUseGlobBuilder(self))
     }
 
-    pub fn struct_<T>(self, id: T) -> ItemStructBuilder<'a, F>
+    pub fn struct_<T>(self, id: T) -> ItemStructBuilder<F>
         where T: ToIdent,
     {
-        let id = id.to_ident(self.ctx);
-        let generics = GenericsBuilder::new(self.ctx).build();
+        let id = id.to_ident();
+        let generics = GenericsBuilder::new().build();
 
         ItemStructBuilder {
             builder: self,
@@ -115,11 +112,11 @@ impl<'a, F> ItemBuilder<'a, F>
         }
     }
 
-    pub fn tuple_struct<T>(self, id: T) -> ItemTupleStructBuilder<'a, F>
+    pub fn tuple_struct<T>(self, id: T) -> ItemTupleStructBuilder<F>
         where T: ToIdent,
     {
-        let id = id.to_ident(self.ctx);
-        let generics = GenericsBuilder::new(self.ctx).build();
+        let id = id.to_ident();
+        let generics = GenericsBuilder::new().build();
 
         ItemTupleStructBuilder {
             builder: self,
@@ -130,7 +127,7 @@ impl<'a, F> ItemBuilder<'a, F>
     }
 }
 
-impl<'a, F> Invoke<ast::Attribute> for ItemBuilder<'a, F>
+impl<F> Invoke<ast::Attribute> for ItemBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
     type Result = Self;
@@ -142,19 +139,18 @@ impl<'a, F> Invoke<ast::Attribute> for ItemBuilder<'a, F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ItemFnDeclBuilder<'a, F> {
-    builder: ItemBuilder<'a, F>,
+pub struct ItemFnDeclBuilder<F> {
+    builder: ItemBuilder<F>,
     id: ast::Ident,
 }
 
-impl<'a, F> Invoke<P<ast::FnDecl>> for ItemFnDeclBuilder<'a, F>
+impl<F> Invoke<P<ast::FnDecl>> for ItemFnDeclBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
-    type Result = ItemFnBuilder<'a, F>;
+    type Result = ItemFnBuilder<F>;
 
-    fn invoke(self, fn_decl: P<ast::FnDecl>) -> ItemFnBuilder<'a, F> {
-        let generics = GenericsBuilder::new(self.builder.ctx)
-            .build();
+    fn invoke(self, fn_decl: P<ast::FnDecl>) -> ItemFnBuilder<F> {
+        let generics = GenericsBuilder::new().build();
 
         ItemFnBuilder {
             builder: self.builder,
@@ -169,8 +165,8 @@ impl<'a, F> Invoke<P<ast::FnDecl>> for ItemFnDeclBuilder<'a, F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ItemFnBuilder<'a, F> {
-    builder: ItemBuilder<'a, F>,
+pub struct ItemFnBuilder<F> {
+    builder: ItemBuilder<F>,
     id: ast::Ident,
     fn_decl: P<ast::FnDecl>,
     unsafety: ast::Unsafety,
@@ -178,7 +174,7 @@ pub struct ItemFnBuilder<'a, F> {
     generics: ast::Generics,
 }
 
-impl<'a, F> ItemFnBuilder<'a, F>
+impl<F> ItemFnBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
     pub fn unsafe_(mut self) -> Self {
@@ -196,16 +192,16 @@ impl<'a, F> ItemFnBuilder<'a, F>
         self
     }
 
-    pub fn generics(self) -> GenericsBuilder<'a, Self> {
-        GenericsBuilder::new_with_callback(self.builder.ctx, self)
+    pub fn generics(self) -> GenericsBuilder<Self> {
+        GenericsBuilder::new_with_callback(self)
     }
 
-    pub fn block(self) -> BlockBuilder<'a, Self> {
-        BlockBuilder::new_with_callback(self.builder.ctx, self)
+    pub fn block(self) -> BlockBuilder<Self> {
+        BlockBuilder::new_with_callback(self)
     }
 }
 
-impl<'a, F> Invoke<ast::Generics> for ItemFnBuilder<'a, F>
+impl<F> Invoke<ast::Generics> for ItemFnBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
     type Result = Self;
@@ -215,7 +211,7 @@ impl<'a, F> Invoke<ast::Generics> for ItemFnBuilder<'a, F>
     }
 }
 
-impl<'a, F> Invoke<P<ast::Block>> for ItemFnBuilder<'a, F>
+impl<F> Invoke<P<ast::Block>> for ItemFnBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
     type Result = F::Result;
@@ -233,9 +229,9 @@ impl<'a, F> Invoke<P<ast::Block>> for ItemFnBuilder<'a, F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ItemUseGlobBuilder<'a, F>(ItemBuilder<'a, F>);
+pub struct ItemUseGlobBuilder<F>(ItemBuilder<F>);
 
-impl<'a, F> Invoke<ast::Path> for ItemUseGlobBuilder<'a, F>
+impl<F> Invoke<ast::Path> for ItemUseGlobBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
     type Result = F::Result;
@@ -247,14 +243,14 @@ impl<'a, F> Invoke<ast::Path> for ItemUseGlobBuilder<'a, F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ItemStructBuilder<'a, F> {
-    builder: ItemBuilder<'a, F>,
+pub struct ItemStructBuilder<F> {
+    builder: ItemBuilder<F>,
     id: ast::Ident,
     generics: ast::Generics,
     fields: Vec<ast::StructField>,
 }
 
-impl<'a, F> ItemStructBuilder<'a, F>
+impl<F> ItemStructBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
     pub fn with_generics(mut self, generics: ast::Generics) -> Self {
@@ -262,8 +258,8 @@ impl<'a, F> ItemStructBuilder<'a, F>
         self
     }
 
-    pub fn generics(self) -> GenericsBuilder<'a, Self> {
-        GenericsBuilder::new_with_callback(self.builder.ctx, self)
+    pub fn generics(self) -> GenericsBuilder<Self> {
+        GenericsBuilder::new_with_callback(self)
     }
 
     pub fn with_field(mut self, field: ast::StructField) -> Self {
@@ -271,14 +267,13 @@ impl<'a, F> ItemStructBuilder<'a, F>
         self
     }
 
-    pub fn field<T>(self, id: T) -> TyBuilder<'a, ItemStructFieldBuilder<'a, Self>>
+    pub fn field<T>(self, id: T) -> TyBuilder<ItemStructFieldBuilder<Self>>
         where T: ToIdent,
     {
-        let id = id.to_ident(self.builder.ctx);
+        let id = id.to_ident();
         let span = self.builder.span;
 
-        TyBuilder::new_with_callback(self.builder.ctx, ItemStructFieldBuilder {
-            ctx: self.builder.ctx,
+        TyBuilder::new_with_callback(ItemStructFieldBuilder {
             callback: self,
             span: span,
             kind: ast::StructFieldKind::NamedField(id, ast::Inherited),
@@ -296,7 +291,7 @@ impl<'a, F> ItemStructBuilder<'a, F>
     }
 }
 
-impl<'a, F> Invoke<ast::Generics> for ItemStructBuilder<'a, F>
+impl<F> Invoke<ast::Generics> for ItemStructBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
     type Result = Self;
@@ -306,7 +301,7 @@ impl<'a, F> Invoke<ast::Generics> for ItemStructBuilder<'a, F>
     }
 }
 
-impl<'a, F> Invoke<ast::StructField> for ItemStructBuilder<'a, F>
+impl<F> Invoke<ast::StructField> for ItemStructBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
     type Result = Self;
@@ -318,14 +313,14 @@ impl<'a, F> Invoke<ast::StructField> for ItemStructBuilder<'a, F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ItemTupleStructBuilder<'a, F> {
-    builder: ItemBuilder<'a, F>,
+pub struct ItemTupleStructBuilder<F> {
+    builder: ItemBuilder<F>,
     id: ast::Ident,
     generics: ast::Generics,
     fields: Vec<ast::StructField>,
 }
 
-impl<'a, F> ItemTupleStructBuilder<'a, F>
+impl<F> ItemTupleStructBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
     pub fn with_generics(mut self, generics: ast::Generics) -> Self {
@@ -333,8 +328,8 @@ impl<'a, F> ItemTupleStructBuilder<'a, F>
         self
     }
 
-    pub fn generics(self) -> GenericsBuilder<'a, Self> {
-        GenericsBuilder::new_with_callback(self.builder.ctx, self)
+    pub fn generics(self) -> GenericsBuilder<Self> {
+        GenericsBuilder::new_with_callback(self)
     }
 
     pub fn with_field(mut self, field: ast::StructField) -> Self {
@@ -355,15 +350,14 @@ impl<'a, F> ItemTupleStructBuilder<'a, F>
         self.field().build_ty(ty)
     }
 
-    pub fn ty(self) -> TyBuilder<'a, Self> {
-        TyBuilder::new_with_callback(self.builder.ctx, self)
+    pub fn ty(self) -> TyBuilder<Self> {
+        TyBuilder::new_with_callback(self)
     }
 
-    pub fn field(self) -> TyBuilder<'a, ItemStructFieldBuilder<'a, Self>> {
+    pub fn field(self) -> TyBuilder<ItemStructFieldBuilder<Self>> {
         let span = self.builder.span;
 
-        TyBuilder::new_with_callback(self.builder.ctx, ItemStructFieldBuilder {
-            ctx: self.builder.ctx,
+        TyBuilder::new_with_callback(ItemStructFieldBuilder {
             callback: self,
             span: span,
             kind: ast::StructFieldKind::UnnamedField(ast::Inherited),
@@ -381,7 +375,7 @@ impl<'a, F> ItemTupleStructBuilder<'a, F>
     }
 }
 
-impl<'a, F> Invoke<ast::Generics> for ItemTupleStructBuilder<'a, F>
+impl<F> Invoke<ast::Generics> for ItemTupleStructBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
     type Result = Self;
@@ -391,7 +385,7 @@ impl<'a, F> Invoke<ast::Generics> for ItemTupleStructBuilder<'a, F>
     }
 }
 
-impl<'a, F> Invoke<P<ast::Ty>> for ItemTupleStructBuilder<'a, F>
+impl<F> Invoke<P<ast::Ty>> for ItemTupleStructBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
     type Result = Self;
@@ -401,7 +395,7 @@ impl<'a, F> Invoke<P<ast::Ty>> for ItemTupleStructBuilder<'a, F>
     }
 }
 
-impl<'a, F> Invoke<ast::StructField> for ItemTupleStructBuilder<'a, F>
+impl<F> Invoke<ast::StructField> for ItemTupleStructBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
     type Result = Self;
@@ -413,15 +407,14 @@ impl<'a, F> Invoke<ast::StructField> for ItemTupleStructBuilder<'a, F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ItemStructFieldBuilder<'a, F> {
-    ctx: &'a Ctx,
+pub struct ItemStructFieldBuilder<F> {
     callback: F,
     span: Span,
     kind: ast::StructFieldKind,
     attrs: Vec<ast::Attribute>,
 }
 
-impl<'a, F> ItemStructFieldBuilder<'a, F>
+impl<F> ItemStructFieldBuilder<F>
     where F: Invoke<ast::StructField>,
 {
     pub fn span(mut self, span: Span) -> Self {
@@ -429,9 +422,9 @@ impl<'a, F> ItemStructFieldBuilder<'a, F>
         self
     }
 
-    pub fn attr(self) -> AttrBuilder<'a, Self> {
+    pub fn attr(self) -> AttrBuilder<Self> {
         let span = self.span;
-        AttrBuilder::new_with_callback(self.ctx, self).span(span)
+        AttrBuilder::new_with_callback(self).span(span)
     }
 
     pub fn build_ty(self, ty: P<ast::Ty>) -> F::Result {
@@ -444,13 +437,13 @@ impl<'a, F> ItemStructFieldBuilder<'a, F>
         self.callback.invoke(respan(self.span, field))
     }
 
-    pub fn ty(self) -> TyBuilder<'a, Self> {
+    pub fn ty(self) -> TyBuilder<Self> {
         let span = self.span;
-        TyBuilder::new_with_callback(self.ctx, self).span(span)
+        TyBuilder::new_with_callback(self).span(span)
     }
 }
 
-impl<'a, F> Invoke<ast::Attribute> for ItemStructFieldBuilder<'a, F> {
+impl<F> Invoke<ast::Attribute> for ItemStructFieldBuilder<F> {
     type Result = Self;
 
     fn invoke(mut self, attr: ast::Attribute) -> Self {
@@ -459,7 +452,7 @@ impl<'a, F> Invoke<ast::Attribute> for ItemStructFieldBuilder<'a, F> {
     }
 }
 
-impl<'a, F> Invoke<P<ast::Ty>> for ItemStructFieldBuilder<'a, F>
+impl<F> Invoke<P<ast::Ty>> for ItemStructFieldBuilder<F>
     where F: Invoke<ast::StructField>,
 {
     type Result = F::Result;

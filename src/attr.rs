@@ -6,25 +6,22 @@ use syntax::codemap::{DUMMY_SP, Span, respan};
 use syntax::parse::token;
 use syntax::ptr::P;
 
-use ctx::Ctx;
 use invoke::Invoke;
 use lit::LitBuilder;
 use str::ToInternedString;
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct AttrBuilder<'a, F> {
-    ctx: &'a Ctx,
+pub struct AttrBuilder<F> {
     callback: F,
     span: Span,
 }
 
-impl<'a, F> AttrBuilder<'a, F>
+impl<F> AttrBuilder<F>
     where F: Invoke<ast::Attribute>,
 {
-    pub fn new_with_callback(ctx: &'a Ctx, callback: F) -> Self {
+    pub fn new_with_callback(callback: F) -> Self {
         AttrBuilder {
-            ctx: ctx,
             callback: callback,
             span: DUMMY_SP,
         }
@@ -56,16 +53,16 @@ impl<'a, F> AttrBuilder<'a, F>
         self.build_meta_item_(ast::MetaWord(word.into_interned_string()))
     }
 
-    pub fn list<T>(self, word: T) -> AttrListBuilder<'a, Self>
+    pub fn list<T>(self, word: T) -> AttrListBuilder<Self>
         where T: ToInternedString
     {
-        AttrListBuilder::new_with_callback(self.ctx, word, self)
+        AttrListBuilder::new_with_callback(word, self)
     }
 
-    pub fn name_value<T>(self, name: T) -> LitBuilder<'a, AttrNameValueBuilder<Self>>
+    pub fn name_value<T>(self, name: T) -> LitBuilder<AttrNameValueBuilder<Self>>
         where T: ToInternedString,
     {
-        LitBuilder::new_with_callback(self.ctx, AttrNameValueBuilder {
+        LitBuilder::new_with_callback(AttrNameValueBuilder {
             callback: self,
             name: name.into_interned_string(),
         })
@@ -115,7 +112,7 @@ impl<'a, F> AttrBuilder<'a, F>
     }
 }
 
-impl<'a, F> Invoke<P<ast::MetaItem>> for AttrBuilder<'a, F>
+impl<F> Invoke<P<ast::MetaItem>> for AttrBuilder<F>
     where F: Invoke<ast::Attribute>,
 {
     type Result = F::Result;
@@ -125,7 +122,7 @@ impl<'a, F> Invoke<P<ast::MetaItem>> for AttrBuilder<'a, F>
     }
 }
 
-impl<'a, F> Invoke<ast::MetaItem_> for AttrBuilder<'a, F>
+impl<F> Invoke<ast::MetaItem_> for AttrBuilder<F>
     where F: Invoke<ast::Attribute>,
 {
     type Result = F::Result;
@@ -137,22 +134,20 @@ impl<'a, F> Invoke<ast::MetaItem_> for AttrBuilder<'a, F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct AttrListBuilder<'a, F> {
-    ctx: &'a Ctx,
+pub struct AttrListBuilder<F> {
     callback: F,
     span: Span,
     name: token::InternedString,
     items: Vec<P<ast::MetaItem>>,
 }
 
-impl<'a, F> AttrListBuilder<'a, F>
+impl<F> AttrListBuilder<F>
     where F: Invoke<P<ast::MetaItem>>,
 {
-    pub fn new_with_callback<T>(ctx: &'a Ctx, name: T, callback: F) -> Self
+    pub fn new_with_callback<T>(name: T, callback: F) -> Self
         where T: ToInternedString,
     {
         AttrListBuilder {
-            ctx: ctx,
             callback: callback,
             span: DUMMY_SP,
             name: name.into_interned_string(),
@@ -204,16 +199,16 @@ impl<'a, F> AttrListBuilder<'a, F>
         self.with_meta_item_(ast::MetaWord(word.into_interned_string()))
     }
 
-    pub fn list<T>(self, name: T) -> AttrListBuilder<'a, Self>
+    pub fn list<T>(self, name: T) -> AttrListBuilder<Self>
         where T: ToInternedString,
     {
-        AttrListBuilder::new_with_callback(self.ctx, name, self)
+        AttrListBuilder::new_with_callback(name, self)
     }
 
-    pub fn name_value<T>(self, name: T) -> LitBuilder<'a, AttrNameValueBuilder<Self>>
+    pub fn name_value<T>(self, name: T) -> LitBuilder<AttrNameValueBuilder<Self>>
         where T: ToInternedString,
     {
-        LitBuilder::new_with_callback(self.ctx, AttrNameValueBuilder {
+        LitBuilder::new_with_callback(AttrNameValueBuilder {
             callback: self,
             name: name.into_interned_string(),
         })
@@ -225,7 +220,7 @@ impl<'a, F> AttrListBuilder<'a, F>
     }
 }
 
-impl<'a, F> Invoke<P<ast::MetaItem>> for AttrListBuilder<'a, F>
+impl<F> Invoke<P<ast::MetaItem>> for AttrListBuilder<F>
     where F: Invoke<P<ast::MetaItem>>,
 {
     type Result = Self;
@@ -235,7 +230,7 @@ impl<'a, F> Invoke<P<ast::MetaItem>> for AttrListBuilder<'a, F>
     }
 }
 
-impl<'a, F> Invoke<ast::MetaItem_> for AttrListBuilder<'a, F>
+impl<F> Invoke<ast::MetaItem_> for AttrListBuilder<F>
     where F: Invoke<P<ast::MetaItem>>,
 {
     type Result = Self;

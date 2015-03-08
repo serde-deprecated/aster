@@ -7,7 +7,6 @@ use syntax::ptr::P;
 
 use invoke::{Invoke, Identity};
 
-use ctx::Ctx;
 use ident::ToIdent;
 use name::ToName;
 use ty::TyBuilder;
@@ -17,60 +16,58 @@ use lifetime::IntoLifetime;
 //////////////////////////////////////////////////////////////////////////////
 
 pub trait IntoPath {
-    fn into_path(self, ctx: &Ctx) -> ast::Path;
+    fn into_path(self) -> ast::Path;
 }
 
 impl IntoPath for ast::Path {
-    fn into_path(self, _ctx: &Ctx) -> ast::Path {
+    fn into_path(self) -> ast::Path {
         self
     }
 }
 
-impl<'a> IntoPath for ast::Ident {
-    fn into_path(self, ctx: &Ctx) -> ast::Path {
-        PathBuilder::new(ctx).id(self).build()
+impl IntoPath for ast::Ident {
+    fn into_path(self) -> ast::Path {
+        PathBuilder::new().id(self).build()
     }
 }
 
 impl<'a> IntoPath for &'a str {
-    fn into_path(self, ctx: &Ctx) -> ast::Path {
-        PathBuilder::new(ctx).id(self).build()
+    fn into_path(self) -> ast::Path {
+        PathBuilder::new().id(self).build()
     }
 }
 
 impl IntoPath for String {
-    fn into_path(self, ctx: &Ctx) -> ast::Path {
-        (&*self).into_path(ctx)
+    fn into_path(self) -> ast::Path {
+        (&*self).into_path()
     }
 }
 
-impl<'a, I, T> IntoPath for I where I: IntoIterator<Item=T>, T: ToIdent {
-    fn into_path(self, ctx: &Ctx) -> ast::Path {
-        PathBuilder::new(ctx).ids(self).build()
+impl<I, T> IntoPath for I where I: IntoIterator<Item=T>, T: ToIdent {
+    fn into_path(self) -> ast::Path {
+        PathBuilder::new().ids(self).build()
     }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct PathBuilder<'a, F=Identity> {
-    ctx: &'a Ctx,
+pub struct PathBuilder<F=Identity> {
     callback: F,
     span: Span,
     global: bool,
 }
 
-impl<'a> PathBuilder<'a> {
-    pub fn new(ctx: &'a Ctx) -> Self {
-        PathBuilder::new_with_callback(ctx, Identity)
+impl PathBuilder {
+    pub fn new() -> Self {
+        PathBuilder::new_with_callback(Identity)
     }
 }
 
-impl<'a, F> PathBuilder<'a, F>
+impl<F> PathBuilder<F>
     where F: Invoke<ast::Path>,
 {
-    pub fn new_with_callback(ctx: &'a Ctx, callback: F) -> Self {
+    pub fn new_with_callback(callback: F) -> Self {
         PathBuilder {
-            ctx: ctx,
             callback: callback,
             span: DUMMY_SP,
             global: false,
@@ -87,7 +84,7 @@ impl<'a, F> PathBuilder<'a, F>
         self
     }
 
-    pub fn ids<I, T>(self, ids: I) -> PathSegmentsBuilder<'a, F>
+    pub fn ids<I, T>(self, ids: I) -> PathSegmentsBuilder<F>
         where I: IntoIterator<Item=T>,
               T: ToIdent,
     {
@@ -97,18 +94,17 @@ impl<'a, F> PathBuilder<'a, F>
         self.id(id).ids(ids)
     }
 
-    pub fn id<I>(self, id: I) -> PathSegmentsBuilder<'a, F>
+    pub fn id<I>(self, id: I) -> PathSegmentsBuilder<F>
         where I: ToIdent,
     {
         self.segment(id).build()
     }
 
     pub fn segment<I>(self, id: I)
-        -> PathSegmentBuilder<'a, PathSegmentsBuilder<'a, F>>
+        -> PathSegmentBuilder<PathSegmentsBuilder<F>>
         where I: ToIdent,
     {
-        PathSegmentBuilder::new_with_callback(self.ctx, id, PathSegmentsBuilder {
-            ctx: self.ctx,
+        PathSegmentBuilder::new_with_callback(id, PathSegmentsBuilder {
             callback: self.callback,
             span: self.span,
             global: self.global,
@@ -119,18 +115,17 @@ impl<'a, F> PathBuilder<'a, F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct PathSegmentsBuilder<'a, F=Identity> {
-    ctx: &'a Ctx,
+pub struct PathSegmentsBuilder<F=Identity> {
     callback: F,
     span: Span,
     global: bool,
     segments: Vec<ast::PathSegment>,
 }
 
-impl<'a, F> PathSegmentsBuilder<'a, F>
+impl<F> PathSegmentsBuilder<F>
     where F: Invoke<ast::Path>,
 {
-    pub fn ids<I, T>(mut self, ids: I) -> PathSegmentsBuilder<'a, F>
+    pub fn ids<I, T>(mut self, ids: I) -> PathSegmentsBuilder<F>
         where I: IntoIterator<Item=T>,
               T: ToIdent,
     {
@@ -141,16 +136,16 @@ impl<'a, F> PathSegmentsBuilder<'a, F>
         self 
     }
 
-    pub fn id<T>(self, id: T) -> PathSegmentsBuilder<'a, F>
+    pub fn id<T>(self, id: T) -> PathSegmentsBuilder<F>
         where T: ToIdent,
     {
         self.segment(id).build()
     }
 
-    pub fn segment<T>(self, id: T) -> PathSegmentBuilder<'a, Self>
+    pub fn segment<T>(self, id: T) -> PathSegmentBuilder<Self>
         where T: ToIdent,
     {
-        PathSegmentBuilder::new_with_callback(self.ctx, id, self)
+        PathSegmentBuilder::new_with_callback(id, self)
     }
 
     pub fn build(self) -> F::Result {
@@ -162,7 +157,7 @@ impl<'a, F> PathSegmentsBuilder<'a, F>
     }
 }
 
-impl<'a, F> Invoke<ast::PathSegment> for PathSegmentsBuilder<'a, F> {
+impl<F> Invoke<ast::PathSegment> for PathSegmentsBuilder<F> {
     type Result = Self;
 
     fn invoke(mut self, segment: ast::PathSegment) -> Self {
@@ -173,8 +168,7 @@ impl<'a, F> Invoke<ast::PathSegment> for PathSegmentsBuilder<'a, F> {
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct PathSegmentBuilder<'a, F=Identity> {
-    ctx: &'a Ctx,
+pub struct PathSegmentBuilder<F=Identity> {
     callback: F,
     span: Span,
     id: ast::Ident,
@@ -183,17 +177,16 @@ pub struct PathSegmentBuilder<'a, F=Identity> {
     bindings: Vec<P<ast::TypeBinding>>,
 }
 
-impl<'a, F> PathSegmentBuilder<'a, F>
+impl<F> PathSegmentBuilder<F>
     where F: Invoke<ast::PathSegment>,
 {
-    pub fn new_with_callback<I>(ctx: &'a Ctx, id: I, callback: F) -> Self
+    pub fn new_with_callback<I>(id: I, callback: F) -> Self
         where I: ToIdent,
     {
         PathSegmentBuilder {
-            ctx: ctx,
             callback: callback,
             span: DUMMY_SP,
-            id: id.to_ident(ctx),
+            id: id.to_ident(),
             lifetimes: Vec::new(),
             tys: Vec::new(),
             bindings: Vec::new(),
@@ -206,14 +199,12 @@ impl<'a, F> PathSegmentBuilder<'a, F>
     }
 
     pub fn with_generics(self, generics: ast::Generics) -> Self {
-        let ctx = self.ctx;
-
         // Strip off the bounds.
         let lifetimes = generics.lifetimes.iter()
             .map(|lifetime_def| lifetime_def.lifetime);
 
         let tys = generics.ty_params.iter()
-            .map(|ty_param| TyBuilder::new(ctx).id(ty_param.ident));
+            .map(|ty_param| TyBuilder::new().id(ty_param.ident));
 
         self.with_lifetimes(lifetimes)
             .with_tys(tys)
@@ -224,8 +215,7 @@ impl<'a, F> PathSegmentBuilder<'a, F>
         where I: IntoIterator<Item=L>,
               L: IntoLifetime,
     {
-        let ctx = self.ctx;
-        let iter = iter.into_iter().map(|lifetime| lifetime.into_lifetime(ctx));
+        let iter = iter.into_iter().map(|lifetime| lifetime.into_lifetime());
         self.lifetimes.extend(iter);
         self
     }
@@ -233,7 +223,7 @@ impl<'a, F> PathSegmentBuilder<'a, F>
     pub fn with_lifetime<L>(mut self, lifetime: L) -> Self
         where L: IntoLifetime,
     {
-        self.lifetimes.push(lifetime.into_lifetime(self.ctx));
+        self.lifetimes.push(lifetime.into_lifetime());
         self
     }
 
@@ -243,7 +233,7 @@ impl<'a, F> PathSegmentBuilder<'a, F>
         let lifetime = ast::Lifetime {
             id: ast::DUMMY_NODE_ID,
             span: self.span,
-            name: name.to_name(self.ctx.clone()),
+            name: name.to_name(),
         };
         self.with_lifetime(lifetime)
     }
@@ -260,8 +250,8 @@ impl<'a, F> PathSegmentBuilder<'a, F>
         self
     }
 
-    pub fn ty(self) -> TyBuilder<'a, Self> {
-        TyBuilder::new_with_callback(self.ctx, self)
+    pub fn ty(self) -> TyBuilder<Self> {
+        TyBuilder::new_with_callback(self)
     }
 
     pub fn build(self) -> F::Result {
@@ -280,7 +270,7 @@ impl<'a, F> PathSegmentBuilder<'a, F>
     }
 }
 
-impl<'a, F> Invoke<P<ast::Ty>> for PathSegmentBuilder<'a, F>
+impl<F> Invoke<P<ast::Ty>> for PathSegmentBuilder<F>
     where F: Invoke<ast::PathSegment>
 {
     type Result = Self;

@@ -2,28 +2,26 @@ use syntax::ast;
 use syntax::codemap::{DUMMY_SP};
 
 use invoke::{Invoke, Identity};
-
-use ctx::Ctx;
 use name::ToName;
 
 //////////////////////////////////////////////////////////////////////////////
 
 pub trait IntoLifetime {
-    fn into_lifetime(self, ctx: &Ctx) -> ast::Lifetime;
+    fn into_lifetime(self) -> ast::Lifetime;
 }
 
 impl IntoLifetime for ast::Lifetime {
-    fn into_lifetime(self, _ctx: &Ctx) -> ast::Lifetime {
+    fn into_lifetime(self) -> ast::Lifetime {
         self
     }
 }
 
 impl<'a> IntoLifetime for &'a str {
-    fn into_lifetime(self, ctx: &Ctx) -> ast::Lifetime {
+    fn into_lifetime(self) -> ast::Lifetime {
         ast::Lifetime {
             id: ast::DUMMY_NODE_ID,
             span: DUMMY_SP,
-            name: self.to_name(ctx),
+            name: self.to_name(),
         }
     }
 }
@@ -31,17 +29,17 @@ impl<'a> IntoLifetime for &'a str {
 //////////////////////////////////////////////////////////////////////////////
 
 pub trait IntoLifetimeDef {
-    fn into_lifetime_def(self, ctx: &Ctx) -> ast::LifetimeDef;
+    fn into_lifetime_def(self) -> ast::LifetimeDef;
 }
 
 impl IntoLifetimeDef for ast::LifetimeDef {
-    fn into_lifetime_def(self, _ctx: &Ctx) -> ast::LifetimeDef {
+    fn into_lifetime_def(self) -> ast::LifetimeDef {
         self
     }
 }
 
 impl IntoLifetimeDef for ast::Lifetime {
-    fn into_lifetime_def(self, _ctx: &Ctx) -> ast::LifetimeDef {
+    fn into_lifetime_def(self) -> ast::LifetimeDef {
         ast::LifetimeDef {
             lifetime: self,
             bounds: vec![],
@@ -50,42 +48,46 @@ impl IntoLifetimeDef for ast::Lifetime {
 }
 
 impl<'a> IntoLifetimeDef for &'a str {
-    fn into_lifetime_def(self, ctx: &Ctx) -> ast::LifetimeDef {
-        self.into_lifetime(ctx).into_lifetime_def(ctx)
+    fn into_lifetime_def(self) -> ast::LifetimeDef {
+        self.into_lifetime().into_lifetime_def()
+    }
+}
+
+impl IntoLifetimeDef for String {
+    fn into_lifetime_def(self) -> ast::LifetimeDef {
+        (*self).into_lifetime().into_lifetime_def()
     }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct LifetimeDefBuilder<'a, F=Identity> {
-    ctx: &'a Ctx,
+pub struct LifetimeDefBuilder<F=Identity> {
     callback: F,
     lifetime: ast::Lifetime,
     bounds: Vec<ast::Lifetime>,
 }
 
-impl<'a> LifetimeDefBuilder<'a> {
-    pub fn new<N>(ctx: &'a Ctx, name: N) -> Self
+impl LifetimeDefBuilder {
+    pub fn new<N>(name: N) -> Self
         where N: ToName,
     {
-        LifetimeDefBuilder::new_with_callback(ctx, name, Identity)
+        LifetimeDefBuilder::new_with_callback(name, Identity)
     }
 }
 
-impl<'a, F> LifetimeDefBuilder<'a, F>
+impl<F> LifetimeDefBuilder<F>
     where F: Invoke<ast::LifetimeDef>,
 {
-    pub fn new_with_callback<N>(ctx: &'a Ctx, name: N, callback: F) -> Self
+    pub fn new_with_callback<N>(name: N, callback: F) -> Self
         where N: ToName,
     {
         let lifetime = ast::Lifetime {
             id: ast::DUMMY_NODE_ID,
             span: DUMMY_SP,
-            name: name.to_name(ctx),
+            name: name.to_name(),
         };
 
         LifetimeDefBuilder {
-            ctx: ctx,
             callback: callback,
             lifetime: lifetime,
             bounds: Vec::new(),
@@ -98,7 +100,7 @@ impl<'a, F> LifetimeDefBuilder<'a, F>
         let lifetime = ast::Lifetime {
             id: ast::DUMMY_NODE_ID,
             span: DUMMY_SP,
-            name: name.to_name(self.ctx),
+            name: name.to_name(),
         };
 
         self.bounds.push(lifetime);

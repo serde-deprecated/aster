@@ -4,36 +4,32 @@ use syntax::ptr::P;
 
 use invoke::{Invoke, Identity};
 
-use ctx::Ctx;
-
 use str::ToInternedString;
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct LitBuilder<'a, F=Identity> {
-    _ctx: &'a Ctx,
+pub struct LitBuilder<F=Identity> {
     callback: F,
     span: Span,
 }
 
-impl<'a> LitBuilder<'a> {
-    pub fn builder(ctx: &Ctx) -> LitBuilder {
-        LitBuilder::new_with_callback(ctx, Identity)
+impl LitBuilder {
+    pub fn builder() -> LitBuilder {
+        LitBuilder::new_with_callback(Identity)
     }
 }
 
-impl<'a, F> LitBuilder<'a, F>
+impl<F> LitBuilder<F>
     where F: Invoke<P<ast::Lit>>,
 {
-    pub fn new_with_callback(ctx: &'a Ctx, callback: F) -> Self {
+    pub fn new_with_callback(callback: F) -> Self {
         LitBuilder {
-            _ctx: ctx,
             callback: callback,
             span: DUMMY_SP,
         }
     }
 
-    pub fn span(mut self, span: Span) -> LitBuilder<'a, F> {
+    pub fn span(mut self, span: Span) -> LitBuilder<F> {
         self.span = span;
         self
     }

@@ -3,15 +3,13 @@ use syntax::ast;
 use syntax::codemap::{DUMMY_SP, Span, respan};
 use syntax::ptr::P;
 
-use ctx::Ctx;
 use generics::GenericsBuilder;
 use ident::ToIdent;
 use invoke::{Invoke, Identity};
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct MethodBuilder<'a, F=Identity> {
-    ctx: &'a Ctx,
+pub struct MethodBuilder<F=Identity> {
     callback: F,
     span: Span,
     attrs: Vec<ast::Attribute>,
@@ -22,27 +20,26 @@ pub struct MethodBuilder<'a, F=Identity> {
     vis: ast::Visibility,
 }
 
-impl<'a> MethodBuilder<'a> {
-    pub fn new<I: ToIdent>(ctx: &'a Ctx, id: I) -> Self {
-        MethodBuilder::new_with_callback(ctx, id, Identity)
+impl MethodBuilder {
+    pub fn new<I: ToIdent>(id: I) -> Self {
+        MethodBuilder::new_with_callback(id, Identity)
     }
 }
 
-impl<'a, F> MethodBuilder<'a, F>
+impl<F> MethodBuilder<F>
     where F: Invoke<P<ast::Method>>,
 {
-    pub fn new_with_callback<I>(ctx: &'a Ctx, id: I, callback: F) -> Self
+    pub fn new_with_callback<I>(id: I, callback: F) -> Self
         where I: ToIdent,
     {
         MethodBuilder {
-            ctx: ctx,
             callback: callback,
             span: DUMMY_SP,
             attrs: vec![],
             abi: Abi::Rust,
-            generics: GenericsBuilder::new(ctx).build(),
+            generics: GenericsBuilder::new().build(),
             unsafety: ast::Unsafety::Normal,
-            id: id.to_ident(ctx),
+            id: id.to_ident(),
             vis: ast::Visibility::Inherited,
         }
     }
@@ -72,22 +69,22 @@ impl<'a, F> MethodBuilder<'a, F>
         self
     }
 
-    pub fn generics(self) -> GenericsBuilder<'a, Self> {
-        GenericsBuilder::new_with_callback(self.ctx, self)
+    pub fn generics(self) -> GenericsBuilder<Self> {
+        GenericsBuilder::new_with_callback(self)
     }
 
-    pub fn self_(self) -> SelfBuilder<'a, Self> {
-        SelfBuilder::new_with_callback(self.ctx, self)
+    pub fn self_(self) -> SelfBuilder<Self> {
+        SelfBuilder::new_with_callback(self)
     }
 
     /*
-    pub fn block(self) -> BlockBuilder<'a, Self> {
-        BlockBuilder::new_with_callback(self.ctx, self)
+    pub fn block(self) -> BlockBuilder<Self> {
+        BlockBuilder::new_with_callback(self)
     }
     */
 }
 
-impl<'a, F> Invoke<ast::Generics> for MethodBuilder<'a, F>
+impl<F> Invoke<ast::Generics> for MethodBuilder<F>
     where F: Invoke<P<ast::Method>>,
 {
     type Result = Self;
@@ -97,12 +94,12 @@ impl<'a, F> Invoke<ast::Generics> for MethodBuilder<'a, F>
     }
 }
 
-impl<'a, F> Invoke<ast::ExplicitSelf> for MethodBuilder<'a, F>
+impl<F> Invoke<ast::ExplicitSelf> for MethodBuilder<F>
     where F: Invoke<P<ast::Method>>,
 {
-    type Result = MethodSelfBuilder<'a, F>;
+    type Result = MethodSelfBuilder<F>;
 
-    fn invoke(self, self_: ast::ExplicitSelf) -> MethodSelfBuilder<'a, F> {
+    fn invoke(self, self_: ast::ExplicitSelf) -> MethodSelfBuilder<F> {
         MethodSelfBuilder {
             builder: self,
             self_: self_,
@@ -110,17 +107,17 @@ impl<'a, F> Invoke<ast::ExplicitSelf> for MethodBuilder<'a, F>
     }
 }
 
-pub struct MethodSelfBuilder<'a, F> {
-    builder: MethodBuilder<'a, F>,
+pub struct MethodSelfBuilder<F> {
+    builder: MethodBuilder<F>,
     self_: ast::ExplicitSelf,
 }
 
-impl<'a, F> Invoke<P<ast::FnDecl>> for MethodSelfBuilder<'a, F>
+impl<F> Invoke<P<ast::FnDecl>> for MethodSelfBuilder<F>
     where F: Invoke<P<ast::Method>>,
 {
-    type Result = MethodSelfFnDeclBuilder<'a, F>;
+    type Result = MethodSelfFnDeclBuilder<F>;
 
-    fn invoke(self, fn_decl: P<ast::FnDecl>) -> MethodSelfFnDeclBuilder<'a, F> {
+    fn invoke(self, fn_decl: P<ast::FnDecl>) -> MethodSelfFnDeclBuilder<F> {
         MethodSelfFnDeclBuilder {
             builder: self.builder,
             self_: self.self_,
@@ -129,13 +126,13 @@ impl<'a, F> Invoke<P<ast::FnDecl>> for MethodSelfBuilder<'a, F>
     }
 }
 
-pub struct MethodSelfFnDeclBuilder<'a, F> {
-    builder: MethodBuilder<'a, F>,
+pub struct MethodSelfFnDeclBuilder<F> {
+    builder: MethodBuilder<F>,
     self_: ast::ExplicitSelf,
     fn_decl: P<ast::FnDecl>,
 }
 
-impl<'a, F> Invoke<P<ast::Block>> for MethodSelfFnDeclBuilder<'a, F>
+impl<F> Invoke<P<ast::Block>> for MethodSelfFnDeclBuilder<F>
     where F: Invoke<P<ast::Method>>,
 {
     type Result = F::Result;
@@ -162,7 +159,7 @@ impl<'a, F> Invoke<P<ast::Block>> for MethodSelfFnDeclBuilder<'a, F>
 }
 
 /*
-impl<'a, F> Invoke<ast::Block> for MethodBuilder<'a, F>
+impl<F> Invoke<ast::Block> for MethodBuilder<F>
     where F: Invoke<P<ast::Method>>,
 {
     type Result = F::Result;
@@ -191,18 +188,16 @@ impl<'a, F> Invoke<ast::Block> for MethodBuilder<'a, F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct SelfBuilder<'a, F> {
-    ctx: &'a Ctx,
+pub struct SelfBuilder<F> {
     callback: F,
     span: Span,
 }
 
-impl<'a, F> SelfBuilder<'a, F>
+impl<F> SelfBuilder<F>
     where F: Invoke<ast::ExplicitSelf>,
 {
-    pub fn new_with_callback(ctx: &'a Ctx, callback: F) -> Self {
+    pub fn new_with_callback(callback: F) -> Self {
         SelfBuilder {
-            ctx: ctx,
             callback: callback,
             span: DUMMY_SP,
         }
@@ -222,7 +217,7 @@ impl<'a, F> SelfBuilder<'a, F>
     }
 
     pub fn value(self) -> F::Result {
-        let ident = "self".to_ident(self.ctx);
+        let ident = "self".to_ident();
         self.build_self(ast::ExplicitSelf_::SelfValue(ident))
     }
 
@@ -231,19 +226,19 @@ impl<'a, F> SelfBuilder<'a, F>
         self.self_(ast::ExplicitSelf_::SelfValue(ident))
     }
 
-    pub fn ty(self) -> TyBuilder<'a, F::Result> {
-        TyBuilder::new_with_callback(self.ctx, self)
+    pub fn ty(self) -> TyBuilder<F::Result> {
+        TyBuilder::new_with_callback(self)
     }
     */
 }
 
-impl<'a, F> Invoke<P<ast::Ty>> for SelfBuilder<'a, F>
+impl<F> Invoke<P<ast::Ty>> for SelfBuilder<F>
     where F: Invoke<ast::ExplicitSelf>,
 {
     type Result = F::Result;
 
     fn invoke(self, ty: P<ast::Ty>) -> F::Result {
-        let ident = "self".to_ident(self.ctx);
+        let ident = "self".to_ident();
         self.build_self(ast::ExplicitSelf_::SelfExplicit(ty, ident))
     }
 }
