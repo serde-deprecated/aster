@@ -35,22 +35,22 @@ impl<F> ExprBuilder<F>
         }
     }
 
+    pub fn build(self, expr: P<ast::Expr>) -> F::Result {
+        self.callback.invoke(expr)
+    }
+
     pub fn span(mut self, span: Span) -> Self {
         self.span = span;
         self
     }
 
-    pub fn build(self, expr: P<ast::Expr>) -> F::Result {
-        self.callback.invoke(expr)
-    }
-
     pub fn build_expr_(self, expr: ast::Expr_) -> F::Result {
-        let span = self.span;
-        self.build(P(ast::Expr {
+        let expr = P(ast::Expr {
             id: ast::DUMMY_NODE_ID,
             node: expr,
-            span: span,
-        }))
+            span: self.span,
+        });
+        self.build(expr)
     }
 
     pub fn build_path(self, path: ast::Path) -> F::Result {
@@ -577,11 +577,6 @@ impl<F: Invoke<P<ast::Expr>>> ExprTupleBuilder<F>
         self
     }
 
-    pub fn with_expr(mut self, expr: P<ast::Expr>) -> Self {
-        self.exprs.push(expr);
-        self
-    }
-
     pub fn expr(self) -> ExprBuilder<Self> {
         ExprBuilder::new_with_callback(self)
     }
@@ -596,8 +591,9 @@ impl<F> Invoke<P<ast::Expr>> for ExprTupleBuilder<F>
 {
     type Result = ExprTupleBuilder<F>;
 
-    fn invoke(self, expr: P<ast::Expr>) -> Self {
-        self.with_expr(expr)
+    fn invoke(mut self, expr: P<ast::Expr>) -> Self {
+        self.exprs.push(expr);
+        self
     }
 }
 
@@ -638,19 +634,6 @@ impl<F> ExprStructPathBuilder<F>
         where I: IntoIterator<Item=ast::Field>,
     {
         self.fields.extend(iter);
-        self
-    }
-
-    pub fn with_field<I>(mut self, id: I, expr: P<ast::Expr>) -> Self
-        where I: ToIdent,
-    {
-        let span = self.span;
-        let id = respan(span, id.to_ident());
-        self.fields.push(ast::Field {
-            ident: id,
-            expr: expr,
-            span: span,
-        });
         self
     }
 
@@ -695,8 +678,14 @@ impl<I, F> Invoke<P<ast::Expr>> for ExprStructFieldBuilder<I, F>
 {
     type Result = ExprStructPathBuilder<F>;
 
-    fn invoke(self, expr: P<ast::Expr>) -> ExprStructPathBuilder<F> {
-        self.builder.with_field(self.id, expr)
+    fn invoke(mut self, expr: P<ast::Expr>) -> ExprStructPathBuilder<F> {
+        let field = ast::Field {
+            ident: respan(self.builder.span, self.id.to_ident()),
+            expr: expr,
+            span: self.builder.span,
+        };
+        self.builder.fields.push(field);
+        self.builder
     }
 }
 

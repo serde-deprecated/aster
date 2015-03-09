@@ -42,6 +42,10 @@ impl<F> ItemBuilder<F>
         }
     }
 
+    pub fn build(self, item: P<ast::Item>) -> F::Result {
+        self.callback.invoke(item)
+    }
+
     pub fn span(mut self, span: Span) -> Self {
         self.span = span;
         self
@@ -59,10 +63,6 @@ impl<F> ItemBuilder<F>
     pub fn pub_(mut self) -> Self {
         self.vis = ast::Visibility::Public;
         self
-    }
-
-    pub fn build_item(self, item: P<ast::Item>) -> F::Result {
-        self.callback.invoke(item)
     }
 
     pub fn build_item_<T>(self, id: T, item_: ast::Item_) -> F::Result
@@ -187,11 +187,6 @@ impl<F> ItemFnBuilder<F>
         self
     }
 
-    pub fn with_generics(mut self, generics: ast::Generics) -> Self {
-        self.generics = generics;
-        self
-    }
-
     pub fn generics(self) -> GenericsBuilder<Self> {
         GenericsBuilder::new_with_callback(self)
     }
@@ -206,8 +201,9 @@ impl<F> Invoke<ast::Generics> for ItemFnBuilder<F>
 {
     type Result = Self;
 
-    fn invoke(self, generics: ast::Generics) -> Self {
-        self.with_generics(generics)
+    fn invoke(mut self, generics: ast::Generics) -> Self {
+        self.generics = generics;
+        self
     }
 }
 
@@ -253,11 +249,6 @@ pub struct ItemStructBuilder<F> {
 impl<F> ItemStructBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
-    pub fn with_generics(mut self, generics: ast::Generics) -> Self {
-        self.generics = generics;
-        self
-    }
-
     pub fn generics(self) -> GenericsBuilder<Self> {
         GenericsBuilder::new_with_callback(self)
     }
@@ -296,8 +287,9 @@ impl<F> Invoke<ast::Generics> for ItemStructBuilder<F>
 {
     type Result = Self;
 
-    fn invoke(self, generics: ast::Generics) -> Self {
-        self.with_generics(generics)
+    fn invoke(mut self, generics: ast::Generics) -> Self {
+        self.generics = generics;
+        self
     }
 }
 
@@ -323,31 +315,17 @@ pub struct ItemTupleStructBuilder<F> {
 impl<F> ItemTupleStructBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
-    pub fn with_generics(mut self, generics: ast::Generics) -> Self {
-        self.generics = generics;
-        self
-    }
-
     pub fn generics(self) -> GenericsBuilder<Self> {
         GenericsBuilder::new_with_callback(self)
-    }
-
-    pub fn with_field(mut self, field: ast::StructField) -> Self {
-        self.fields.push(field);
-        self
     }
 
     pub fn with_tys<I>(mut self, iter: I) -> Self
         where I: IntoIterator<Item=P<ast::Ty>>,
     {
         for ty in iter {
-            self = self.with_ty(ty);
+            self = self.ty().build(ty);
         }
         self
-    }
-
-    pub fn with_ty(self, ty: P<ast::Ty>) -> Self {
-        self.field().build_ty(ty)
     }
 
     pub fn ty(self) -> TyBuilder<Self> {
@@ -380,8 +358,9 @@ impl<F> Invoke<ast::Generics> for ItemTupleStructBuilder<F>
 {
     type Result = Self;
 
-    fn invoke(self, generics: ast::Generics) -> Self {
-        self.with_generics(generics)
+    fn invoke(mut self, generics: ast::Generics) -> Self {
+        self.generics = generics;
+        self
     }
 }
 
@@ -391,7 +370,7 @@ impl<F> Invoke<P<ast::Ty>> for ItemTupleStructBuilder<F>
     type Result = Self;
 
     fn invoke(self, ty: P<ast::Ty>) -> Self {
-        self.with_ty(ty)
+        self.field().build(ty)
     }
 }
 
@@ -400,8 +379,9 @@ impl<F> Invoke<ast::StructField> for ItemTupleStructBuilder<F>
 {
     type Result = Self;
 
-    fn invoke(self, field: ast::StructField) -> Self {
-        self.with_field(field)
+    fn invoke(mut self, field: ast::StructField) -> Self {
+        self.fields.push(field);
+        self
     }
 }
 

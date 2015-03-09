@@ -32,19 +32,18 @@ impl<F> TyBuilder<F>
         }
     }
 
+    pub fn build(self, ty: P<ast::Ty>) -> F::Result {
+        self.callback.invoke(ty)
+    }
+
     pub fn span(mut self, span: Span) -> Self {
         self.span = span;
         self
     }
 
-    pub fn build_ty(self, ty: P<ast::Ty>) -> F::Result {
-        self.callback.invoke(ty)
-    }
-
-
     pub fn build_ty_(self, ty_: ast::Ty_) -> F::Result {
         let span = self.span;
-        self.build_ty(P(ast::Ty {
+        self.build(P(ast::Ty {
             id: ast::DUMMY_NODE_ID,
             node: ty_,
             span: span,

@@ -33,13 +33,13 @@ impl<F> StmtBuilder<F>
         }
     }
 
+    pub fn build(self, stmt: P<ast::Stmt>) -> F::Result {
+        self.callback.invoke(stmt)
+    }
+
     pub fn span(mut self, span: Span) -> Self {
         self.span = span;
         self
-    }
-
-    pub fn build(self, stmt: P<ast::Stmt>) -> F::Result {
-        self.callback.invoke(stmt)
     }
 
     pub fn build_stmt_(self, stmt_: ast::Stmt_) -> F::Result {

@@ -210,7 +210,6 @@ impl<F> PathSegmentBuilder<F>
             .with_tys(tys)
     }
 
-
     pub fn with_lifetimes<I, L>(mut self, iter: I) -> Self
         where I: IntoIterator<Item=L>,
               L: IntoLifetime,

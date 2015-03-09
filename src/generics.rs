@@ -54,6 +54,12 @@ impl<F> GenericsBuilder<F>
         }
     }
 
+    pub fn with(self, generics: ast::Generics) -> Self {
+        self.with_lifetimes(generics.lifetimes.into_iter())
+            .with_ty_params(generics.ty_params.move_iter())
+            .with_predicates(generics.where_clause.predicates.into_iter())
+    }
+
     pub fn span(mut self, span: Span) -> Self {
         self.span = span;
         self
