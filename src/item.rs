@@ -261,15 +261,9 @@ impl<F> ItemStructBuilder<F>
     pub fn field<T>(self, id: T) -> TyBuilder<ItemStructFieldBuilder<Self>>
         where T: ToIdent,
     {
-        let id = id.to_ident();
         let span = self.builder.span;
-
-        TyBuilder::new_with_callback(ItemStructFieldBuilder {
-            callback: self,
-            span: span,
-            kind: ast::StructFieldKind::NamedField(id, ast::Inherited),
-            attrs: vec![],
-        })
+        let builder = ItemStructFieldBuilder::named_with_callback(id, self).span(span);
+        TyBuilder::new_with_callback(builder)
     }
 
     pub fn build(self) -> F::Result {
@@ -334,13 +328,8 @@ impl<F> ItemTupleStructBuilder<F>
 
     pub fn field(self) -> TyBuilder<ItemStructFieldBuilder<Self>> {
         let span = self.builder.span;
-
-        TyBuilder::new_with_callback(ItemStructFieldBuilder {
-            callback: self,
-            span: span,
-            kind: ast::StructFieldKind::UnnamedField(ast::Inherited),
-            attrs: vec![],
-        })
+        let builder = ItemStructFieldBuilder::unnamed_with_callback(self).span(span);
+        TyBuilder::new_with_callback(builder)
     }
 
     pub fn build(self) -> F::Result {
@@ -387,18 +376,59 @@ impl<F> Invoke<ast::StructField> for ItemTupleStructBuilder<F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ItemStructFieldBuilder<F> {
+pub struct ItemStructFieldBuilder<F=Identity> {
     callback: F,
     span: Span,
     kind: ast::StructFieldKind,
     attrs: Vec<ast::Attribute>,
 }
 
+impl ItemStructFieldBuilder {
+    pub fn named<T>(name: T) -> Self
+        where T: ToIdent,
+    {
+        ItemStructFieldBuilder::named_with_callback(name, Identity)
+    }
+
+    pub fn unnamed() -> Self {
+        ItemStructFieldBuilder::unnamed_with_callback(Identity)
+    }
+}
+
 impl<F> ItemStructFieldBuilder<F>
     where F: Invoke<ast::StructField>,
 {
+    pub fn named_with_callback<T>(id: T, callback: F) -> Self
+        where T: ToIdent,
+    {
+        let id = id.to_ident();
+        ItemStructFieldBuilder {
+            callback: callback,
+            span: DUMMY_SP,
+            kind: ast::StructFieldKind::NamedField(id, ast::Inherited),
+            attrs: vec![],
+        }
+    }
+
+    pub fn unnamed_with_callback(callback: F) -> Self {
+        ItemStructFieldBuilder {
+            callback: callback,
+            span: DUMMY_SP,
+            kind: ast::StructFieldKind::UnnamedField(ast::Inherited),
+            attrs: vec![],
+        }
+    }
+
     pub fn span(mut self, span: Span) -> Self {
         self.span = span;
+        self
+    }
+
+    pub fn pub_(mut self) -> Self {
+        match self.kind {
+            ast::StructFieldKind::NamedField(_, ref mut vis) => { *vis = ast::Public; }
+            ast::StructFieldKind::UnnamedField(ref mut vis) => { *vis = ast::Public; }
+        }
         self
     }
 

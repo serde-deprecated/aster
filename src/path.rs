@@ -74,6 +74,10 @@ impl<F> PathBuilder<F>
         }
     }
 
+    pub fn build(self, path: ast::Path) -> F::Result {
+        self.callback.invoke(path)
+    }
+
     pub fn span(mut self, span: Span) -> Self {
         self.span = span;
         self

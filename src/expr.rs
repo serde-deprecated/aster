@@ -637,6 +637,16 @@ impl<F> ExprStructPathBuilder<F>
         self
     }
 
+    pub fn with_id_exprs<I>(mut self, iter: I) -> Self
+        where I: IntoIterator<Item=(ast::Ident, P<ast::Expr>)>,
+    {
+        for (id, expr) in iter {
+            self = self.field(id).build(expr);
+        }
+
+        self
+    }
+
     pub fn field<I>(self, id: I) -> ExprBuilder<ExprStructFieldBuilder<I, F>>
         where I: ToIdent,
     {
@@ -646,7 +656,7 @@ impl<F> ExprStructPathBuilder<F>
         })
     }
 
-    pub fn expr(self) -> ExprBuilder<Self> {
+    pub fn build_with(self) -> ExprBuilder<Self> {
         ExprBuilder::new_with_callback(self)
     }
 
