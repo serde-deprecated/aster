@@ -3,6 +3,7 @@ use syntax::ast;
 use syntax::codemap::{DUMMY_SP, Span, respan};
 use syntax::ptr::P;
 
+use block::BlockBuilder;
 use generics::GenericsBuilder;
 use ident::ToIdent;
 use invoke::{Invoke, Identity};
@@ -71,12 +72,6 @@ impl<F> MethodBuilder<F>
     pub fn self_(self) -> SelfBuilder<Self> {
         SelfBuilder::new_with_callback(self)
     }
-
-    /*
-    pub fn block(self) -> BlockBuilder<Self> {
-        BlockBuilder::new_with_callback(self)
-    }
-    */
 }
 
 impl<F> Invoke<ast::Generics> for MethodBuilder<F>
@@ -103,6 +98,8 @@ impl<F> Invoke<ast::ExplicitSelf> for MethodBuilder<F>
     }
 }
 
+//////////////////////////////////////////////////////////////////////////////
+
 pub struct MethodSelfBuilder<F> {
     builder: MethodBuilder<F>,
     self_: ast::ExplicitSelf,
@@ -111,16 +108,18 @@ pub struct MethodSelfBuilder<F> {
 impl<F> Invoke<P<ast::FnDecl>> for MethodSelfBuilder<F>
     where F: Invoke<P<ast::Method>>,
 {
-    type Result = MethodSelfFnDeclBuilder<F>;
+    type Result = BlockBuilder<MethodSelfFnDeclBuilder<F>>;
 
-    fn invoke(self, fn_decl: P<ast::FnDecl>) -> MethodSelfFnDeclBuilder<F> {
-        MethodSelfFnDeclBuilder {
+    fn invoke(self, fn_decl: P<ast::FnDecl>) -> BlockBuilder<MethodSelfFnDeclBuilder<F>> {
+        BlockBuilder::new_with_callback(MethodSelfFnDeclBuilder {
             builder: self.builder,
             self_: self.self_,
             fn_decl: fn_decl,
-        }
+        })
     }
 }
+
+//////////////////////////////////////////////////////////////////////////////
 
 pub struct MethodSelfFnDeclBuilder<F> {
     builder: MethodBuilder<F>,
@@ -154,34 +153,6 @@ impl<F> Invoke<P<ast::Block>> for MethodSelfFnDeclBuilder<F>
     }
 }
 
-/*
-impl<F> Invoke<ast::Block> for MethodBuilder<F>
-    where F: Invoke<P<ast::Method>>,
-{
-    type Result = F::Result;
-
-    fn invoke(self, block: P<ast::Block>) -> F::Result {
-        let method = ast::Method {
-            attrs: self.attrs,
-            id: ast::DUMMY_NODE_ID,
-            span: self.span,
-            node: ast::MethDecl(
-                self.id,
-                self.generics,
-                self.abi,
-                respan(self.span, self.self_),
-                ast::Unsafety::Normal,
-                self.fn_decl,
-                block,
-                self.vis,
-            ),
-        };
-
-        self.callback.invoke(P(method))
-    }
-}
-*/
-
 //////////////////////////////////////////////////////////////////////////////
 
 pub struct SelfBuilder<F> {
@@ -199,22 +170,26 @@ impl<F> SelfBuilder<F>
         }
     }
 
+    pub fn build(self, self_: ast::ExplicitSelf) -> F::Result {
+        self.callback.invoke(self_)
+    }
+
     pub fn span(mut self, span: Span) -> Self {
         self.span = span;
         self
     }
 
-    pub fn build_self(self, self_: ast::ExplicitSelf_) -> F::Result {
-        self.callback.invoke(respan(self.span, self_))
+    pub fn build_self_(self, self_: ast::ExplicitSelf_) -> F::Result {
+        let self_ = respan(self.span, self_);
+        self.build(self_)
     }
 
     pub fn static_(self) -> F::Result {
-        self.build_self(ast::ExplicitSelf_::SelfStatic)
+        self.build_self_(ast::ExplicitSelf_::SelfStatic)
     }
 
     pub fn value(self) -> F::Result {
-        let ident = "self".to_ident();
-        self.build_self(ast::ExplicitSelf_::SelfValue(ident))
+        self.build_self_(ast::ExplicitSelf_::SelfValue("self".to_ident()))
     }
 
     /*
@@ -234,7 +209,6 @@ impl<F> Invoke<P<ast::Ty>> for SelfBuilder<F>
     type Result = F::Result;
 
     fn invoke(self, ty: P<ast::Ty>) -> F::Result {
-        let ident = "self".to_ident();
-        self.build_self(ast::ExplicitSelf_::SelfExplicit(ty, ident))
+        self.build_self_(ast::ExplicitSelf_::SelfExplicit(ty, "self".to_ident()))
     }
 }
