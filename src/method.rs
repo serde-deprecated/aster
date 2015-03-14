@@ -28,7 +28,7 @@ impl MethodBuilder {
 }
 
 impl<F> MethodBuilder<F>
-    where F: Invoke<P<ast::Method>>,
+    where F: Invoke<P<ast::ImplItem>>,
 {
     pub fn new_with_callback<I>(id: I, callback: F) -> Self
         where I: ToIdent,
@@ -75,7 +75,7 @@ impl<F> MethodBuilder<F>
 }
 
 impl<F> Invoke<ast::Generics> for MethodBuilder<F>
-    where F: Invoke<P<ast::Method>>,
+    where F: Invoke<P<ast::ImplItem>>,
 {
     type Result = Self;
 
@@ -86,14 +86,14 @@ impl<F> Invoke<ast::Generics> for MethodBuilder<F>
 }
 
 impl<F> Invoke<ast::ExplicitSelf> for MethodBuilder<F>
-    where F: Invoke<P<ast::Method>>,
+    where F: Invoke<P<ast::ImplItem>>,
 {
     type Result = MethodSelfBuilder<F>;
 
-    fn invoke(self, self_: ast::ExplicitSelf) -> MethodSelfBuilder<F> {
+    fn invoke(self, explicit_self: ast::ExplicitSelf) -> MethodSelfBuilder<F> {
         MethodSelfBuilder {
             builder: self,
-            self_: self_,
+            explicit_self: explicit_self,
         }
     }
 }
@@ -102,18 +102,18 @@ impl<F> Invoke<ast::ExplicitSelf> for MethodBuilder<F>
 
 pub struct MethodSelfBuilder<F> {
     builder: MethodBuilder<F>,
-    self_: ast::ExplicitSelf,
+    explicit_self: ast::ExplicitSelf,
 }
 
 impl<F> Invoke<P<ast::FnDecl>> for MethodSelfBuilder<F>
-    where F: Invoke<P<ast::Method>>,
+    where F: Invoke<P<ast::ImplItem>>,
 {
     type Result = BlockBuilder<MethodSelfFnDeclBuilder<F>>;
 
     fn invoke(self, fn_decl: P<ast::FnDecl>) -> BlockBuilder<MethodSelfFnDeclBuilder<F>> {
         BlockBuilder::new_with_callback(MethodSelfFnDeclBuilder {
             builder: self.builder,
-            self_: self.self_,
+            explicit_self: self.explicit_self,
             fn_decl: fn_decl,
         })
     }
@@ -123,33 +123,32 @@ impl<F> Invoke<P<ast::FnDecl>> for MethodSelfBuilder<F>
 
 pub struct MethodSelfFnDeclBuilder<F> {
     builder: MethodBuilder<F>,
-    self_: ast::ExplicitSelf,
+    explicit_self: ast::ExplicitSelf,
     fn_decl: P<ast::FnDecl>,
 }
 
 impl<F> Invoke<P<ast::Block>> for MethodSelfFnDeclBuilder<F>
-    where F: Invoke<P<ast::Method>>,
+    where F: Invoke<P<ast::ImplItem>>,
 {
     type Result = F::Result;
 
     fn invoke(self, block: P<ast::Block>) -> F::Result {
-        let method = ast::Method {
-            attrs: self.builder.attrs,
-            id: ast::DUMMY_NODE_ID,
-            span: self.builder.span,
-            node: ast::MethDecl(
-                self.builder.id,
-                self.builder.generics,
-                self.builder.abi,
-                self.self_,
-                self.builder.unsafety,
-                self.fn_decl,
-                block,
-                self.builder.vis,
-            ),
+        let method_sig = ast::MethodSig {
+            unsafety: self.builder.unsafety,
+            abi: self.builder.abi,
+            decl: self.fn_decl,
+            generics: self.builder.generics,
+            explicit_self: self.explicit_self,
         };
 
-        self.builder.callback.invoke(P(method))
+        self.builder.callback.invoke(P(ast::ImplItem {
+            id: ast::DUMMY_NODE_ID,
+            ident: self.builder.id,
+            vis: self.builder.vis,
+            attrs: self.builder.attrs,
+            node: ast::MethodImplItem(method_sig, block),
+            span: self.builder.span,
+        }))
     }
 }
 
