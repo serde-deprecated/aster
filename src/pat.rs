@@ -171,9 +171,7 @@ impl<F> PatEnumPathBuilder<F>
     }
 
     pub fn build(self) -> F::Result {
-        let pats = if self.pats.is_empty() { None } else { Some(self.pats) };
-
-        self.builder.build_pat_(ast::Pat_::PatEnum(self.path, pats))
+        self.builder.build_pat_(ast::Pat_::PatEnum(self.path, Some(self.pats)))
     }
 }
 
