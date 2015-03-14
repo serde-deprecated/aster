@@ -93,6 +93,10 @@ impl AstBuilder {
         block::BlockBuilder::new().span(self.span)
     }
 
+    pub fn pat(&self) -> pat::PatBuilder {
+        pat::PatBuilder::new().span(self.span)
+    }
+
     pub fn fn_decl(&self) -> fn_decl::FnDeclBuilder {
         fn_decl::FnDeclBuilder::new().span(self.span)
     }

@@ -326,4 +326,3 @@ impl<F> Invoke<P<ast::Ty>> for TyTupleBuilder<F>
         self.with_ty(ty)
     }
 }
-
