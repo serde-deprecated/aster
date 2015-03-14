@@ -180,7 +180,7 @@ impl<F> GenericsBuilder<F>
         self 
     }
 
-    pub fn strip_bounds(mut self) -> Self {
+    pub fn strip_bounds(self) -> Self {
         self.strip_lifetimes()
             .strip_ty_params()
             .strip_predicates()
