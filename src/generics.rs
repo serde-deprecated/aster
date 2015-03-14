@@ -181,16 +181,27 @@ impl<F> GenericsBuilder<F>
     }
 
     pub fn strip_bounds(mut self) -> Self {
+        self.strip_lifetimes()
+            .strip_ty_params()
+            .strip_predicates()
+    }
+
+    pub fn strip_lifetimes(mut self) -> Self {
         for lifetime in self.lifetimes.iter_mut() {
             lifetime.bounds = vec![];
         }
+        self
+    }
 
+    pub fn strip_ty_params(mut self) -> Self {
         for ty_param in self.ty_params.iter_mut() {
             ty_param.bounds = OwnedSlice::empty();
         }
+        self
+    }
 
+    pub fn strip_predicates(mut self) -> Self {
         self.predicates = vec![];
-
         self
     }
 

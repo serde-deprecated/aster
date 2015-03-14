@@ -7,6 +7,7 @@ use block::BlockBuilder;
 use generics::GenericsBuilder;
 use ident::ToIdent;
 use invoke::{Invoke, Identity};
+use lifetime::IntoLifetime;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -191,11 +192,43 @@ impl<F> SelfBuilder<F>
         self.build_self_(ast::ExplicitSelf_::SelfValue("self".to_ident()))
     }
 
-    /*
     pub fn ref_(self) -> F::Result {
-        self.self_(ast::ExplicitSelf_::SelfValue(ident))
+        self.build_self_(ast::ExplicitSelf_::SelfRegion(
+            None,
+            ast::Mutability::MutImmutable,
+            "self".to_ident(),
+        ))
     }
 
+    pub fn ref_lifetime<L>(self, lifetime: L) -> F::Result
+        where L: IntoLifetime,
+    {
+        self.build_self_(ast::ExplicitSelf_::SelfRegion(
+            Some(lifetime.into_lifetime()),
+            ast::Mutability::MutImmutable,
+            "self".to_ident(),
+        ))
+    }
+
+    pub fn ref_mut(self) -> F::Result {
+        self.build_self_(ast::ExplicitSelf_::SelfRegion(
+            None,
+            ast::Mutability::MutMutable,
+            "self".to_ident(),
+        ))
+    }
+
+    pub fn ref_mut_lifetime<L>(self, lifetime: L) -> F::Result
+        where L: IntoLifetime,
+    {
+        self.build_self_(ast::ExplicitSelf_::SelfRegion(
+            Some(lifetime.into_lifetime()),
+            ast::Mutability::MutMutable,
+            "self".to_ident(),
+        ))
+    }
+
+    /*
     pub fn ty(self) -> TyBuilder<F::Result> {
         TyBuilder::new_with_callback(self)
     }
