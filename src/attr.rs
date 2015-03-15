@@ -76,35 +76,35 @@ impl<F> AttrBuilder<F>
         self.word("test")
     }
 
-    pub fn build_allow<I, T>(self, iter: I) -> F::Result
+    pub fn allow<I, T>(self, iter: I) -> F::Result
         where I: IntoIterator<Item=T>,
               T: ToInternedString,
     {
         self.list("allow").words(iter).build()
     }
 
-    pub fn build_warn<I, T>(self, iter: I) -> F::Result
+    pub fn warn<I, T>(self, iter: I) -> F::Result
         where I: IntoIterator<Item=T>,
               T: ToInternedString,
     {
         self.list("warn").words(iter).build()
     }
 
-    pub fn build_deny<I, T>(self, iter: I) -> F::Result
+    pub fn deny<I, T>(self, iter: I) -> F::Result
         where I: IntoIterator<Item=T>,
               T: ToInternedString,
     {
         self.list("deny").words(iter).build()
     }
 
-    pub fn build_features<I, T>(self, iter: I) -> F::Result
+    pub fn features<I, T>(self, iter: I) -> F::Result
         where I: IntoIterator<Item=T>,
               T: ToInternedString,
     {
         self.list("feature").words(iter).build()
     }
 
-    pub fn build_plugins<I, T>(self, iter: I) -> F::Result
+    pub fn plugins<I, T>(self, iter: I) -> F::Result
         where I: IntoIterator<Item=T>,
               T: ToInternedString,
     {
