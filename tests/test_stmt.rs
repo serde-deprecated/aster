@@ -5,7 +5,6 @@ extern crate syntax;
 
 use syntax::ast;
 use syntax::codemap::{DUMMY_SP, respan};
-use syntax::print::pprust;
 use syntax::ptr::P;
 
 use aster::AstBuilder;
