@@ -50,7 +50,7 @@ impl<F> AttrBuilder<F>
     pub fn word<T>(self, word: T) -> F::Result
         where T: ToInternedString
     {
-        self.build_meta_item_(ast::MetaWord(word.into_interned_string()))
+        self.build_meta_item_(ast::MetaWord(word.to_interned_string()))
     }
 
     pub fn list<T>(self, word: T) -> AttrListBuilder<Self>
@@ -64,7 +64,7 @@ impl<F> AttrBuilder<F>
     {
         LitBuilder::new_with_callback(AttrNameValueBuilder {
             callback: self,
-            name: name.into_interned_string(),
+            name: name.to_interned_string(),
         })
     }
 
@@ -150,7 +150,7 @@ impl<F> AttrListBuilder<F>
         AttrListBuilder {
             callback: callback,
             span: DUMMY_SP,
-            name: name.into_interned_string(),
+            name: name.to_interned_string(),
             items: vec![],
         }
     }
@@ -190,13 +190,13 @@ impl<F> AttrListBuilder<F>
               T: ToInternedString,
     {
         let iter = iter.into_iter();
-        self.with_meta_items_(iter.map(|word| ast::MetaWord(word.into_interned_string())))
+        self.with_meta_items_(iter.map(|word| ast::MetaWord(word.to_interned_string())))
     }
 
     pub fn word<T>(self, word: T) -> Self
         where T: ToInternedString,
     {
-        self.with_meta_item_(ast::MetaWord(word.into_interned_string()))
+        self.with_meta_item_(ast::MetaWord(word.to_interned_string()))
     }
 
     pub fn list<T>(self, name: T) -> AttrListBuilder<Self>
@@ -210,7 +210,7 @@ impl<F> AttrListBuilder<F>
     {
         LitBuilder::new_with_callback(AttrNameValueBuilder {
             callback: self,
-            name: name.into_interned_string(),
+            name: name.to_interned_string(),
         })
     }
 

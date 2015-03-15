@@ -24,6 +24,7 @@ pub mod ty_param;
 
 use syntax::ast;
 use syntax::codemap::{DUMMY_SP, Span};
+use syntax::parse::token;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -42,6 +43,12 @@ impl AstBuilder {
     pub fn span(mut self, span: Span) -> Self {
         self.span = span;
         self
+    }
+
+    pub fn interned_string<S>(&self, s: S) -> token::InternedString
+        where S: str::ToInternedString
+    {
+        s.to_interned_string()
     }
 
     pub fn id<I>(&self, id: I) -> ast::Ident
@@ -92,6 +99,10 @@ impl AstBuilder {
 
     pub fn from_generics(&self, generics: ast::Generics) -> generics::GenericsBuilder {
         generics::GenericsBuilder::from_generics(generics).span(self.span)
+    }
+
+    pub fn lit(&self) -> lit::LitBuilder {
+        lit::LitBuilder::new().span(self.span)
     }
 
     pub fn expr(&self) -> expr::ExprBuilder {

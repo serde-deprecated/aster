@@ -14,7 +14,7 @@ pub struct LitBuilder<F=Identity> {
 }
 
 impl LitBuilder {
-    pub fn builder() -> LitBuilder {
+    pub fn new() -> LitBuilder {
         LitBuilder::new_with_callback(Identity)
     }
 }
@@ -45,59 +45,64 @@ impl<F> LitBuilder<F>
         self.build_lit(ast::LitBool(value))
     }
 
-    pub fn int(self, value: i64, ty: ast::IntTy) -> F::Result {
+    pub fn int(self, value: i64) -> F::Result {
+        let sign = ast::Sign::new(value);
+        self.build_lit(ast::LitInt(value as u64, ast::UnsuffixedIntLit(sign)))
+    }
+
+    fn build_int(self, value: i64, ty: ast::IntTy) -> F::Result {
         let sign = ast::Sign::new(value);
         self.build_lit(ast::LitInt(value as u64, ast::LitIntType::SignedIntLit(ty, sign)))
     }
 
     pub fn isize(self, value: isize) -> F::Result {
-        self.int(value as i64, ast::IntTy::TyIs(false))
+        self.build_int(value as i64, ast::IntTy::TyIs(false))
     }
 
     pub fn i8(self, value: i8) -> F::Result {
-        self.int(value as i64, ast::IntTy::TyI8)
+        self.build_int(value as i64, ast::IntTy::TyI8)
     }
 
     pub fn i16(self, value: i16) -> F::Result {
-        self.int(value as i64, ast::IntTy::TyI16)
+        self.build_int(value as i64, ast::IntTy::TyI16)
     }
 
     pub fn i32(self, value: i32) -> F::Result {
-        self.int(value as i64, ast::IntTy::TyI32)
+        self.build_int(value as i64, ast::IntTy::TyI32)
     }
 
     pub fn i64(self, value: i64) -> F::Result {
-        self.int(value, ast::IntTy::TyI64)
+        self.build_int(value, ast::IntTy::TyI64)
     }
 
-    pub fn uint(self, value: u64, ty: ast::UintTy) -> F::Result {
+    fn build_uint(self, value: u64, ty: ast::UintTy) -> F::Result {
         self.build_lit(ast::LitInt(value, ast::LitIntType::UnsignedIntLit(ty)))
     }
 
     pub fn usize(self, value: usize) -> F::Result {
-        self.uint(value as u64, ast::UintTy::TyUs(false))
+        self.build_uint(value as u64, ast::UintTy::TyUs(false))
     }
 
     pub fn u8(self, value: u8) -> F::Result {
-        self.uint(value as u64, ast::UintTy::TyU8)
+        self.build_uint(value as u64, ast::UintTy::TyU8)
     }
 
     pub fn u16(self, value: u16) -> F::Result {
-        self.uint(value as u64, ast::UintTy::TyU16)
+        self.build_uint(value as u64, ast::UintTy::TyU16)
     }
 
     pub fn u32(self, value: u32) -> F::Result {
-        self.uint(value as u64, ast::UintTy::TyU32)
+        self.build_uint(value as u64, ast::UintTy::TyU32)
     }
 
     pub fn u64(self, value: u64) -> F::Result {
-        self.uint(value, ast::UintTy::TyU64)
+        self.build_uint(value, ast::UintTy::TyU64)
     }
 
     pub fn str<S>(self, value: S) -> F::Result
         where S: ToInternedString,
     {
-        let value = value.into_interned_string();
+        let value = value.to_interned_string();
         self.build_lit(ast::LitStr(value, ast::CookedStr))
     }
 }

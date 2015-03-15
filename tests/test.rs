@@ -10,29 +10,6 @@ use aster::AstBuilder;
 fn test() {
     let builder = AstBuilder::new();
 
-    // expr: `5i8`
-    let expr = builder.expr().i8(5);
-    println!("expr: {}", pprust::expr_to_string(&*expr));
-
-    // expr: `5is`
-    let expr = builder.expr().isize(5);
-    println!("expr: {}", pprust::expr_to_string(&*expr));
-
-    // expr: `1i8 + 2i8`
-    let expr = builder.expr().add().i8(1).i8(2);
-    println!("expr: {}", pprust::expr_to_string(&*expr));
-
-    // expr: `(1i8, ((), 2is))`
-    let expr = builder.expr()
-        .tuple()
-            .expr().i8(1)
-            .expr().tuple()
-                .expr().unit()
-                .expr().isize(2)
-                .build()
-            .build();
-    println!("expr: {}", pprust::expr_to_string(&*expr));
-
     // stmt: `let x;`
     let stmt = builder.stmt().let_().id("x").build();
     println!("stmt: {}", pprust::stmt_to_string(&*stmt));

@@ -83,6 +83,10 @@ impl<F> ExprBuilder<F>
         self.lit().bool(value)
     }
 
+    pub fn int(self, value: i64) -> F::Result {
+        self.lit().int(value)
+    }
+
     pub fn isize(self, value: isize) -> F::Result {
         self.lit().isize(value)
     }
