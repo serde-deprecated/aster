@@ -55,12 +55,24 @@ impl AstBuilder {
         name.to_name()
     }
 
+    pub fn lifetime<L>(&self, lifetime: L) -> ast::Lifetime
+        where L: lifetime::IntoLifetime
+    {
+        lifetime.into_lifetime()
+    }
+
     pub fn path(&self) -> path::PathBuilder {
         path::PathBuilder::new()
     }
 
     pub fn ty(&self) -> ty::TyBuilder {
         ty::TyBuilder::new().span(self.span)
+    }
+
+    pub fn lifetime_def<N>(&self, name: N) -> lifetime::LifetimeDefBuilder
+        where N: name::ToName,
+    {
+        lifetime::LifetimeDefBuilder::new(name)
     }
 
     pub fn ty_param<I>(&self, id: I) -> ty_param::TyParamBuilder

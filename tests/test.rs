@@ -10,51 +10,6 @@ use aster::AstBuilder;
 fn test() {
     let builder = AstBuilder::new();
 
-    // path: `isize`
-    let path = builder.path().id("isize").build();
-    println!("path: {}", pprust::path_to_string(&path));
-
-    // path: `isize`
-    let path = builder.path()
-        .segment("isize").build()
-        .build();
-    println!("path: {}", pprust::path_to_string(&path));
-
-    // path: `::std::thread::Thread`
-    let path = builder.path().global()
-        .id("std")
-        .id("thread")
-        .id("Thread")
-        .build();
-    println!("path: {}", pprust::path_to_string(&path));
-
-    // type: `isize`
-    let ty = builder.ty().isize();
-    println!("ty: {}", pprust::ty_to_string(&*ty));
-
-    // type: `Option<isize>`
-    let ty = builder.ty().option().isize();
-    println!("ty: {}", pprust::ty_to_string(&*ty));
-
-    // type: `Result<isize, isize>`
-    let ty = builder.ty().result().isize().isize();
-    println!("ty: {}", pprust::ty_to_string(&*ty));
-
-    // type: `()`
-    let ty = builder.ty().tuple().build();
-    println!("ty: {}", pprust::ty_to_string(&*ty));
-
-    // type: `(isize, ((), isize))`
-    let ty = builder.ty()
-        .tuple()
-            .ty().isize()
-            .ty().tuple()
-                .ty().unit()
-                .ty().isize()
-            .build()
-        .build();
-    println!("ty: {}", pprust::ty_to_string(&*ty));
-
     // expr: `5i8`
     let expr = builder.expr().i8(5);
     println!("expr: {}", pprust::expr_to_string(&*expr));
@@ -112,25 +67,4 @@ fn test() {
             .expr().u16(1)
             .build();
     println!("stmt: {}", pprust::stmt_to_string(&*stmt));
-        
-    let fn_ = builder.item().fn_("foo")
-        .output().isize()
-        .block()
-            .stmt().let_id("x").isize(1)
-            .stmt().let_id("y").isize(2)
-            .expr().add().id("x").id("y");
-    println!("fn: {}", pprust::item_to_string(&*fn_));
-
-    let fn_ = builder.item().fn_("bar")
-        .output().isize()
-        .generics()
-            .lifetime("'a").build()
-            .lifetime("'b").bound("'a").build()
-            .ty_param("T").build()
-            .build()
-        .block()
-            .stmt().let_id("x").isize(1)
-            .stmt().let_id("y").isize(2)
-            .expr().add().id("x").id("y");
-    println!("fn: {}", pprust::item_to_string(&*fn_));
 }

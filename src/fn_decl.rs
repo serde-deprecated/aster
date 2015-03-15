@@ -59,11 +59,16 @@ impl<F> FnDeclBuilder<F>
         self.build(ret_ty)
     }
 
-    pub fn build_output(self, ty: P<ast::Ty>) -> F::Result {
+    pub fn default_return(self) -> F::Result {
+        let ret_ty = ast::FunctionRetTy::DefaultReturn(self.span);
+        self.build(ret_ty)
+    }
+
+    pub fn build_return(self, ty: P<ast::Ty>) -> F::Result {
         self.build(ast::FunctionRetTy::Return(ty))
     }
 
-    pub fn output(self) -> TyBuilder<Self> {
+    pub fn return_(self) -> TyBuilder<Self> {
         TyBuilder::new_with_callback(self)
     }
 
@@ -92,7 +97,7 @@ impl<F> Invoke<P<ast::Ty>> for FnDeclBuilder<F>
     type Result = F::Result;
 
     fn invoke(self, ty: P<ast::Ty>) -> F::Result {
-        self.build_output(ty)
+        self.build_return(ty)
     }
 }
 
