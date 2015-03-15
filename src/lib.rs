@@ -18,6 +18,7 @@ pub mod pat;
 pub mod path;
 pub mod stmt;
 pub mod str;
+pub mod struct_def;
 pub mod ty;
 pub mod ty_param;
 
@@ -123,6 +124,10 @@ impl AstBuilder {
         where I: ident::ToIdent,
     {
         fn_decl::ArgBuilder::new(id).span(self.span)
+    }
+
+    pub fn struct_def(&self) -> struct_def::StructDefBuilder {
+        struct_def::StructDefBuilder::new().span(self.span)
     }
 
     pub fn item(&self) -> item::ItemBuilder {
