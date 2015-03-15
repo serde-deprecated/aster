@@ -235,95 +235,22 @@ fn test_enum() {
             node: ast::ItemEnum(
                 ast::EnumDef {
                     variants: vec![
-                        P(Spanned {
-                            span: DUMMY_SP,
-                            node: ast::Variant_ {
-                                name: builder.id("A"),
-                                attrs: vec![],
-                                kind: ast::TupleVariantKind(vec![]),
-                                id: ast::DUMMY_NODE_ID,
-                                disr_expr: None,
-                                vis: ast::Inherited,
-                            },
-                        }),
-                        P(Spanned {
-                            span: DUMMY_SP,
-                            node: ast::Variant_ {
-                                name: builder.id("B"),
-                                attrs: vec![],
-                                kind: ast::TupleVariantKind(vec![]),
-                                id: ast::DUMMY_NODE_ID,
-                                disr_expr: None,
-                                vis: ast::Inherited,
-                            },
-                        }),
-                        P(Spanned {
-                            span: DUMMY_SP,
-                            node: ast::Variant_ {
-                                name: builder.id("C"),
-                                attrs: vec![],
-                                kind: ast::TupleVariantKind(vec![
-                                    ast::VariantArg {
-                                        ty: builder.ty().isize(),
-                                        id: ast::DUMMY_NODE_ID,
-                                    },
-                                ]),
-                                id: ast::DUMMY_NODE_ID,
-                                disr_expr: None,
-                                vis: ast::Inherited,
-                            },
-                        }),
-                        P(Spanned {
-                            span: DUMMY_SP,
-                            node: ast::Variant_ {
-                                name: builder.id("D"),
-                                attrs: vec![],
-                                kind: ast::TupleVariantKind(vec![
-                                    ast::VariantArg {
-                                        ty: builder.ty().isize(),
-                                        id: ast::DUMMY_NODE_ID,
-                                    },
-                                    ast::VariantArg {
-                                        ty: builder.ty().isize(),
-                                        id: ast::DUMMY_NODE_ID,
-                                    },
-                                ]),
-                                id: ast::DUMMY_NODE_ID,
-                                disr_expr: None,
-                                vis: ast::Inherited,
-                            },
-                        }),
-                        P(Spanned {
-                            span: DUMMY_SP,
-                            node: ast::Variant_ {
-                                name: builder.id("E"),
-                                attrs: vec![],
-                                kind: ast::StructVariantKind(
-                                    builder.struct_def()
-                                        .field("a").isize()
-                                        .build()
-                                ),
-                                id: ast::DUMMY_NODE_ID,
-                                disr_expr: None,
-                                vis: ast::Inherited,
-                            },
-                        }),
-                        P(Spanned {
-                            span: DUMMY_SP,
-                            node: ast::Variant_ {
-                                name: builder.id("F"),
-                                attrs: vec![],
-                                kind: ast::StructVariantKind(
-                                    builder.struct_def()
-                                        .field("a").isize()
-                                        .field("b").isize()
-                                        .build()
-                                ),
-                                id: ast::DUMMY_NODE_ID,
-                                disr_expr: None,
-                                vis: ast::Inherited,
-                            },
-                        }),
+                        builder.variant("A").tuple().build(),
+                        builder.variant("B").tuple().build(),
+                        builder.variant("C").tuple()
+                            .ty().isize()
+                            .build(),
+                        builder.variant("D").tuple()
+                            .ty().isize()
+                            .ty().isize()
+                            .build(),
+                        builder.variant("E").struct_()
+                            .field("a").isize()
+                            .build(),
+                        builder.variant("F").struct_()
+                            .field("a").isize()
+                            .field("b").isize()
+                            .build(),
                     ],
                 },
                 builder.generics().build(),

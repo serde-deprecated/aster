@@ -21,6 +21,7 @@ pub mod str;
 pub mod struct_def;
 pub mod ty;
 pub mod ty_param;
+pub mod variant;
 
 use syntax::ast;
 use syntax::codemap::{DUMMY_SP, Span};
@@ -139,6 +140,12 @@ impl AstBuilder {
 
     pub fn struct_def(&self) -> struct_def::StructDefBuilder {
         struct_def::StructDefBuilder::new().span(self.span)
+    }
+
+    pub fn variant<T>(&self, id: T) -> variant::VariantBuilder
+        where T: ident::ToIdent,
+    {
+        variant::VariantBuilder::new(id).span(self.span)
     }
 
     pub fn item(&self) -> item::ItemBuilder {
