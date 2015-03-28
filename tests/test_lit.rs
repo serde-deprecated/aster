@@ -27,19 +27,19 @@ fn test_int() {
     check(builder.lit().i16(5), 5, ast::SignedIntLit(ast::TyI16, ast::Plus));
     check(builder.lit().i32(5), 5, ast::SignedIntLit(ast::TyI32, ast::Plus));
     check(builder.lit().i64(5), 5, ast::SignedIntLit(ast::TyI64, ast::Plus));
-    check(builder.lit().isize(5), 5, ast::SignedIntLit(ast::TyIs(false), ast::Plus));
+    check(builder.lit().isize(5), 5, ast::SignedIntLit(ast::TyIs, ast::Plus));
 
     check(builder.lit().i8(-5), -5, ast::SignedIntLit(ast::TyI8, ast::Minus));
     check(builder.lit().i16(-5), -5, ast::SignedIntLit(ast::TyI16, ast::Minus));
     check(builder.lit().i32(-5), -5, ast::SignedIntLit(ast::TyI32, ast::Minus));
     check(builder.lit().i64(-5), -5, ast::SignedIntLit(ast::TyI64, ast::Minus));
-    check(builder.lit().isize(-5), -5, ast::SignedIntLit(ast::TyIs(false), ast::Minus));
+    check(builder.lit().isize(-5), -5, ast::SignedIntLit(ast::TyIs, ast::Minus));
 
     check(builder.lit().u8(5), 5, ast::UnsignedIntLit(ast::TyU8));
     check(builder.lit().u16(5), 5, ast::UnsignedIntLit(ast::TyU16));
     check(builder.lit().u32(5), 5, ast::UnsignedIntLit(ast::TyU32));
     check(builder.lit().u64(5), 5, ast::UnsignedIntLit(ast::TyU64));
-    check(builder.lit().usize(5), 5, ast::UnsignedIntLit(ast::TyUs(false)));
+    check(builder.lit().usize(5), 5, ast::UnsignedIntLit(ast::TyUs));
 
     check(builder.lit().int(5), 5, ast::UnsuffixedIntLit(ast::Plus));
     check(builder.lit().int(-5), -5, ast::UnsuffixedIntLit(ast::Minus));

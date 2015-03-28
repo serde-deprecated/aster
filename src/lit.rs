@@ -56,7 +56,7 @@ impl<F> LitBuilder<F>
     }
 
     pub fn isize(self, value: isize) -> F::Result {
-        self.build_int(value as i64, ast::IntTy::TyIs(false))
+        self.build_int(value as i64, ast::IntTy::TyIs)
     }
 
     pub fn i8(self, value: i8) -> F::Result {
@@ -80,7 +80,7 @@ impl<F> LitBuilder<F>
     }
 
     pub fn usize(self, value: usize) -> F::Result {
-        self.build_uint(value as u64, ast::UintTy::TyUs(false))
+        self.build_uint(value as u64, ast::UintTy::TyUs)
     }
 
     pub fn u8(self, value: u8) -> F::Result {
