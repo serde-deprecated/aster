@@ -43,7 +43,7 @@ impl IntoPath for String {
     }
 }
 
-impl<I, T> IntoPath for I where I: IntoIterator<Item=T>, T: ToIdent {
+impl<'a, T> IntoPath for &'a [T] where T: ToIdent {
     fn into_path(self) -> ast::Path {
         PathBuilder::new().ids(self).build()
     }
