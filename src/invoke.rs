@@ -6,7 +6,7 @@ pub trait Invoke<A> {
 
 //////////////////////////////////////////////////////////////////////////////
 
-#[derive(Copy)]
+#[derive(Clone, Copy)]
 pub struct Identity;
 
 impl<A> Invoke<A> for Identity {
