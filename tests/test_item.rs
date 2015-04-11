@@ -20,7 +20,7 @@ fn test_fn() {
         .stmt().let_id("x").isize(1)
         .stmt().let_id("y").isize(2)
         .expr().add().id("x").id("y");
-        
+
     let fn_ = builder.item().fn_("foo")
         .return_().isize()
         .build(block.clone());
@@ -52,7 +52,7 @@ fn test_generic_fn() {
         .stmt().let_id("x").isize(1)
         .stmt().let_id("y").isize(2)
         .expr().add().id("x").id("y");
-        
+
     let fn_ = builder.item().fn_("foo")
         .return_().isize()
         .generics()
@@ -288,7 +288,7 @@ fn test_use() {
         .build();
 
     check(
-        item, 
+        item,
         ast::ViewPathSimple(
             "Vec".to_ident(),
             builder.path().ids(&["std", "vec", "Vec"]).build()
@@ -300,7 +300,7 @@ fn test_use() {
         .as_("MyVec");
 
     check(
-        item, 
+        item,
         ast::ViewPathSimple(
             "MyVec".to_ident(),
             builder.path().ids(&["std", "vec", "Vec"]).build()
@@ -312,7 +312,7 @@ fn test_use() {
         .glob();
 
     check(
-        item, 
+        item,
         ast::ViewPathGlob(
             builder.path().ids(&["std", "vec"]).build()
         )
@@ -324,7 +324,7 @@ fn test_use() {
         .build();
 
     check(
-        item, 
+        item,
         ast::ViewPathList(
             builder.path().ids(&["std", "vec"]).build(),
             vec![],
@@ -340,7 +340,7 @@ fn test_use() {
         .build();
 
     check(
-        item, 
+        item,
         ast::ViewPathList(
             builder.path().ids(&["std", "vec"]).build(),
             vec![
