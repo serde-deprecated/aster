@@ -5,10 +5,12 @@ extern crate syntax;
 
 use syntax::abi::Abi;
 use syntax::ast;
-use syntax::codemap::{DUMMY_SP, Spanned};
+use syntax::codemap::{DUMMY_SP, Spanned, respan};
+use syntax::parse::token;
 use syntax::ptr::P;
 
 use aster::AstBuilder;
+use aster::ident::ToIdent;
 
 #[test]
 fn test_fn() {
@@ -258,5 +260,102 @@ fn test_enum() {
             vis: ast::Inherited,
             span: DUMMY_SP,
         })
+    );
+}
+
+#[test]
+fn test_use() {
+    fn check(item: P<ast::Item>, view_path: ast::ViewPath_) {
+        assert_eq!(
+            item,
+            P(ast::Item {
+                ident: token::special_idents::invalid,
+                attrs: vec![],
+                id: ast::DUMMY_NODE_ID,
+                node: ast::ItemUse(
+                    P(respan(DUMMY_SP, view_path))
+                ),
+                vis: ast::Inherited,
+                span: DUMMY_SP,
+            })
+        );
+    }
+
+    let builder = AstBuilder::new();
+
+    let item = builder.item().use_()
+        .ids(&["std", "vec", "Vec"]).build()
+        .build();
+
+    check(
+        item, 
+        ast::ViewPathSimple(
+            "Vec".to_ident(),
+            builder.path().ids(&["std", "vec", "Vec"]).build()
+        )
+    );
+
+    let item = builder.item().use_()
+        .ids(&["std", "vec", "Vec"]).build()
+        .as_("MyVec");
+
+    check(
+        item, 
+        ast::ViewPathSimple(
+            "MyVec".to_ident(),
+            builder.path().ids(&["std", "vec", "Vec"]).build()
+        )
+    );
+
+    let item = builder.item().use_()
+        .ids(&["std", "vec"]).build()
+        .glob();
+
+    check(
+        item, 
+        ast::ViewPathGlob(
+            builder.path().ids(&["std", "vec"]).build()
+        )
+    );
+
+    let item = builder.item().use_()
+        .ids(&["std", "vec"]).build()
+        .list()
+        .build();
+
+    check(
+        item, 
+        ast::ViewPathList(
+            builder.path().ids(&["std", "vec"]).build(),
+            vec![],
+        )
+    );
+
+    let item = builder.item().use_()
+        .ids(&["std", "vec"]).build()
+        .list()
+        .self_()
+        .id("Vec")
+        .id("IntoIter")
+        .build();
+
+    check(
+        item, 
+        ast::ViewPathList(
+            builder.path().ids(&["std", "vec"]).build(),
+            vec![
+                respan(DUMMY_SP, ast::PathListMod {
+                    id: ast::DUMMY_NODE_ID,
+                }),
+                respan(DUMMY_SP, ast::PathListIdent {
+                    name: "Vec".to_ident(),
+                    id: ast::DUMMY_NODE_ID,
+                }),
+                respan(DUMMY_SP, ast::PathListIdent {
+                    name: "IntoIter".to_ident(),
+                    id: ast::DUMMY_NODE_ID,
+                }),
+            ],
+        )
     );
 }

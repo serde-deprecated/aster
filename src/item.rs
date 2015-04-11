@@ -96,8 +96,10 @@ impl<F> ItemBuilder<F>
         self.build_item_(token::special_idents::invalid, item)
     }
 
-    pub fn use_glob(self) -> PathBuilder<ItemUseGlobBuilder<F>> {
-        PathBuilder::new_with_callback(ItemUseGlobBuilder(self))
+    pub fn use_(self) -> PathBuilder<ItemUseBuilder<F>> {
+        PathBuilder::new_with_callback(ItemUseBuilder {
+            builder: self,
+        })
     }
 
     pub fn struct_<T>(self, id: T) -> ItemStructBuilder<F>
@@ -245,15 +247,98 @@ impl<F> Invoke<P<ast::Block>> for ItemFnBuilder<F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ItemUseGlobBuilder<F>(ItemBuilder<F>);
+pub struct ItemUseBuilder<F> {
+    builder: ItemBuilder<F>,
+}
 
-impl<F> Invoke<ast::Path> for ItemUseGlobBuilder<F>
+impl<F> Invoke<ast::Path> for ItemUseBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
-    type Result = F::Result;
+    type Result = ItemUsePathBuilder<F>;
 
-    fn invoke(self, path: ast::Path) -> F::Result {
-        self.0.build_use(ast::ViewPathGlob(path))
+    fn invoke(self, path: ast::Path) -> ItemUsePathBuilder<F> {
+        ItemUsePathBuilder {
+            builder: self.builder,
+            path: path,
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ItemUsePathBuilder<F> {
+    builder: ItemBuilder<F>,
+    path: ast::Path,
+}
+
+impl<F> ItemUsePathBuilder<F>
+    where F: Invoke<P<ast::Item>>,
+{
+    pub fn as_<T>(self, id: T) -> F::Result
+        where T: ToIdent,
+    {
+        self.builder.build_use(ast::ViewPathSimple(id.to_ident(), self.path))
+    }
+
+    pub fn build(self) -> F::Result {
+        let id = {
+            let segment = self.path.segments.last().expect("path with no segments!");
+            segment.identifier
+        };
+        self.as_(id)
+    }
+
+    pub fn glob(self) -> F::Result {
+        self.builder.build_use(ast::ViewPathGlob(self.path))
+    }
+
+    pub fn list(self) -> ItemUsePathListBuilder<F> {
+        let span =  self.builder.span;
+        ItemUsePathListBuilder {
+            builder: self.builder,
+            span: span,
+            path: self.path,
+            idents: Vec::new(),
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ItemUsePathListBuilder<F> {
+    builder: ItemBuilder<F>,
+    span: Span,
+    path: ast::Path,
+    idents: Vec<ast::PathListItem>,
+}
+
+impl<F> ItemUsePathListBuilder<F>
+    where F: Invoke<P<ast::Item>>,
+{
+    pub fn span(mut self, span: Span) -> Self {
+        self.span = span;
+        self
+    }
+
+    pub fn self_(mut self) -> Self {
+        self.idents.push(respan(self.span, ast::PathListMod {
+            id: ast::DUMMY_NODE_ID,
+        }));
+        self
+    }
+
+    pub fn id<T>(mut self, id: T) -> Self
+        where T: ToIdent,
+    {
+        self.idents.push(respan(self.span, ast::PathListIdent {
+            name: id.to_ident(),
+            id: ast::DUMMY_NODE_ID,
+        }));
+        self
+    }
+
+    pub fn build(self) -> F::Result {
+        self.builder.build_use(ast::ViewPathList(self.path, self.idents))
     }
 }
 
