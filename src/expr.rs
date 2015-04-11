@@ -9,6 +9,7 @@ use ident::ToIdent;
 use invoke::{Invoke, Identity};
 use lit::LitBuilder;
 use path::{IntoPath, PathBuilder};
+use qpath::QPathBuilder;
 use str::ToInternedString;
 use ty::TyBuilder;
 
@@ -63,6 +64,10 @@ impl<F> ExprBuilder<F>
 
     pub fn path(self) -> PathBuilder<Self> {
         PathBuilder::new_with_callback(self)
+    }
+
+    pub fn qpath(self) -> QPathBuilder<Self> {
+        QPathBuilder::new_with_callback(self)
     }
 
     pub fn id<I>(self, id: I) -> F::Result
@@ -160,9 +165,12 @@ impl<F> ExprBuilder<F>
         })
     }
 
+    // FIXME: Disabled for now until the `box` keyword is stablized.
+    /*
     pub fn box_(self) -> ExprBuilder<ExprUnaryBuilder<F>> {
         self.unary(ast::UnUniq)
     }
+    */
 
     pub fn deref(self) -> ExprBuilder<ExprUnaryBuilder<F>> {
         self.unary(ast::UnDeref)
@@ -478,6 +486,55 @@ impl<F> ExprBuilder<F>
             index: index,
         })
     }
+
+    pub fn box_(self) -> ExprBuilder<ExprPathBuilder<F>> {
+        let path = PathBuilder::new()
+            .global()
+            .id("std").id("boxed").id("Box").id("new")
+            .build();
+
+        ExprBuilder::new_with_callback(ExprPathBuilder {
+            builder: self,
+            path: path,
+        })
+    }
+
+    pub fn rc(self) -> ExprBuilder<ExprPathBuilder<F>> {
+        let path = PathBuilder::new()
+            .global()
+            .id("std").id("rc").id("Rc").id("new")
+            .build();
+
+        ExprBuilder::new_with_callback(ExprPathBuilder {
+            builder: self,
+            path: path,
+        })
+    }
+
+    pub fn arc(self) -> ExprBuilder<ExprPathBuilder<F>> {
+        let path = PathBuilder::new()
+            .global()
+            .id("std").id("arc").id("Arc").id("new")
+            .build();
+
+        ExprBuilder::new_with_callback(ExprPathBuilder {
+            builder: self,
+            path: path,
+        })
+    }
+
+    pub fn slice(self) -> ExprSliceBuilder<F> {
+        ExprSliceBuilder {
+            builder: self,
+            exprs: Vec::new(),
+        }
+    }
+
+    pub fn vec(self) -> ExprSliceBuilder<ExprVecBuilder<F>> {
+        ExprBuilder::new_with_callback(ExprVecBuilder {
+            builder: self,
+        }).slice()
+    }
 }
 
 impl<F> Invoke<P<ast::Lit>> for ExprBuilder<F>
@@ -497,6 +554,16 @@ impl<F> Invoke<ast::Path> for ExprBuilder<F>
 
     fn invoke(self, path: ast::Path) -> F::Result {
         self.build_path(path)
+    }
+}
+
+impl<F> Invoke<(ast::QSelf, ast::Path)> for ExprBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, (qself, path): (ast::QSelf, ast::Path)) -> F::Result {
+        self.build_qpath(qself, path)
     }
 }
 
@@ -940,5 +1007,65 @@ impl<F> Invoke<P<ast::Expr>> for ExprTupFieldBuilder<F>
 
     fn invoke(self, expr: P<ast::Expr>) -> F::Result {
         self.builder.build_expr_(ast::ExprTupField(expr, self.index))
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprSliceBuilder<F> {
+    builder: ExprBuilder<F>,
+    exprs: Vec<P<ast::Expr>>,
+}
+
+impl<F: Invoke<P<ast::Expr>>> ExprSliceBuilder<F>
+    where F: Invoke<P<ast::Expr>>
+{
+    pub fn with_exprs<I>(mut self, iter: I) -> Self
+        where I: IntoIterator<Item=P<ast::Expr>>,
+    {
+        self.exprs.extend(iter);
+        self
+    }
+
+    pub fn expr(self) -> ExprBuilder<Self> {
+        ExprBuilder::new_with_callback(self)
+    }
+
+    pub fn build(self) -> F::Result {
+        self.builder.build_expr_(ast::ExprVec(self.exprs))
+    }
+}
+
+impl<F> Invoke<P<ast::Expr>> for ExprSliceBuilder<F>
+    where F: Invoke<P<ast::Expr>>
+{
+    type Result = ExprSliceBuilder<F>;
+
+    fn invoke(mut self, expr: P<ast::Expr>) -> Self {
+        self.exprs.push(expr);
+        self
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprVecBuilder<F> {
+    builder: ExprBuilder<F>,
+}
+
+impl<F> Invoke<P<ast::Expr>> for ExprVecBuilder<F>
+    where F: Invoke<P<ast::Expr>>
+{
+    type Result = F::Result;
+
+    fn invoke(self, expr: P<ast::Expr>) -> F::Result {
+        let qpath = ExprBuilder::new().qpath()
+            .ty().slice().infer()
+            .id("into_vec");
+
+        self.builder.call()
+            .build(qpath)
+            .arg().box_().build(expr)
+            .build()
     }
 }

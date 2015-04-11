@@ -78,6 +78,7 @@ impl<F> PathBuilder<F>
         self.callback.invoke(path)
     }
 
+    /// Update the span to start from this location.
     pub fn span(mut self, span: Span) -> Self {
         self.span = span;
         self

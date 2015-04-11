@@ -16,6 +16,7 @@ pub mod method;
 pub mod name;
 pub mod pat;
 pub mod path;
+pub mod qpath;
 pub mod stmt;
 pub mod str;
 pub mod struct_def;

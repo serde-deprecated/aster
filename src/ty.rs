@@ -8,6 +8,7 @@ use ident::ToIdent;
 use invoke::{Invoke, Identity};
 use name::ToName;
 use path::PathBuilder;
+use qpath::QPathBuilder;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -68,6 +69,10 @@ impl<F> TyBuilder<F>
         PathBuilder::new_with_callback(TyPathBuilder(self))
     }
 
+    pub fn qpath(self) -> QPathBuilder<TyQPathBuilder<F>> {
+        QPathBuilder::new_with_callback(TyQPathBuilder(self))
+    }
+
     pub fn isize(self) -> F::Result {
         self.id("isize")
     }
@@ -108,18 +113,6 @@ impl<F> TyBuilder<F>
         self.id("u64")
     }
 
-    pub fn option(self) -> TyBuilder<TyOptionBuilder<F>> {
-        TyBuilder::new_with_callback(TyOptionBuilder(self))
-    }
-
-    pub fn result(self) -> TyBuilder<TyResultOkBuilder<F>> {
-        TyBuilder::new_with_callback(TyResultOkBuilder(self))
-    }
-
-    pub fn phantom_data(self) -> TyBuilder<TyPhantomDataBuilder<F>> {
-        TyBuilder::new_with_callback(TyPhantomDataBuilder(self))
-    }
-
     pub fn unit(self) -> F::Result {
         self.tuple().build()
     }
@@ -131,12 +124,36 @@ impl<F> TyBuilder<F>
         }
     }
 
+    pub fn build_slice(self, ty: P<ast::Ty>) -> F::Result {
+        self.build_ty_(ast::Ty_::TyVec(ty))
+    }
+
+    pub fn slice(self) -> TyBuilder<TySliceBuilder<F>> {
+        TyBuilder::new_with_callback(TySliceBuilder(self))
+    }
+
     pub fn ref_(self) -> TyRefBuilder<F> {
         TyRefBuilder {
             builder: self,
             lifetime: None,
             mutability: ast::MutImmutable,
         }
+    }
+
+    pub fn infer(self) -> F::Result {
+        self.build_ty_(ast::TyInfer)
+    }
+
+    pub fn option(self) -> TyBuilder<TyOptionBuilder<F>> {
+        TyBuilder::new_with_callback(TyOptionBuilder(self))
+    }
+
+    pub fn result(self) -> TyBuilder<TyResultOkBuilder<F>> {
+        TyBuilder::new_with_callback(TyResultOkBuilder(self))
+    }
+
+    pub fn phantom_data(self) -> TyBuilder<TyPhantomDataBuilder<F>> {
+        TyBuilder::new_with_callback(TyPhantomDataBuilder(self))
     }
 }
 
@@ -151,6 +168,34 @@ impl<F> Invoke<ast::Path> for TyPathBuilder<F>
 
     fn invoke(self, path: ast::Path) -> F::Result {
         self.0.build_path(path)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct TyQPathBuilder<F>(TyBuilder<F>);
+
+impl<F> Invoke<(ast::QSelf, ast::Path)> for TyQPathBuilder<F>
+    where F: Invoke<P<ast::Ty>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, (qself, path): (ast::QSelf, ast::Path)) -> F::Result {
+        self.0.build_qpath(qself, path)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct TySliceBuilder<F>(TyBuilder<F>);
+
+impl<F> Invoke<P<ast::Ty>> for TySliceBuilder<F>
+    where F: Invoke<P<ast::Ty>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, ty: P<ast::Ty>) -> F::Result {
+        self.0.build_slice(ty)
     }
 }
 

@@ -27,7 +27,7 @@ impl GenericsBuilder {
     }
 
     pub fn from_generics(generics: ast::Generics) -> Self {
-        GenericsBuilder::from_generics_with_callback(Identity, generics)
+        GenericsBuilder::from_generics_with_callback(generics, Identity)
     }
 }
 
@@ -44,7 +44,7 @@ impl<F> GenericsBuilder<F>
         }
     }
 
-    pub fn from_generics_with_callback(callback: F, generics: ast::Generics) -> Self {
+    pub fn from_generics_with_callback(generics: ast::Generics, callback: F) -> Self {
         GenericsBuilder {
             callback: callback,
             span: DUMMY_SP,

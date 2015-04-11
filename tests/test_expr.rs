@@ -42,6 +42,75 @@ fn test_lit() {
 }
 
 #[test]
+fn test_path() {
+    let builder = AstBuilder::new();
+
+    let expr = builder.expr().path()
+        .id("x")
+        .build();
+
+    assert_eq!(
+        expr,
+        P(ast::Expr {
+            id: ast::DUMMY_NODE_ID,
+            node: ast::ExprPath(
+                None,
+                builder.path().id("x").build(),
+            ),
+            span: DUMMY_SP,
+        })
+    );
+}
+
+#[test]
+fn test_qpath() {
+    let builder = AstBuilder::new();
+
+    let expr = builder.expr().qpath()
+        .ty().slice().infer()
+        .id("into_vec");
+
+    assert_eq!(
+        expr,
+        P(ast::Expr {
+            id: ast::DUMMY_NODE_ID,
+            node: ast::ExprPath(
+                Some(ast::QSelf {
+                    ty: builder.ty().slice().infer(),
+                    position: 0,
+                }),
+                builder.path().id("into_vec").build(),
+            ),
+            span: DUMMY_SP,
+        })
+    );
+
+    let expr: P<ast::Expr> = builder.expr().qpath()
+        .ty().slice().infer()
+        .as_().id("Slice").build()
+        .id("into_vec");
+
+    assert_eq!(
+        expr,
+        P(ast::Expr {
+            id: ast::DUMMY_NODE_ID,
+            node: ast::ExprPath(
+                Some(ast::QSelf {
+                    ty: builder.ty().slice().infer(),
+                    position: 1,
+                }),
+                builder.path()
+                    .id("Slice")
+                    .id("into_vec")
+                    .build(),
+            ),
+            span: DUMMY_SP,
+        })
+    );
+}
+
+
+#[test]
 fn test_bin() {
     let builder = AstBuilder::new();
 
@@ -114,5 +183,52 @@ fn test_tuple() {
             ]),
             span: DUMMY_SP,
         })
+    );
+}
+
+#[test]
+fn test_slice() {
+    let builder = AstBuilder::new();
+
+    let expr = builder.expr().slice()
+        .expr().i8(1)
+        .expr().i8(2)
+        .expr().i8(3)
+        .build();
+
+    assert_eq!(
+        expr,
+        P(ast::Expr {
+            id: ast::DUMMY_NODE_ID,
+            node: ast::ExprVec(vec![
+                builder.expr().i8(1),
+                builder.expr().i8(2),
+                builder.expr().i8(3),
+            ]),
+            span: DUMMY_SP,
+        })
+    );
+}
+
+#[test]
+fn test_vec() {
+    let builder = AstBuilder::new();
+
+    let expr = builder.expr().vec()
+        .expr().i8(1)
+        .expr().i8(2)
+        .expr().i8(3)
+        .build();
+
+    assert_eq!(
+        expr,
+        builder.expr().call()
+            .qpath().ty().slice().infer().id("into_vec")
+            .arg().box_().slice()
+                .expr().i8(1)
+                .expr().i8(2)
+                .expr().i8(3)
+                .build()
+            .build()
     );
 }

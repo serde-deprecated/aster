@@ -25,6 +25,53 @@ fn test_path() {
 }
 
 #[test]
+fn test_qpath() {
+    let builder = AstBuilder::new();
+
+    let expr = builder.expr().qpath()
+        .ty().slice().infer()
+        .id("into_vec");
+
+    assert_eq!(
+        expr,
+        P(ast::Expr {
+            id: ast::DUMMY_NODE_ID,
+            node: ast::ExprPath(
+                Some(ast::QSelf {
+                    ty: builder.ty().slice().infer(),
+                    position: 0,
+                }),
+                builder.path().id("into_vec").build(),
+            ),
+            span: DUMMY_SP,
+        })
+    );
+
+    let expr: P<ast::Expr> = builder.expr().qpath()
+        .ty().slice().infer()
+        .as_().id("Slice").build()
+        .id("into_vec");
+
+    assert_eq!(
+        expr,
+        P(ast::Expr {
+            id: ast::DUMMY_NODE_ID,
+            node: ast::ExprPath(
+                Some(ast::QSelf {
+                    ty: builder.ty().slice().infer(),
+                    position: 1,
+                }),
+                builder.path()
+                    .id("Slice")
+                    .id("into_vec")
+                    .build(),
+            ),
+            span: DUMMY_SP,
+        })
+    );
+}
+
+#[test]
 fn test_option() {
     let builder = AstBuilder::new();
     let ty = builder.ty().option().isize();
@@ -126,6 +173,22 @@ fn test_tuple() {
                     span: DUMMY_SP,
                 }),
             ]),
+            span: DUMMY_SP,
+        })
+    );
+}
+
+#[test]
+fn test_slice() {
+    let builder = AstBuilder::new();
+    let ty = builder.ty()
+        .slice().isize();
+
+    assert_eq!(
+        ty,
+        P(ast::Ty {
+            id: ast::DUMMY_NODE_ID,
+            node: ast::TyVec(builder.ty().isize()),
             span: DUMMY_SP,
         })
     );
