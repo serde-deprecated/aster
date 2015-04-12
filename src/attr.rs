@@ -68,6 +68,10 @@ impl<F> AttrBuilder<F>
         })
     }
 
+    pub fn automatically_derived(self) -> F::Result {
+        self.word("automatically_derived")
+    }
+
     pub fn inline(self) -> F::Result {
         self.word("inline")
     }

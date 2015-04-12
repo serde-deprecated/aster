@@ -506,6 +506,16 @@ impl<F> ItemEnumBuilder<F>
         self.with_variant(variant)
     }
 
+    pub fn ids<I, T>(mut self, ids: I) -> Self
+        where I: IntoIterator<Item=T>,
+              T: ToIdent,
+    {
+        for id in ids.into_iter() {
+            self = self.id(id);
+        }
+        self
+    }
+
     pub fn id<T>(self, id: T) -> Self
         where T: ToIdent,
     {
