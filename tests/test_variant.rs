@@ -67,8 +67,8 @@ fn test_tuple_variant() {
 fn test_struct_variant() {
     let builder = AstBuilder::new();
     let variant = builder.variant("A").struct_()
-        .field("a").isize()
-        .field("b").isize()
+        .field("a").ty().isize()
+        .field("b").ty().isize()
         .build();
 
     assert_eq!(
@@ -80,8 +80,8 @@ fn test_struct_variant() {
                 attrs: vec![],
                 kind: ast::StructVariantKind(
                     builder.struct_def()
-                        .field("a").isize()
-                        .field("b").isize()
+                        .field("a").ty().isize()
+                        .field("b").ty().isize()
                         .build()
                 ),
                 id: ast::DUMMY_NODE_ID,

@@ -159,7 +159,7 @@ impl<F> VariantStructBuilder<F>
         StructDefBuilder::new_with_callback(self).span(span).with_field(field)
     }
 
-    pub fn field<T>(self, id: T) -> TyBuilder<StructFieldBuilder<StructDefBuilder<Self>>>
+    pub fn field<T>(self, id: T) -> StructFieldBuilder<StructDefBuilder<Self>>
         where T: ToIdent,
     {
         let span = self.builder.span;

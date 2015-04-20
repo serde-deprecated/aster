@@ -42,12 +42,11 @@ impl<F> StructDefBuilder<F>
         self
     }
 
-    pub fn field<T>(self, id: T) -> TyBuilder<StructFieldBuilder<Self>>
+    pub fn field<T>(self, id: T) -> StructFieldBuilder<Self>
         where T: ToIdent,
     {
         let span = self.span;
-        let builder = StructFieldBuilder::named_with_callback(id, self).span(span);
-        TyBuilder::new_with_callback(builder)
+        StructFieldBuilder::named_with_callback(id, self).span(span)
     }
 
     pub fn build(self) -> F::Result {

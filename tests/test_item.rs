@@ -110,8 +110,8 @@ fn test_empty_struct() {
 fn test_struct() {
     let builder = AstBuilder::new();
     let struct_ = builder.item().struct_("Struct")
-        .field("x").isize()
-        .field("y").isize()
+        .field("x").ty().isize()
+        .field("y").ty().isize()
         .build();
 
     assert_eq!(
@@ -122,8 +122,8 @@ fn test_struct() {
             id: ast::DUMMY_NODE_ID,
             node: ast::ItemStruct(
                 builder.struct_def()
-                    .field("x").isize()
-                    .field("y").isize()
+                    .field("x").ty().isize()
+                    .field("y").ty().isize()
                     .build(),
                 builder.generics().build(),
             ),
@@ -220,11 +220,11 @@ fn test_enum() {
             .ty().isize()
             .build()
         .struct_("E")
-            .field("a").isize()
+            .field("a").ty().isize()
             .build()
         .struct_("F")
-            .field("a").isize()
-            .field("b").isize()
+            .field("a").ty().isize()
+            .field("b").ty().isize()
             .build()
         .build();
 
@@ -247,11 +247,11 @@ fn test_enum() {
                             .ty().isize()
                             .build(),
                         builder.variant("E").struct_()
-                            .field("a").isize()
+                            .field("a").ty().isize()
                             .build(),
                         builder.variant("F").struct_()
-                            .field("a").isize()
-                            .field("b").isize()
+                            .field("a").ty().isize()
+                            .field("b").ty().isize()
                             .build(),
                     ],
                 },
