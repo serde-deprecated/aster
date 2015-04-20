@@ -359,3 +359,48 @@ fn test_use() {
         )
     );
 }
+
+#[test]
+fn test_attr() {
+    let builder = AstBuilder::new();
+    let struct_ = builder.item()
+        .attr().doc("/// doc string")
+        .struct_("Struct")
+        .field("x").ty().isize()
+        .field("y").ty().isize()
+        .build();
+
+    assert_eq!(
+        struct_,
+        P(ast::Item {
+            ident: builder.id("Struct"),
+            attrs: vec![
+                respan(
+                    DUMMY_SP,
+                    ast::Attribute_ {
+                        id: ast::AttrId(0),
+                        style: ast::AttrOuter,
+                        value: P(respan(
+                            DUMMY_SP,
+                            ast::MetaNameValue(
+                                builder.interned_string("doc"),
+                                (*builder.lit().str("/// doc string")).clone(),
+                            ),
+                        )),
+                        is_sugared_doc: true,
+                    }
+                ),
+            ],
+            id: ast::DUMMY_NODE_ID,
+            node: ast::ItemStruct(
+                builder.struct_def()
+                    .field("x").ty().isize()
+                    .field("y").ty().isize()
+                    .build(),
+                builder.generics().build(),
+            ),
+            vis: ast::Inherited,
+            span: DUMMY_SP,
+        })
+    );
+}
