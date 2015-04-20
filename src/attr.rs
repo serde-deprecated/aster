@@ -6,15 +6,23 @@ use syntax::codemap::{DUMMY_SP, Span, respan};
 use syntax::parse::token;
 use syntax::ptr::P;
 
-use invoke::Invoke;
+use invoke::{Invoke, Identity};
 use lit::LitBuilder;
 use str::ToInternedString;
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct AttrBuilder<F> {
+pub struct AttrBuilder<F=Identity> {
     callback: F,
     span: Span,
+    style: ast::AttrStyle,
+    is_sugared_doc: bool,
+}
+
+impl AttrBuilder {
+    pub fn new() -> Self {
+        AttrBuilder::new_with_callback(Identity)
+    }
 }
 
 impl<F> AttrBuilder<F>
@@ -24,6 +32,8 @@ impl<F> AttrBuilder<F>
         AttrBuilder {
             callback: callback,
             span: DUMMY_SP,
+            style: ast::AttrOuter,
+            is_sugared_doc: false,
         }
     }
 
@@ -32,12 +42,17 @@ impl<F> AttrBuilder<F>
         self
     }
 
+    pub fn inner(mut self) -> Self {
+        self.style = ast::AttrInner;
+        self
+    }
+
     pub fn build_meta_item(self, item: P<ast::MetaItem>) -> F::Result {
         let attr = respan(self.span, ast::Attribute_ {
             id: attr::mk_attr_id(),
-            style: ast::AttrOuter,
+            style: self.style,
             value: item,
-            is_sugared_doc: false,
+            is_sugared_doc: self.is_sugared_doc,
         });
         self.callback.invoke(attr)
     }
@@ -113,6 +128,18 @@ impl<F> AttrBuilder<F>
               T: ToInternedString,
     {
         self.list("plugin").words(iter).build()
+    }
+
+    /**
+     * Create a #[doc = "..."] node. Note that callers of this must make sure to prefix their
+     * comments with either "///" or "/\*\*" if an outer comment, or "//!" or "/\*!" if an inner
+     * comment.
+     */
+    pub fn doc<T>(mut self, doc: T) -> F::Result
+        where T: ToInternedString,
+    {
+        self.is_sugared_doc = true;
+        self.name_value("doc").str(doc)
     }
 }
 

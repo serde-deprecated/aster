@@ -71,6 +71,10 @@ impl AstBuilder {
         lifetime.into_lifetime()
     }
 
+    pub fn attr(&self) -> attr::AttrBuilder {
+        attr::AttrBuilder::new()
+    }
+
     pub fn path(&self) -> path::PathBuilder {
         path::PathBuilder::new()
     }
