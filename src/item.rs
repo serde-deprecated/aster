@@ -357,6 +357,13 @@ impl<F> ItemStructBuilder<F>
         GenericsBuilder::new_with_callback(self)
     }
 
+    pub fn with_fields<I>(self, iter: I) -> StructDefBuilder<Self>
+        where I: IntoIterator<Item=ast::StructField>,
+    {
+        let span = self.builder.span;
+        StructDefBuilder::new_with_callback(self).span(span).with_fields(iter)
+    }
+
     pub fn with_field(self, field: ast::StructField) -> StructDefBuilder<Self> {
         let span = self.builder.span;
         StructDefBuilder::new_with_callback(self).span(span).with_field(field)
