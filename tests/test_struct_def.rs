@@ -124,3 +124,25 @@ fn test_attrs() {
         })
     );
 }
+
+
+#[test]
+fn test_with_fields() {
+    let builder = AstBuilder::new();
+    let struct_def = builder.struct_def()
+        .field("x").ty().isize()
+        .field("y").ty().isize()
+        .build();
+
+    let struct_def2 = builder.struct_def()
+        .with_fields(
+            vec!["x","y"].iter()
+                .map(|f| builder.field(f).ty().isize())
+            )
+        .build();
+
+    assert_eq!(
+        struct_def,
+        struct_def2
+    );
+}

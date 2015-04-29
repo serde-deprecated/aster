@@ -37,6 +37,13 @@ impl<F> StructDefBuilder<F>
         self
     }
 
+    pub fn with_fields<I>(mut self, iter: I) -> Self
+        where I: IntoIterator<Item=ast::StructField>,
+    {
+        self.fields.extend(iter);
+        self
+    }
+
     pub fn with_field(mut self, field: ast::StructField) -> Self {
         self.fields.push(field);
         self
