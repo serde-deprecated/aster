@@ -404,3 +404,25 @@ fn test_attr() {
         })
     );
 }
+
+#[test]
+fn test_ty() {
+    let builder = AstBuilder::new();
+    let enum_= builder.item().ty_("MyT")
+        .ty().isize();
+
+    assert_eq!(
+        enum_,
+        P(ast::Item {
+            ident: builder.id("MyT"),
+            id: ast::DUMMY_NODE_ID,
+            attrs: vec![],
+            node: ast::ItemTy(
+                builder.ty().isize(),
+                builder.generics().build(),
+            ),
+            vis: ast::Inherited,
+            span: DUMMY_SP,
+        })
+    );
+}
