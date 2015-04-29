@@ -1,7 +1,12 @@
-#![feature(rustc_private)]
+#![cfg_attr(not(feature = "syntex"), feature(rustc_private))]
+
+#[cfg(feature = "syntex")]
+extern crate syntex_syntax as syntax;
+
+#[cfg(not(feature = "syntex"))]
+extern crate syntax;
 
 extern crate aster;
-extern crate syntax;
 
 use syntax::ast;
 use syntax::codemap::{DUMMY_SP, Spanned, respan};

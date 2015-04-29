@@ -7,7 +7,6 @@ description = "A libsyntax ast builder"
 repository = "https://github.com/erickt/rust-aster"
 
 [features]
-default = ["syntex"]
 syntex = ["syntex_syntax"]
 
 [dependencies.syntex_syntax]
