@@ -153,6 +153,12 @@ impl AstBuilder {
         variant::VariantBuilder::new(id).span(self.span)
     }
 
+    pub fn field<T>(&self, id: T) -> struct_def::StructFieldBuilder
+        where T: ident::ToIdent,
+    {
+        struct_def::StructFieldBuilder::named(id).span(self.span)
+    }
+
     pub fn item(&self) -> item::ItemBuilder {
         item::ItemBuilder::new().span(self.span)
     }
