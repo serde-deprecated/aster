@@ -7,6 +7,7 @@ use syntax::abi::Abi;
 use syntax::ast;
 use syntax::codemap::{DUMMY_SP, Spanned, respan};
 use syntax::parse::token;
+use syntax::print::pprust;
 use syntax::ptr::P;
 
 use aster::AstBuilder;
@@ -403,4 +404,36 @@ fn test_attr() {
             span: DUMMY_SP,
         })
     );
+}
+
+#[test]
+fn test_mac() {
+    let builder = AstBuilder::new();
+    let mac = builder.item().mac()
+        .path().id("my_macro").build()
+        .expr().str("abc")
+        .expr().id(",")
+        .expr().build_add(builder.expr().u32(0), builder.expr().u32(1))
+        .build();
+
+    assert_eq!(
+        &pprust::item_to_string(&mac)[..],
+        "my_macro! (\"abc\" , 0u32 + 1u32);"
+        );
+
+    let mac = builder.item().mac()
+        .path().id("my_macro").build()
+        .with_args(
+            vec![
+                builder.expr().str("abc"),
+                builder.expr().id(","),
+                builder.expr().build_add(builder.expr().u32(0), builder.expr().u32(1))
+                ]
+            )
+        .build();
+
+    assert_eq!(
+        &pprust::item_to_string(&mac)[..],
+        "my_macro! (\"abc\" , 0u32 + 1u32);"
+        );
 }
