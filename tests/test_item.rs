@@ -404,3 +404,41 @@ fn test_attr() {
         })
     );
 }
+
+#[test]
+fn test_extern_crate() {
+    use aster::name::ToName;
+
+    let builder = AstBuilder::new();
+    let item = builder.item()
+        .extern_crate("aster")
+        .build();
+
+    assert_eq!(
+        item,
+        P(ast::Item {
+            ident: builder.id("aster"),
+            attrs: vec![],
+            id: ast::DUMMY_NODE_ID,
+            node: ast::ItemExternCrate(None),
+            vis: ast::Inherited,
+            span: DUMMY_SP,
+        })
+    );
+
+    let item = builder.item()
+        .extern_crate("aster")
+        .with_name("aster1".to_name());
+
+    assert_eq!(
+        item,
+        P(ast::Item {
+            ident: builder.id("aster"),
+            attrs: vec![],
+            id: ast::DUMMY_NODE_ID,
+            node: ast::ItemExternCrate(Some("aster1".to_name())),
+            vis: ast::Inherited,
+            span: DUMMY_SP,
+        })
+    );
+}

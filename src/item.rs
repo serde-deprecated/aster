@@ -143,6 +143,17 @@ impl<F> ItemBuilder<F>
         }
 
     }
+
+    pub fn extern_crate<T>(self, id: T) -> ItemExternCrateBuilder<F>
+        where T: ToIdent,
+    {
+        let id = id.to_ident();
+
+        ItemExternCrateBuilder {
+            builder: self,
+            id: id,
+        }
+    }
 }
 
 impl<F> Invoke<ast::Attribute> for ItemBuilder<F>
@@ -567,5 +578,27 @@ impl<F> Invoke<P<ast::Variant>> for ItemEnumBuilder<F>
 
     fn invoke(self, variant: P<ast::Variant>) -> Self {
         self.with_variant(variant)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+/// A builder for extern crate items
+pub struct ItemExternCrateBuilder<F> {
+    builder: ItemBuilder<F>,
+    id: ast::Ident,
+}
+
+impl<F> ItemExternCrateBuilder<F>
+    where F: Invoke<P<ast::Item>>,
+{
+    pub fn with_name(self, name: ast::Name) -> F::Result {
+        let extern_ = ast::ItemExternCrate(Some(name));
+        self.builder.build_item_(self.id, extern_)
+    }
+
+    pub fn build(self) -> F::Result {
+        let extern_ = ast::ItemExternCrate(None);
+        self.builder.build_item_(self.id, extern_)
     }
 }
