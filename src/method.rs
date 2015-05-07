@@ -66,6 +66,11 @@ impl<F> MethodBuilder<F>
         self
     }
 
+    pub fn with_generics(mut self, generics: ast::Generics) -> Self {
+        self.generics = generics;
+        self
+    }
+
     pub fn generics(self) -> GenericsBuilder<Self> {
         GenericsBuilder::new_with_callback(self)
     }
@@ -81,8 +86,7 @@ impl<F> Invoke<ast::Generics> for MethodBuilder<F>
     type Result = Self;
 
     fn invoke(mut self, generics: ast::Generics) -> Self {
-        self.generics = generics;
-        self
+        self.with_generics(generics)
     }
 }
 
