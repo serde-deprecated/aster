@@ -1,8 +1,3 @@
-#![feature(rustc_private)]
-
-extern crate aster;
-extern crate syntax;
-
 use syntax::abi::Abi;
 use syntax::ast;
 use syntax::codemap::{DUMMY_SP, Spanned, respan};

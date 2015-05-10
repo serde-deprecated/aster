@@ -1,8 +1,3 @@
-#![feature(rustc_private)]
-
-extern crate aster;
-extern crate syntax;
-
 use syntax::ast;
 use syntax::owned_slice::OwnedSlice;
 
