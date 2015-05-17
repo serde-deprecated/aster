@@ -498,9 +498,9 @@ fn test_mac() {
 }
 
 #[test]
-fn test_ty() {
+fn test_type() {
     let builder = AstBuilder::new();
-    let enum_= builder.item().ty_("MyT")
+    let enum_= builder.item().type_("MyT")
         .ty().isize();
 
     assert_eq!(

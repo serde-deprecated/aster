@@ -163,7 +163,7 @@ impl<F> ItemBuilder<F>
         }
     }
 
-    pub fn ty_<T>(self, id: T) -> ItemTyBuilder<F>
+    pub fn type_<T>(self, id: T) -> ItemTyBuilder<F>
         where T: ToIdent,
     {
         let id = id.to_ident();
