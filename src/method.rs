@@ -105,7 +105,7 @@ impl<F> Invoke<ast::Generics> for MethodBuilder<F>
 {
     type Result = Self;
 
-    fn invoke(mut self, generics: ast::Generics) -> Self {
+    fn invoke(self, generics: ast::Generics) -> Self {
         self.with_generics(generics)
     }
 }
