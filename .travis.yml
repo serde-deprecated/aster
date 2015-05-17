@@ -1,7 +1,16 @@
 language: rust
+rust:
+  - nightly
+  - beta
+  - stable
+matrix:
+  - include:
+    - rust: nightly
+      env: FEATURES="--features nightly"
 script:
-- cargo test
-- cargo doc
+  - cargo build --verbose $FEATURES
+  - cargo test --verbose $FEATURES
+  - cargo doc --verbose $FEATURES
 after_success: |
   [ $TRAVIS_BRANCH = "master" ] &&
   [ $TRAVIS_PULL_REQUEST  = false ] &&
