@@ -3,6 +3,7 @@ use syntax::ast;
 use syntax::codemap::{DUMMY_SP, Span, respan};
 use syntax::ptr::P;
 
+use attr::AttrBuilder;
 use block::BlockBuilder;
 use generics::GenericsBuilder;
 use ident::ToIdent;
@@ -51,6 +52,15 @@ impl<F> MethodBuilder<F>
         self
     }
 
+    pub fn with_attr(mut self, attr: ast::Attribute) -> Self {
+        self.attrs.push(attr);
+        self
+    }
+
+    pub fn attr(self) -> AttrBuilder<Self> {
+        AttrBuilder::new_with_callback(self)
+    }
+
     pub fn unsafe_(mut self) -> Self {
         self.unsafety = ast::Unsafety::Normal;
         self
@@ -77,6 +87,16 @@ impl<F> MethodBuilder<F>
 
     pub fn self_(self) -> SelfBuilder<Self> {
         SelfBuilder::new_with_callback(self)
+    }
+}
+
+impl<F> Invoke<ast::Attribute> for MethodBuilder<F>
+    where F: Invoke<P<ast::ImplItem>>,
+{
+    type Result = Self;
+
+    fn invoke(self, attr: ast::Attribute) -> Self {
+        self.with_attr(attr)
     }
 }
 
