@@ -162,6 +162,19 @@ impl<F> ItemBuilder<F>
             builder: self,
         }
     }
+
+    pub fn ty_<T>(self, id: T) -> ItemTyBuilder<F>
+        where T: ToIdent,
+    {
+        let id = id.to_ident();
+        let generics = GenericsBuilder::new().build();
+
+        ItemTyBuilder {
+            builder: self,
+            id: id,
+            generics: generics,
+        }
+    }
 }
 
 impl<F> Invoke<ast::Attribute> for ItemBuilder<F>
@@ -656,5 +669,49 @@ impl<F> Invoke<ast::Mac> for ItemMacBuilder<F>
 
     fn invoke(self, mac: ast::Mac) -> F::Result {
         self.build(mac)
+    }
+}
+
+pub struct ItemTyBuilder<F> {
+    builder: ItemBuilder<F>,
+    id: ast::Ident,
+    generics: ast::Generics,
+}
+
+impl<F> ItemTyBuilder<F>
+    where F: Invoke<P<ast::Item>>,
+{
+    pub fn generics(self) -> GenericsBuilder<Self> {
+        GenericsBuilder::new_with_callback(self)
+    }
+
+    pub fn ty(self) -> TyBuilder<Self> {
+        TyBuilder::new_with_callback(self)
+    }
+
+    pub fn build_ty(self, ty: P<ast::Ty>) -> F::Result {
+        let ty_ = ast::ItemTy(ty, self.generics);
+        self.builder.build_item_(self.id, ty_)
+    }
+}
+
+impl<F> Invoke<ast::Generics> for ItemTyBuilder<F>
+    where F: Invoke<P<ast::Item>>,
+{
+    type Result = Self;
+
+    fn invoke(mut self, generics: ast::Generics) -> Self {
+        self.generics = generics;
+        self
+    }
+}
+
+impl<F> Invoke<P<ast::Ty>> for ItemTyBuilder<F>
+    where F: Invoke<P<ast::Item>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, ty: P<ast::Ty>) -> F::Result {
+        self.build_ty(ty)
     }
 }
