@@ -1,5 +1,9 @@
-#![feature(rustc_private)]
+#![cfg_attr(not(feature = "syntex"), feature(rustc_private))]
 
+#[cfg(feature = "syntex")]
+extern crate syntex_syntax as syntax;
+
+#[cfg(not(feature = "syntex"))]
 extern crate syntax;
 
 pub mod attr;
