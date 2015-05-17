@@ -134,6 +134,27 @@ fn test_struct() {
 }
 
 #[test]
+fn test_struct_with_fields() {
+    let builder = AstBuilder::new();
+    let struct_ = builder.item().struct_("Struct")
+        .field("x").ty().isize()
+        .field("y").ty().isize()
+        .build();
+
+    let struct_2 = builder.item().struct_("Struct")
+        .with_fields(
+            vec!["x","y"].iter()
+                .map(|f| builder.field(f).ty().isize())
+                )
+        .build();
+
+    assert_eq!(
+        struct_,
+        struct_2
+    );
+}
+
+#[test]
 fn test_tuple_struct() {
     let builder = AstBuilder::new();
     let struct_ = builder.item().tuple_struct("Struct")
