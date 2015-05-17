@@ -48,6 +48,13 @@ impl<F> FnDeclBuilder<F>
         self
     }
 
+    pub fn with_args<I>(mut self, iter: I) -> Self
+        where I: IntoIterator<Item=ast::Arg>
+    {
+        self.args.extend(iter);
+        self
+    }
+
     pub fn arg<I>(self, id: I) -> ArgBuilder<Self>
         where I: ToIdent,
     {
