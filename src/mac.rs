@@ -101,12 +101,7 @@ fn make_ext_ctxt(sess: &ParseSess) -> ExtCtxt {
     };
 
     let cfg = vec![];
-    let ecfg = expand::ExpansionConfig {
-        crate_name: String::new(),
-        features: None,
-        recursion_limit: 64,
-        trace_mac: false,
-    };
+    let ecfg = expand::ExpansionConfig::default(String::new());
 
     let mut cx = ExtCtxt::new(&sess, cfg, ecfg);
     cx.bt_push(info);
