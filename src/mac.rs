@@ -65,7 +65,6 @@ impl<F> MacBuilder<F>
     pub fn with_arg<T>(mut self, expr: T) -> Self
         where T: ToTokens
     {
-        use syntax::ext::quote::rt::ToTokens;
         let parse_sess = parse::new_parse_sess();
         let cx = make_ext_ctxt(&parse_sess);
         let tokens = expr.to_tokens(&cx);

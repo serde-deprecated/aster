@@ -7,6 +7,7 @@ use syntax::ptr::P;
 
 use aster::AstBuilder;
 use aster::ident::ToIdent;
+use aster::name::ToName;
 
 #[test]
 fn test_fn() {
@@ -424,8 +425,6 @@ fn test_attr() {
 
 #[test]
 fn test_extern_crate() {
-    use aster::name::ToName;
-
     let builder = AstBuilder::new();
     let item = builder.item()
         .extern_crate("aster")
