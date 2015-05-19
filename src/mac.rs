@@ -3,7 +3,7 @@ use syntax::codemap::{self, DUMMY_SP, Span, respan};
 use syntax::ext::base::ExtCtxt;
 use syntax::ext::expand;
 use syntax::ext::quote::rt::ToTokens;
-use syntax::parse::{self, ParseSess};
+use syntax::parse::ParseSess;
 use syntax::ptr::P;
 
 use expr::ExprBuilder;
@@ -65,7 +65,7 @@ impl<F> MacBuilder<F>
     pub fn with_arg<T>(mut self, expr: T) -> Self
         where T: ToTokens
     {
-        let parse_sess = parse::new_parse_sess();
+        let parse_sess = ParseSess::new();
         let cx = make_ext_ctxt(&parse_sess);
         let tokens = expr.to_tokens(&cx);
         assert!(tokens.len() == 1);
