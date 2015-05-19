@@ -1,16 +1,16 @@
 language: rust
 rust:
-  - stable
-  - beta
-  - nightly
+- stable
+- beta
+- nightly
 matrix:
-  - include:
-    - rust: nightly
-      env: FEATURES="--features nightly"
+- include:
+  - rust: nightly
+    env: FEATURES="--features nightly"
 script:
-  - (test $TRAVIS_RUST_VERSION != "nightly" && cargo test --verbose --features with-syntex)
-  - (test $TRAVIS_RUST_VERSION == "nightly" && cargo test --verbose)
-  - (test $TRAVIS_RUST_VERSION == "nightly" && cargo test --verbose --features with-syntex)
+- (test $TRAVIS_RUST_VERSION != "nightly" && cargo test --verbose --features with-syntex)
+- (test $TRAVIS_RUST_VERSION == "nightly" && cargo test --verbose)
+- (test $TRAVIS_RUST_VERSION == "nightly" && cargo test --verbose --features with-syntex)
 after_success: |
   [ $TRAVIS_BRANCH = "master" ] &&
   [ $TRAVIS_PULL_REQUEST  = false ] &&
@@ -21,4 +21,5 @@ after_success: |
   git push -fq https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git gh-pages
 env:
   global:
-    secure: o08wjk2TbslNxErz0ESv0o/h/41GtZjJ6pR2/GKF5r5zNW5GoZtYy3wo23iz6R7DGCNPsOt2hlpwgJU9GaaWqlNowMS+L46CsuiuzxoD+TClBhkvASPSyrRK122TiCL1V6gONsZQ4787pUzBhdXJY9ClBV1hgvsscJc/UPKSn/s=
+  - secure: o08wjk2TbslNxErz0ESv0o/h/41GtZjJ6pR2/GKF5r5zNW5GoZtYy3wo23iz6R7DGCNPsOt2hlpwgJU9GaaWqlNowMS+L46CsuiuzxoD+TClBhkvASPSyrRK122TiCL1V6gONsZQ4787pUzBhdXJY9ClBV1hgvsscJc/UPKSn/s=
+  - secure: HsctrSe7IW9iLKbRuVbWLiKuEoAOqDd5DoMjxmvNIIE+wvnid5k6egzq/OmcnwkNx/f+PHU6V8Vqcy8lMsP2vMYzvpVTUDEBQdY9z0ms50ZOt/dC2Rmt1qvurrcx4IZTrJDr4u8OZdld0TKYYPhvQk/Yv4xcFrQrFeTaeYPz8bY=
