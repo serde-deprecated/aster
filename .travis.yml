@@ -1,17 +1,17 @@
 language: rust
 rust:
-- stable
-- beta
-- nightly
+  - stable
+  - beta
+  - nightly
 env:
-  matrix:
-  - FEATURES="--features with-syntex"
-matrix:
-  include:
-  - rust: nightly
-    env: FEATURES=""
+#  matrix:
+#    #  - FEATURES="--features with-syntex"
+#matrix:
+#  include:
+#    - rust: nightly
+#    #env: FEATURES=""
 script:
-- cargo test --verbose "$FEATURES"
+  - cargo test --verbose $FEATURES
 after_success: |
   [ $TRAVIS_BRANCH = "master" ] &&
   [ $TRAVIS_PULL_REQUEST  = false ] &&
