@@ -1,17 +1,19 @@
 language: rust
 rust:
-  - stable
-  - beta
-  - nightly
+- stable
+- beta
+- nightly
 env:
+  global:
+  - secure: HsctrSe7IW9iLKbRuVbWLiKuEoAOqDd5DoMjxmvNIIE+wvnid5k6egzq/OmcnwkNx/f+PHU6V8Vqcy8lMsP2vMYzvpVTUDEBQdY9z0ms50ZOt/dC2Rmt1qvurrcx4IZTrJDr4u8OZdld0TKYYPhvQk/Yv4xcFrQrFeTaeYPz8bY=
   matrix:
-    - FEATURES="--features with-syntex"
+  - FEATURES="--features with-syntex"
 matrix:
   include:
-    - rust: nightly
-      env: FEATURES=""
+  - rust: nightly
+    env: FEATURES=""
 script:
-  - cargo test --verbose $FEATURES
+- cargo test --verbose $FEATURES
 after_success: |
   [ $TRAVIS_BRANCH = "master" ] &&
   [ $TRAVIS_PULL_REQUEST  = false ] &&
@@ -20,6 +22,3 @@ after_success: |
   sudo pip install ghp-import &&
   ghp-import -n target/doc &&
   git push -fq https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git gh-pages
-env:
-  global:
-  - secure: HsctrSe7IW9iLKbRuVbWLiKuEoAOqDd5DoMjxmvNIIE+wvnid5k6egzq/OmcnwkNx/f+PHU6V8Vqcy8lMsP2vMYzvpVTUDEBQdY9z0ms50ZOt/dC2Rmt1qvurrcx4IZTrJDr4u8OZdld0TKYYPhvQk/Yv4xcFrQrFeTaeYPz8bY=
