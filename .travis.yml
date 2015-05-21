@@ -3,9 +3,14 @@ rust:
 - stable
 - beta
 - nightly
+env:
+  - FEATURES="--features with-syntex"
+matrix:
+  include:
+  - rust: nightly
+    env: FEATURES=""
 script:
-- cargo test --verbose --features with-syntex
-- test "$TRAVIS_RUST_VERSION" == "nightly" && cargo test --verbose
+- cargo test --verbose "FEATURES"
 after_success: |
   [ $TRAVIS_BRANCH = "master" ] &&
   [ $TRAVIS_PULL_REQUEST  = false ] &&
