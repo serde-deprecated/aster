@@ -4,6 +4,7 @@ rust:
 - beta
 - nightly
 env:
+  matrix:
   - FEATURES="--features with-syntex"
 matrix:
   include:
