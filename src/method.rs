@@ -19,6 +19,7 @@ pub struct MethodBuilder<F=Identity> {
     abi: Abi,
     generics: ast::Generics,
     unsafety: ast::Unsafety,
+    constness: ast::Constness,
     id: ast::Ident,
     vis: ast::Visibility,
 }
@@ -42,6 +43,7 @@ impl<F> MethodBuilder<F>
             abi: Abi::Rust,
             generics: GenericsBuilder::new().build(),
             unsafety: ast::Unsafety::Normal,
+            constness: ast::Constness::NotConst,
             id: id.to_ident(),
             vis: ast::Visibility::Inherited,
         }
@@ -161,6 +163,7 @@ impl<F> Invoke<P<ast::Block>> for MethodSelfFnDeclBuilder<F>
         let method_sig = ast::MethodSig {
             unsafety: self.builder.unsafety,
             abi: self.builder.abi,
+            constness: self.builder.constness,
             decl: self.fn_decl,
             generics: self.builder.generics,
             explicit_self: self.explicit_self,

@@ -207,6 +207,7 @@ impl<F> Invoke<P<ast::FnDecl>> for ItemFnDeclBuilder<F>
             id: self.id,
             fn_decl: fn_decl,
             unsafety: ast::Unsafety::Normal,
+            constness: ast::Constness::NotConst,
             abi: Abi::Rust,
             generics: generics,
         }
@@ -220,6 +221,7 @@ pub struct ItemFnBuilder<F> {
     id: ast::Ident,
     fn_decl: P<ast::FnDecl>,
     unsafety: ast::Unsafety,
+    constness: ast::Constness,
     abi: Abi,
     generics: ast::Generics,
 }
@@ -245,6 +247,7 @@ impl<F> ItemFnBuilder<F>
         self.builder.build_item_(self.id, ast::Item_::ItemFn(
             self.fn_decl,
             self.unsafety,
+            self.constness,
             self.abi,
             self.generics,
             block,
