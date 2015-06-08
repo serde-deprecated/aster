@@ -31,6 +31,7 @@ fn test_fn() {
             node: ast::ItemFn(
                 builder.fn_decl().return_().isize(),
                 ast::Unsafety::Normal,
+                ast::Constness::NotConst,
                 Abi::Rust,
                 builder.generics().build(),
                 block
@@ -68,6 +69,7 @@ fn test_generic_fn() {
             node: ast::ItemFn(
                 builder.fn_decl().return_().isize(),
                 ast::Unsafety::Normal,
+                ast::Constness::NotConst,
                 Abi::Rust,
                 builder.generics()
                     .lifetime("'a").build()
