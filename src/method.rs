@@ -169,6 +169,7 @@ impl<F> Invoke<P<ast::Block>> for MethodSelfFnDeclBuilder<F>
             unsafety: self.builder.unsafety,
             constness: self.builder.constness,
             abi: self.builder.abi,
+            constness: self.builder.constness,
             decl: self.fn_decl,
             generics: self.builder.generics,
             explicit_self: self.explicit_self,
