@@ -13,6 +13,7 @@ use generics::GenericsBuilder;
 use ident::ToIdent;
 use invoke::{Invoke, Identity};
 use mac::MacBuilder;
+use method::MethodBuilder;
 use path::PathBuilder;
 use struct_def::{StructDefBuilder, StructFieldBuilder};
 use ty::TyBuilder;
@@ -173,6 +174,19 @@ impl<F> ItemBuilder<F>
             builder: self,
             id: id,
             generics: generics,
+        }
+    }
+
+    pub fn impl_(self) -> ItemImplBuilder<F> {
+        let generics = GenericsBuilder::new().build();
+
+        ItemImplBuilder {
+            builder: self,
+            unsafety: ast::Unsafety::Normal,
+            polarity: ast::ImplPolarity::Positive,
+            generics: generics,
+            trait_ref: None,
+            items: vec![]
         }
     }
 }
@@ -715,6 +729,125 @@ impl<F> Invoke<ast::Generics> for ItemTyBuilder<F>
 }
 
 impl<F> Invoke<P<ast::Ty>> for ItemTyBuilder<F>
+    where F: Invoke<P<ast::Item>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, ty: P<ast::Ty>) -> F::Result {
+        self.build_ty(ty)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ItemImplBuilder<F> {
+    builder: ItemBuilder<F>,
+    unsafety: ast::Unsafety,
+    polarity: ast::ImplPolarity,
+    generics: ast::Generics,
+    trait_ref: Option<ast::TraitRef>,
+    items: Vec<P<ast::ImplItem>>,
+}
+
+impl<F> ItemImplBuilder<F>
+    where F: Invoke<P<ast::Item>>,
+{
+    pub fn unsafe_(mut self) -> Self {
+        self.unsafety = ast::Unsafety::Unsafe;
+        self
+    }
+
+    pub fn negative(mut self) -> Self {
+        self.polarity = ast::ImplPolarity::Negative;
+        self
+    }
+
+    pub fn with_generics(mut self, generics: ast::Generics) -> Self {
+        self.generics = generics;
+        self
+    }
+
+    pub fn generics(self) -> GenericsBuilder<Self> {
+        GenericsBuilder::new_with_callback(self)
+    }
+
+    pub fn with_trait(mut self, trait_ref: ast::TraitRef) -> Self {
+        self.trait_ref = Some(trait_ref);
+        self
+    }
+
+    pub fn trait_(self) -> PathBuilder<Self> {
+        PathBuilder::new_with_callback(self)
+    }
+
+    pub fn ty(self) -> TyBuilder<Self> {
+        TyBuilder::new_with_callback(self)
+    }
+
+    pub fn build_ty(self, ty: P<ast::Ty>) -> F::Result {
+        let ty_ = ast::ItemImpl(
+            self.unsafety,
+            self.polarity,
+            self.generics,
+            self.trait_ref,
+            ty,
+            self.items);
+        self.builder.build_item_(token::special_idents::invalid, ty_)
+    }
+
+    pub fn with_items<I>(mut self, items: I) -> Self
+        where I: IntoIterator<Item=P<ast::ImplItem>>,
+    {
+        self.items.extend(items);
+        self
+    }
+
+    pub fn with_item(mut self, item: P<ast::ImplItem>) -> Self {
+        self.items.push(item);
+        self
+    }
+
+    pub fn method<T>(self, id: T) -> MethodBuilder<Self>
+        where T: ToIdent,
+    {
+        MethodBuilder::new_with_callback(id, self)
+    }
+}
+
+impl<F> Invoke<ast::Generics> for ItemImplBuilder<F>
+    where F: Invoke<P<ast::Item>>,
+{
+    type Result = Self;
+
+    fn invoke(self, generics: ast::Generics) -> Self {
+        self.with_generics(generics)
+    }
+}
+
+impl<F> Invoke<ast::Path> for ItemImplBuilder<F>
+    where F: Invoke<P<ast::Item>>
+{
+    type Result = Self;
+
+    fn invoke(self, path: ast::Path) -> Self {
+        self.with_trait(ast::TraitRef {
+            path: path,
+            ref_id: 0
+        })
+    }
+}
+
+impl<F> Invoke<P<ast::ImplItem>> for ItemImplBuilder<F>
+    where F: Invoke<P<ast::Item>>,
+{
+    type Result = Self;
+
+    fn invoke(self, item: P<ast::ImplItem>) -> Self {
+        self.with_item(item)
+    }
+}
+
+impl<F> Invoke<P<ast::Ty>> for ItemImplBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
     type Result = F::Result;

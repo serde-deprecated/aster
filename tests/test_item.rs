@@ -514,3 +514,43 @@ fn test_type() {
         })
     );
 }
+
+#[test]
+fn test_impl() {
+    let builder = AstBuilder::new();
+    let impl_ = builder.item().impl_()
+        .trait_().id("ser").id("Serialize").build()
+        .method("serialize")
+            .fn_decl()
+                .arg("serializer").ty().ref_().mut_().ty().path().id("ser").id("Serialize").build()
+                .default_return()
+            .build() // empty method block
+        .ty().id("MySerializer");
+
+    assert_eq!(
+        impl_,
+        P(ast::Item {
+            ident: builder.id(""),
+            id: ast::DUMMY_NODE_ID,
+            attrs: vec![],
+            node: ast::ItemImpl(
+                ast::Unsafety::Normal,
+                ast::ImplPolarity::Positive,
+                builder.generics().build(),
+                Some(ast::TraitRef {
+                    path: builder.path().id("ser").id("Serialize").build(),
+                    ref_id: 0
+                }),
+                builder.ty().id("MySerializer"),
+                vec![builder.method("serialize")
+                    .fn_decl()
+                        .arg("serializer").ty().ref_().mut_().ty().path().id("ser").id("Serialize").build()
+                        .default_return()
+                    .build()
+                ]
+            ),
+            vis: ast::Visibility::Inherited,
+            span: DUMMY_SP
+        })
+    );
+}
