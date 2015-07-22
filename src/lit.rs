@@ -99,6 +99,24 @@ impl<F> LitBuilder<F>
         self.build_uint(value, ast::UintTy::TyU64)
     }
 
+    fn build_float<S>(self, value: S, ty: ast::FloatTy) -> F::Result
+        where S: ToInternedString,
+    {
+        self.build_lit(ast::LitFloat(value.to_interned_string(), ty))
+    }
+
+    pub fn f32<S>(self, value: S) -> F::Result
+        where S: ToInternedString,
+    {
+        self.build_float(value, ast::FloatTy::TyF32)
+    }
+
+    pub fn f64<S>(self, value: S) -> F::Result
+        where S: ToInternedString,
+    {
+        self.build_float(value, ast::FloatTy::TyF64)
+    }
+
     pub fn str<S>(self, value: S) -> F::Result
         where S: ToInternedString,
     {

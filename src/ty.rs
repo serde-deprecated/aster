@@ -113,6 +113,14 @@ impl<F> TyBuilder<F>
         self.id("u64")
     }
 
+    pub fn f32(self) -> F::Result {
+        self.id("f32")
+    }
+
+    pub fn f64(self) -> F::Result {
+        self.id("f64")
+    }
+
     pub fn unit(self) -> F::Result {
         self.tuple().build()
     }

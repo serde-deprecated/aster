@@ -12,6 +12,7 @@ use syntax::parse::token;
 
 pub mod attr;
 pub mod block;
+pub mod constant;
 pub mod expr;
 pub mod fn_decl;
 pub mod generics;
@@ -136,10 +137,8 @@ impl AstBuilder {
         fn_decl::FnDeclBuilder::new().span(self.span)
     }
 
-    pub fn method<I>(&self, id: I) -> method::MethodBuilder
-        where I: ident::ToIdent,
-    {
-        method::MethodBuilder::new(id).span(self.span)
+    pub fn method(&self) -> method::MethodBuilder {
+        method::MethodBuilder::new().span(self.span)
     }
 
     pub fn arg<I>(&self, id: I) -> fn_decl::ArgBuilder
@@ -166,5 +165,9 @@ impl AstBuilder {
 
     pub fn item(&self) -> item::ItemBuilder {
         item::ItemBuilder::new().span(self.span)
+    }
+
+    pub fn const_(&self) -> constant::ConstBuilder {
+        constant::ConstBuilder::new().span(self.span)
     }
 }

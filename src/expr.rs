@@ -132,6 +132,18 @@ impl<F> ExprBuilder<F>
         self.lit().u64(value)
     }
 
+    pub fn f32<S>(self, value: S) -> F::Result
+        where S: ToInternedString,
+    {
+        self.lit().f32(value)
+    }
+
+    pub fn f64<S>(self, value: S) -> F::Result
+        where S: ToInternedString,
+    {
+        self.lit().f64(value)
+    }
+
     pub fn str<S>(self, value: S) -> F::Result
         where S: ToInternedString,
     {

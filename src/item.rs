@@ -8,11 +8,13 @@ use syntax::ptr::P;
 
 use attr::AttrBuilder;
 use block::BlockBuilder;
+use constant::{Const, ConstBuilder};
 use fn_decl::FnDeclBuilder;
 use generics::GenericsBuilder;
 use ident::ToIdent;
 use invoke::{Invoke, Identity};
 use mac::MacBuilder;
+use method::{Method, MethodBuilder};
 use path::PathBuilder;
 use struct_def::{StructDefBuilder, StructFieldBuilder};
 use ty::TyBuilder;
@@ -156,8 +158,7 @@ impl<F> ItemBuilder<F>
         }
     }
 
-    pub fn mac(self) -> ItemMacBuilder<F>
-    {
+    pub fn mac(self) -> ItemMacBuilder<F> {
         ItemMacBuilder {
             builder: self,
         }
@@ -174,6 +175,28 @@ impl<F> ItemBuilder<F>
             id: id,
             generics: generics,
         }
+    }
+
+    pub fn impl_(self) -> ItemImplBuilder<F> {
+        let generics = GenericsBuilder::new().build();
+
+        ItemImplBuilder {
+            builder: self,
+            unsafety: ast::Unsafety::Normal,
+            polarity: ast::ImplPolarity::Positive,
+            generics: generics,
+            trait_ref: None,
+            items: vec![],
+        }
+    }
+
+    pub fn const_<T>(self, id: T) -> ConstBuilder<ItemConstBuilder<F>>
+        where T: ToIdent,
+    {
+        ConstBuilder::new_with_callback(ItemConstBuilder {
+            builder: self,
+            id: id.to_ident(),
+        })
     }
 }
 
@@ -639,6 +662,8 @@ impl<F> ItemExternCrateBuilder<F>
     }
 }
 
+//////////////////////////////////////////////////////////////////////////////
+
 /// A builder for macro invocation items.
 ///
 /// Specifying the macro path returns a `MacBuilder`, which is used to
@@ -679,6 +704,8 @@ impl<F> Invoke<ast::Mac> for ItemMacBuilder<F>
         self.build(mac)
     }
 }
+
+//////////////////////////////////////////////////////////////////////////////
 
 pub struct ItemTyBuilder<F> {
     builder: ItemBuilder<F>,
@@ -721,5 +748,270 @@ impl<F> Invoke<P<ast::Ty>> for ItemTyBuilder<F>
 
     fn invoke(self, ty: P<ast::Ty>) -> F::Result {
         self.build_ty(ty)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ItemImplBuilder<F> {
+    builder: ItemBuilder<F>,
+    unsafety: ast::Unsafety,
+    polarity: ast::ImplPolarity,
+    generics: ast::Generics,
+    trait_ref: Option<ast::TraitRef>,
+    items: Vec<P<ast::ImplItem>>,
+}
+
+impl<F> ItemImplBuilder<F>
+    where F: Invoke<P<ast::Item>>,
+{
+    pub fn unsafe_(mut self) -> Self {
+        self.unsafety = ast::Unsafety::Unsafe;
+        self
+    }
+
+    pub fn negative(mut self) -> Self {
+        self.polarity = ast::ImplPolarity::Negative;
+        self
+    }
+
+    pub fn with_generics(mut self, generics: ast::Generics) -> Self {
+        self.generics = generics;
+        self
+    }
+
+    pub fn generics(self) -> GenericsBuilder<Self> {
+        GenericsBuilder::new_with_callback(self)
+    }
+
+    pub fn with_trait(mut self, trait_ref: ast::TraitRef) -> Self {
+        self.trait_ref = Some(trait_ref);
+        self
+    }
+
+    pub fn trait_(self) -> PathBuilder<Self> {
+        PathBuilder::new_with_callback(self)
+    }
+
+    pub fn ty(self) -> TyBuilder<Self> {
+        TyBuilder::new_with_callback(self)
+    }
+
+    pub fn build_ty(self, ty: P<ast::Ty>) -> F::Result {
+        let ty_ = ast::ItemImpl(
+            self.unsafety,
+            self.polarity,
+            self.generics,
+            self.trait_ref,
+            ty,
+            self.items);
+        self.builder.build_item_(token::special_idents::invalid, ty_)
+    }
+
+    pub fn with_items<I>(mut self, items: I) -> Self
+        where I: IntoIterator<Item=P<ast::ImplItem>>,
+    {
+        self.items.extend(items);
+        self
+    }
+
+    pub fn with_item(mut self, item: P<ast::ImplItem>) -> Self {
+        self.items.push(item);
+        self
+    }
+
+    pub fn item<T>(self, id: T) -> ItemImplItemBuilder<Self>
+        where T: ToIdent,
+    {
+        ItemImplItemBuilder::new_with_callback(id, self)
+    }
+}
+
+impl<F> Invoke<ast::Generics> for ItemImplBuilder<F>
+    where F: Invoke<P<ast::Item>>,
+{
+    type Result = Self;
+
+    fn invoke(self, generics: ast::Generics) -> Self {
+        self.with_generics(generics)
+    }
+}
+
+impl<F> Invoke<ast::Path> for ItemImplBuilder<F>
+    where F: Invoke<P<ast::Item>>
+{
+    type Result = Self;
+
+    fn invoke(self, path: ast::Path) -> Self {
+        self.with_trait(ast::TraitRef {
+            path: path,
+            ref_id: 0
+        })
+    }
+}
+
+impl<F> Invoke<P<ast::ImplItem>> for ItemImplBuilder<F>
+    where F: Invoke<P<ast::Item>>,
+{
+    type Result = Self;
+
+    fn invoke(self, item: P<ast::ImplItem>) -> Self {
+        self.with_item(item)
+    }
+}
+
+impl<F> Invoke<P<ast::Ty>> for ItemImplBuilder<F>
+    where F: Invoke<P<ast::Item>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, ty: P<ast::Ty>) -> F::Result {
+        self.build_ty(ty)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ItemImplItemBuilder<F> {
+    callback: F,
+    id: ast::Ident,
+    vis: ast::Visibility,
+    attrs: Vec<ast::Attribute>,
+    span: Span,
+}
+
+impl<F> ItemImplItemBuilder<F>
+    where F: Invoke<P<ast::ImplItem>>,
+{
+    pub fn new_with_callback<T>(id: T, callback: F) -> Self
+        where F: Invoke<P<ast::ImplItem>>,
+              T: ToIdent,
+    {
+        ItemImplItemBuilder {
+            callback: callback,
+            id: id.to_ident(),
+            vis: ast::Visibility::Inherited,
+            attrs: vec![],
+            span: DUMMY_SP,
+        }
+    }
+
+    pub fn span(mut self, span: Span) -> Self {
+        self.span = span;
+        self
+    }
+
+    pub fn with_attr(mut self, attr: ast::Attribute) -> Self {
+        self.attrs.push(attr);
+        self
+    }
+
+    pub fn attr(self) -> AttrBuilder<Self> {
+        AttrBuilder::new_with_callback(self)
+    }
+
+    pub fn pub_(mut self) -> Self {
+        self.vis = ast::Visibility::Public;
+        self
+    }
+
+    pub fn const_(self) -> ConstBuilder<Self> {
+        ConstBuilder::new_with_callback(self)
+    }
+
+    pub fn method(self) -> MethodBuilder<Self> {
+        MethodBuilder::new_with_callback(self)
+    }
+
+    pub fn type_(self) -> TyBuilder<Self> {
+        TyBuilder::new_with_callback(self)
+    }
+
+    pub fn mac(self) -> MacBuilder<Self> {
+        MacBuilder::new_with_callback(self)
+    }
+
+    pub fn build_item(self, node: ast::ImplItem_) -> F::Result {
+        let item = ast::ImplItem {
+            id: ast::DUMMY_NODE_ID,
+            ident: self.id,
+            vis: self.vis,
+            attrs: self.attrs,
+            node: node,
+            span: self.span,
+        };
+        self.callback.invoke(P(item))
+    }
+}
+
+impl<F> Invoke<ast::Attribute> for ItemImplItemBuilder<F>
+    where F: Invoke<P<ast::ImplItem>>,
+{
+    type Result = Self;
+
+    fn invoke(self, attr: ast::Attribute) -> Self {
+        self.with_attr(attr)
+    }
+}
+
+impl<F> Invoke<Const> for ItemImplItemBuilder<F>
+    where F: Invoke<P<ast::ImplItem>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, const_: Const) -> F::Result {
+        let node = ast::ConstImplItem(const_.ty, const_.expr.expect("an expr is required for a const impl item"));
+        self.build_item(node)
+    }
+}
+
+impl<F> Invoke<Method> for ItemImplItemBuilder<F>
+    where F: Invoke<P<ast::ImplItem>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, method: Method) -> F::Result {
+        let node = ast::MethodImplItem(method.sig, method.block.expect("a block is required for a method impl item"));
+        self.build_item(node)
+    }
+}
+
+impl<F> Invoke<P<ast::Ty>> for ItemImplItemBuilder<F>
+    where F: Invoke<P<ast::ImplItem>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, ty: P<ast::Ty>) -> F::Result {
+        let node = ast::TypeImplItem(ty);
+        self.build_item(node)
+    }
+}
+
+impl<F> Invoke<ast::Mac> for ItemImplItemBuilder<F>
+    where F: Invoke<P<ast::ImplItem>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, mac: ast::Mac) -> F::Result {
+        let node = ast::MacImplItem(mac);
+        self.build_item(node)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ItemConstBuilder<F> {
+    builder: ItemBuilder<F>,
+    id: ast::Ident,
+}
+
+impl<F> Invoke<Const> for ItemConstBuilder<F>
+    where F: Invoke<P<ast::Item>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, const_: Const) -> F::Result {
+        let ty = ast::ItemConst(const_.ty, const_.expr.expect("an expr is required for a const item"));
+        self.builder.build_item_(self.id, ty)
     }
 }
