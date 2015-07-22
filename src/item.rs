@@ -230,7 +230,7 @@ impl<F> ItemFnBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
     pub fn unsafe_(mut self) -> Self {
-        self.unsafety = ast::Unsafety::Normal;
+        self.unsafety = ast::Unsafety::Unsafe;
         self
     }
 
