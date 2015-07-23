@@ -157,8 +157,7 @@ impl<F> ItemBuilder<F>
         }
     }
 
-    pub fn mac(self) -> ItemMacBuilder<F>
-    {
+    pub fn mac(self) -> ItemMacBuilder<F> {
         ItemMacBuilder {
             builder: self,
         }
@@ -653,6 +652,8 @@ impl<F> ItemExternCrateBuilder<F>
     }
 }
 
+//////////////////////////////////////////////////////////////////////////////
+
 /// A builder for macro invocation items.
 ///
 /// Specifying the macro path returns a `MacBuilder`, which is used to
@@ -693,6 +694,8 @@ impl<F> Invoke<ast::Mac> for ItemMacBuilder<F>
         self.build(mac)
     }
 }
+
+//////////////////////////////////////////////////////////////////////////////
 
 pub struct ItemTyBuilder<F> {
     builder: ItemBuilder<F>,
