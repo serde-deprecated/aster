@@ -8,6 +8,7 @@ use syntax::ptr::P;
 
 use attr::AttrBuilder;
 use block::BlockBuilder;
+use constant::{Const, ConstBuilder};
 use fn_decl::FnDeclBuilder;
 use generics::GenericsBuilder;
 use ident::ToIdent;
@@ -185,8 +186,17 @@ impl<F> ItemBuilder<F>
             polarity: ast::ImplPolarity::Positive,
             generics: generics,
             trait_ref: None,
-            items: vec![]
+            items: vec![],
         }
+    }
+
+    pub fn const_<T>(self, id: T) -> ConstBuilder<ItemConstBuilder<F>>
+        where T: ToIdent,
+    {
+        ConstBuilder::new_with_callback(ItemConstBuilder {
+            builder: self,
+            id: id.to_ident(),
+        })
     }
 }
 
@@ -811,9 +821,15 @@ impl<F> ItemImplBuilder<F>
     }
 
     pub fn method<T>(self, id: T) -> MethodBuilder<Self>
-        where T: ToIdent,
+        where T: ToIdent
     {
         MethodBuilder::new_with_callback(id, self)
+    }
+
+    pub fn item<T>(self, id: T) -> ItemImplItemBuilder<Self>
+        where T: ToIdent,
+    {
+        ItemImplItemBuilder::new_with_callback(id, self)
     }
 }
 
@@ -857,5 +873,101 @@ impl<F> Invoke<P<ast::Ty>> for ItemImplBuilder<F>
 
     fn invoke(self, ty: P<ast::Ty>) -> F::Result {
         self.build_ty(ty)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ItemImplItemBuilder<F> {
+    callback: F,
+    id: ast::Ident,
+    vis: ast::Visibility,
+    attrs: Vec<ast::Attribute>,
+    span: Span,
+}
+
+impl<F> ItemImplItemBuilder<F>
+    where F: Invoke<P<ast::ImplItem>>,
+{
+    pub fn new_with_callback<T>(id: T, callback: F) -> Self
+        where F: Invoke<P<ast::ImplItem>>,
+              T: ToIdent,
+    {
+        ItemImplItemBuilder {
+            callback: callback,
+            id: id.to_ident(),
+            vis: ast::Visibility::Inherited,
+            attrs: vec![],
+            span: DUMMY_SP,
+        }
+    }
+
+    pub fn span(mut self, span: Span) -> Self {
+        self.span = span;
+        self
+    }
+
+    pub fn with_attr(mut self, attr: ast::Attribute) -> Self {
+        self.attrs.push(attr);
+        self
+    }
+
+    pub fn attr(self) -> AttrBuilder<Self> {
+        AttrBuilder::new_with_callback(self)
+    }
+
+    pub fn const_(self) -> ConstBuilder<Self> {
+        ConstBuilder::new_with_callback(self)
+    }
+
+    pub fn build_item(self, node: ast::ImplItem_) -> F::Result {
+        let item = ast::ImplItem {
+            id: ast::DUMMY_NODE_ID,
+            ident: self.id,
+            vis: self.vis,
+            attrs: self.attrs,
+            node: node,
+            span: self.span,
+        };
+        self.callback.invoke(P(item))
+    }
+}
+
+impl<F> Invoke<ast::Attribute> for ItemImplItemBuilder<F>
+    where F: Invoke<P<ast::ImplItem>>,
+{
+    type Result = Self;
+
+    fn invoke(self, attr: ast::Attribute) -> Self {
+        self.with_attr(attr)
+    }
+}
+
+impl<F> Invoke<Const> for ItemImplItemBuilder<F>
+    where F: Invoke<P<ast::ImplItem>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, const_: Const) -> F::Result {
+        let node = ast::ConstImplItem(const_.ty, const_.expr);
+        self.build_item(node)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ItemConstBuilder<F> {
+    builder: ItemBuilder<F>,
+    id: ast::Ident,
+}
+
+impl<F> Invoke<Const> for ItemConstBuilder<F>
+    where F: Invoke<P<ast::Item>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, const_: Const) -> F::Result {
+        let ty = ast::ItemConst(const_.ty, const_.expr);
+        self.builder.build_item_(self.id, ty)
     }
 }
