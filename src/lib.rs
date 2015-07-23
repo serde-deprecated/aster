@@ -12,6 +12,7 @@ use syntax::parse::token;
 
 pub mod attr;
 pub mod block;
+pub mod constant;
 pub mod expr;
 pub mod fn_decl;
 pub mod generics;

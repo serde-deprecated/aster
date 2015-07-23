@@ -514,3 +514,91 @@ fn test_type() {
         })
     );
 }
+
+#[test]
+fn test_impl() {
+    let builder = AstBuilder::new();
+    let impl_ = builder.item().impl_()
+        .trait_().id("ser").id("Serialize").build()
+
+        // Type
+
+        // Macro
+
+        // Const
+        .item("PI").const_()
+            .ty().f64()
+            .f64("3.14159265358979323846264338327950288")
+
+        // Method
+        .method("serialize")
+            .fn_decl()
+                .arg("serializer").ty().ref_().mut_().ty().path().id("ser").id("Serialize").build()
+                .default_return()
+            .build() // empty method block
+
+        .ty().id("MySerializer");
+
+    assert_eq!(
+        impl_,
+        P(ast::Item {
+            ident: builder.id(""),
+            id: ast::DUMMY_NODE_ID,
+            attrs: vec![],
+            node: ast::ItemImpl(
+                ast::Unsafety::Normal,
+                ast::ImplPolarity::Positive,
+                builder.generics().build(),
+                Some(ast::TraitRef {
+                    path: builder.path().id("ser").id("Serialize").build(),
+                    ref_id: 0
+                }),
+                builder.ty().id("MySerializer"),
+                vec![
+                    P(ast::ImplItem {
+                        id: ast::DUMMY_NODE_ID,
+                        ident: builder.id("PI"),
+                        vis: ast::Visibility::Inherited,
+                        attrs: vec![],
+                        node: ast::ConstImplItem(
+                            builder.ty().f64(),
+                            builder.expr().f64("3.14159265358979323846264338327950288"),
+                        ),
+                        span: DUMMY_SP,
+                    }),
+
+                    builder.method("serialize")
+                    .fn_decl()
+                        .arg("serializer").ty().ref_().mut_().ty().path().id("ser").id("Serialize").build()
+                        .default_return()
+                    .build()
+                ]
+            ),
+            vis: ast::Visibility::Inherited,
+            span: DUMMY_SP,
+        })
+    );
+}
+
+#[test]
+fn test_const() {
+    let builder = AstBuilder::new();
+    let const_ = builder.item().const_("PI")
+        .ty().f64()
+        .f64("3.14159265358979323846264338327950288");
+
+    assert_eq!(
+        const_,
+        P(ast::Item {
+            ident: builder.id("PI"),
+            id: ast::DUMMY_NODE_ID,
+            attrs: vec![],
+            node: ast::ItemConst(
+                builder.ty().f64(),
+                builder.expr().f64("3.14159265358979323846264338327950288")
+            ),
+            vis: ast::Visibility::Inherited,
+            span: DUMMY_SP,
+        })
+    );
+}
