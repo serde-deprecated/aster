@@ -403,7 +403,7 @@ impl<F> ExprBuilder<F>
     pub fn some(self) -> ExprBuilder<ExprPathBuilder<F>> {
         let path = PathBuilder::new()
             .global()
-            .id("std").id("option").id("Option").id("None")
+            .id("std").id("option").id("Option").id("Some")
             .build();
 
         ExprBuilder::new_with_callback(ExprPathBuilder {
