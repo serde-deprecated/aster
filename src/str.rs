@@ -26,13 +26,13 @@ impl<'a> ToInternedString for &'a str {
 
 impl ToInternedString for ast::Ident {
     fn to_interned_string(&self) -> token::InternedString {
-        token::get_ident(*self)
+        self.name.as_str()
     }
 }
 
 impl ToInternedString for ast::Name {
     fn to_interned_string(&self) -> token::InternedString {
-        token::get_name(*self)
+        self.as_str()
     }
 }
 
