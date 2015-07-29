@@ -57,7 +57,6 @@ impl<F> StmtBuilder<F>
             init: init,
             id: ast::DUMMY_NODE_ID,
             span: self.span,
-            source: ast::LocalSource::LocalLet,
         };
 
         let decl = respan(self.span, ast::Decl_::DeclLocal(P(local)));
