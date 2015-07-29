@@ -472,10 +472,9 @@ impl<F> ItemTupleStructBuilder<F>
         TyBuilder::new_with_callback(self)
     }
 
-    pub fn field(self) -> TyBuilder<StructFieldBuilder<Self>> {
+    pub fn field(self) -> StructFieldBuilder<Self> {
         let span = self.builder.span;
-        let builder = StructFieldBuilder::unnamed_with_callback(self).span(span);
-        TyBuilder::new_with_callback(builder)
+        StructFieldBuilder::unnamed_with_callback(self).span(span)
     }
 
     pub fn build(self) -> F::Result {
@@ -505,7 +504,7 @@ impl<F> Invoke<P<ast::Ty>> for ItemTupleStructBuilder<F>
     type Result = Self;
 
     fn invoke(self, ty: P<ast::Ty>) -> Self {
-        self.field().build(ty)
+        self.field().build_ty(ty)
     }
 }
 
