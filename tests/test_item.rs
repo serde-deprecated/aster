@@ -366,14 +366,17 @@ fn test_use() {
             vec![
                 respan(DUMMY_SP, ast::PathListMod {
                     id: ast::DUMMY_NODE_ID,
+                    rename: None
                 }),
                 respan(DUMMY_SP, ast::PathListIdent {
                     name: "Vec".to_ident(),
                     id: ast::DUMMY_NODE_ID,
+                    rename: None
                 }),
                 respan(DUMMY_SP, ast::PathListIdent {
                     name: "IntoIter".to_ident(),
                     id: ast::DUMMY_NODE_ID,
+                    rename: None
                 }),
             ],
         )
