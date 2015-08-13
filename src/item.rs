@@ -386,6 +386,7 @@ impl<F> ItemUsePathListBuilder<F>
     pub fn self_(mut self) -> Self {
         self.idents.push(respan(self.span, ast::PathListMod {
             id: ast::DUMMY_NODE_ID,
+            rename: None,
         }));
         self
     }
@@ -396,6 +397,7 @@ impl<F> ItemUsePathListBuilder<F>
         self.idents.push(respan(self.span, ast::PathListIdent {
             name: id.to_ident(),
             id: ast::DUMMY_NODE_ID,
+            rename: None,
         }));
         self
     }
