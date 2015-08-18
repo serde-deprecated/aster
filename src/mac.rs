@@ -3,6 +3,7 @@ use syntax::codemap::{self, DUMMY_SP, Span, respan};
 use syntax::ext::base::ExtCtxt;
 use syntax::ext::expand;
 use syntax::ext::quote::rt::ToTokens;
+use syntax::feature_gate::GatedCfg;
 use syntax::parse::ParseSess;
 use syntax::ptr::P;
 
@@ -66,7 +67,8 @@ impl<F> MacBuilder<F>
         where T: ToTokens
     {
         let parse_sess = ParseSess::new();
-        let cx = make_ext_ctxt(&parse_sess);
+        let mut feature_gated_cfgs = Vec::new();
+        let cx = make_ext_ctxt(&parse_sess, &mut feature_gated_cfgs);
         let tokens = expr.to_tokens(&cx);
         assert!(tokens.len() == 1);
         self.tokens.push(tokens[0].clone());
@@ -89,7 +91,8 @@ impl<F> Invoke<P<ast::Expr>> for MacBuilder<F>
     }
 }
 
-fn make_ext_ctxt(sess: &ParseSess) -> ExtCtxt {
+fn make_ext_ctxt<'a>(sess: &'a ParseSess,
+                     feature_gated_cfgs: &'a mut Vec<GatedCfg>) -> ExtCtxt<'a> {
     let info = codemap::ExpnInfo {
         call_site: codemap::DUMMY_SP,
         callee: codemap::NameAndSpan {
@@ -103,7 +106,7 @@ fn make_ext_ctxt(sess: &ParseSess) -> ExtCtxt {
     let cfg = vec![];
     let ecfg = expand::ExpansionConfig::default(String::new());
 
-    let mut cx = ExtCtxt::new(&sess, cfg, ecfg);
+    let mut cx = ExtCtxt::new(&sess, cfg, ecfg, feature_gated_cfgs);
     cx.bt_push(info);
 
     cx
