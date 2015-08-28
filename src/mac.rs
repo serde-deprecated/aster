@@ -9,6 +9,7 @@ use syntax::ptr::P;
 
 use expr::ExprBuilder;
 use invoke::{Invoke, Identity};
+use name::ToName;
 
 /// A Builder for macro invocations.
 ///
@@ -96,8 +97,7 @@ fn make_ext_ctxt<'a>(sess: &'a ParseSess,
     let info = codemap::ExpnInfo {
         call_site: codemap::DUMMY_SP,
         callee: codemap::NameAndSpan {
-            name: "test".to_string(),
-            format: codemap::MacroAttribute,
+            format: codemap::MacroAttribute("test".to_name()),
             allow_internal_unstable: false,
             span: None
         }
