@@ -5,6 +5,7 @@ use syntax::ext::expand;
 use syntax::ext::quote::rt::ToTokens;
 use syntax::feature_gate::GatedCfg;
 use syntax::parse::ParseSess;
+use syntax::parse::token;
 use syntax::ptr::P;
 
 use expr::ExprBuilder;
@@ -96,8 +97,7 @@ fn make_ext_ctxt<'a>(sess: &'a ParseSess,
     let info = codemap::ExpnInfo {
         call_site: codemap::DUMMY_SP,
         callee: codemap::NameAndSpan {
-            name: "test".to_string(),
-            format: codemap::MacroAttribute,
+            format: codemap::MacroAttribute(token::intern("test")),
             allow_internal_unstable: false,
             span: None
         }
