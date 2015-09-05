@@ -1,25 +1,42 @@
-sudo: false
 language: rust
+sudo: false
+
+# run builds for all the trains (and more)
 rust:
 - stable
 - beta
 - nightly
+
+addons:
+  apt:
+    packages:
+    - libcurl4-openssl-dev
+    - libelf-dev
+    - libdw-dev
+
+before_script:
+- |
+    pip install 'travis-cargo<0.2' --user &&
+    export PATH=$HOME/.local/bin:$PATH
+
+script:
+- |
+    travis-cargo build -- --features with-syntex &&
+    travis-cargo test -- --features with-syntex &&
+    travis-cargo bench -- --features with-syntex &&
+    travis-cargo --only nightly build &&
+    travis-cargo --only nightly test &&
+    travis-cargo --only nightly bench &&
+    travis-cargo --only stable doc -- --features with-syntex
+
+after_success:
+- travis-cargo --only stable doc-upload
+- travis-cargo coveralls --no-sudo
+
 env:
   global:
-  - secure: HsctrSe7IW9iLKbRuVbWLiKuEoAOqDd5DoMjxmvNIIE+wvnid5k6egzq/OmcnwkNx/f+PHU6V8Vqcy8lMsP2vMYzvpVTUDEBQdY9z0ms50ZOt/dC2Rmt1qvurrcx4IZTrJDr4u8OZdld0TKYYPhvQk/Yv4xcFrQrFeTaeYPz8bY=
-  matrix:
-  - FEATURES="--features with-syntex"
-matrix:
-  include:
-  - rust: nightly
-    env: FEATURES=""
-script:
-- cargo test --verbose $FEATURES
-after_success: |
-  [ $TRAVIS_BRANCH = "master" ] &&
-  [ $TRAVIS_PULL_REQUEST  = false ] &&
-  cargo doc --verbose &&
-  echo "<meta http-equiv=refresh content=0;url=`echo $TRAVIS_REPO_SLUG | cut -d '/' -f 2`/index.html>" > target/doc/index.html &&
-  sudo pip install ghp-import &&
-  ghp-import -n target/doc &&
-  git push -fq https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git gh-pages
+    # override the default `--features unstable` used for the nightly branch (optional)
+    - TRAVIS_CARGO_NIGHTLY_FEATURE=""
+
+    # encrypted github token for doc upload (see `GH_TOKEN` link above)
+    - secure: HsctrSe7IW9iLKbRuVbWLiKuEoAOqDd5DoMjxmvNIIE+wvnid5k6egzq/OmcnwkNx/f+PHU6V8Vqcy8lMsP2vMYzvpVTUDEBQdY9z0ms50ZOt/dC2Rmt1qvurrcx4IZTrJDr4u8OZdld0TKYYPhvQk/Yv4xcFrQrFeTaeYPz8bY=
