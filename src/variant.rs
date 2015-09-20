@@ -71,7 +71,6 @@ impl<F> VariantBuilder<F>
             kind: kind,
             id: ast::DUMMY_NODE_ID,
             disr_expr: None,
-            vis: ast::Visibility::Inherited,
         };
         let variant = P(respan(self.span, variant_));
         self.callback.invoke(variant)

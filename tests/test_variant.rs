@@ -19,7 +19,6 @@ fn test_empty_tuple_variant() {
                 kind: ast::TupleVariantKind(vec![]),
                 id: ast::DUMMY_NODE_ID,
                 disr_expr: None,
-                vis: ast::Inherited,
             },
         })
     )
@@ -52,7 +51,6 @@ fn test_tuple_variant() {
                 ]),
                 id: ast::DUMMY_NODE_ID,
                 disr_expr: None,
-                vis: ast::Inherited,
             },
         })
     )
@@ -81,7 +79,6 @@ fn test_struct_variant() {
                 ),
                 id: ast::DUMMY_NODE_ID,
                 disr_expr: None,
-                vis: ast::Inherited,
             },
         })
     )
