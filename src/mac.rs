@@ -53,8 +53,11 @@ impl<F> MacBuilder<F>
     }
 
     pub fn build(self) -> F::Result {
-        let mac = ast::Mac_::MacInvocTT(
-            self.path.expect("No path set for macro"), self.tokens, 0);
+        let mac = ast::Mac_ {
+            path: self.path.expect("No path set for macro"),
+            tts: self.tokens,
+            ctxt: 0,
+        };
         self.callback.invoke(respan(self.span, mac))
     }
 
