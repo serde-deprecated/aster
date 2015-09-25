@@ -154,10 +154,6 @@ impl<F> ExprBuilder<F>
         self.build_expr_(ast::ExprUnary(unop, expr))
     }
 
-    pub fn build_box(self, expr: P<ast::Expr>) -> F::Result {
-        self.build_unary(ast::UnUniq, expr)
-    }
-
     pub fn build_deref(self, expr: P<ast::Expr>) -> F::Result {
         self.build_unary(ast::UnDeref, expr)
     }
@@ -176,13 +172,6 @@ impl<F> ExprBuilder<F>
             unop: unop,
         })
     }
-
-    // FIXME: Disabled for now until the `box` keyword is stablized.
-    /*
-    pub fn box_(self) -> ExprBuilder<ExprUnaryBuilder<F>> {
-        self.unary(ast::UnUniq)
-    }
-    */
 
     pub fn deref(self) -> ExprBuilder<ExprUnaryBuilder<F>> {
         self.unary(ast::UnDeref)
