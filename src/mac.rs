@@ -56,7 +56,7 @@ impl<F> MacBuilder<F>
         let mac = ast::Mac_ {
             path: self.path.expect("No path set for macro"),
             tts: self.tokens,
-            ctxt: 0,
+            ctxt: ast::EMPTY_CTXT,
         };
         self.callback.invoke(respan(self.span, mac))
     }

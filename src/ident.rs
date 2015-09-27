@@ -16,7 +16,7 @@ impl ToIdent for ast::Ident {
 
 impl ToIdent for ast::Name {
     fn to_ident(&self) -> ast::Ident {
-        ast::Ident::new(*self)
+        ast::Ident::with_empty_ctxt(*self)
     }
 }
 

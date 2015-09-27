@@ -682,7 +682,7 @@ impl<F> ItemMacBuilder<F>
 
     pub fn build(self, mac: ast::Mac) -> F::Result {
         let item_mac = ast::ItemMac(mac);
-        self.builder.build_item_(ast::Ident::new(ast::Name(0)), item_mac)
+        self.builder.build_item_(ast::Name(0).to_ident(), item_mac)
     }
 }
 
