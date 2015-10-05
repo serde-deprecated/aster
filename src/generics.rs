@@ -153,11 +153,11 @@ impl<F> GenericsBuilder<F>
     {
         let lifetime = lifetime.into_lifetime();
 
-        for lifetime_def in self.lifetimes.iter_mut() {
+        for lifetime_def in &mut self.lifetimes {
             lifetime_def.bounds.push(lifetime.clone());
         }
 
-        for ty_param in self.ty_params.iter_mut() {
+        for ty_param in &mut self.ty_params {
             *ty_param = TyParamBuilder::from_ty_param(ty_param.clone())
                 .lifetime_bound(lifetime.clone())
                 .build();
@@ -171,7 +171,7 @@ impl<F> GenericsBuilder<F>
     {
         let path = path.into_path();
 
-        for ty_param in self.ty_params.iter_mut() {
+        for ty_param in &mut self.ty_params {
             *ty_param = TyParamBuilder::from_ty_param(ty_param.clone())
                 .trait_bound(path.clone()).build()
                 .build();
@@ -187,14 +187,14 @@ impl<F> GenericsBuilder<F>
     }
 
     pub fn strip_lifetimes(mut self) -> Self {
-        for lifetime in self.lifetimes.iter_mut() {
+        for lifetime in &mut self.lifetimes {
             lifetime.bounds = vec![];
         }
         self
     }
 
     pub fn strip_ty_params(mut self) -> Self {
-        for ty_param in self.ty_params.iter_mut() {
+        for ty_param in &mut self.ty_params {
             ty_param.bounds = OwnedSlice::empty();
         }
         self
