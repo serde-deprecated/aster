@@ -1,3 +1,5 @@
+#![cfg_attr(feature = "unstable", allow(should_implement_trait))]
+
 use std::iter::IntoIterator;
 
 use syntax::ast;

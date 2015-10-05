@@ -1,3 +1,5 @@
+#![cfg_attr(feature = "unstable", allow(wrong_self_convention))]
+
 use syntax::ast;
 use syntax::codemap::{DUMMY_SP, Span};
 use syntax::ptr::P;

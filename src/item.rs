@@ -1,3 +1,5 @@
+#![cfg_attr(feature = "unstable", allow(wrong_self_convention))]
+
 use std::iter::IntoIterator;
 
 use syntax::abi::Abi;
