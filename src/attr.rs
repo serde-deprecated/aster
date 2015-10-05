@@ -32,7 +32,7 @@ impl<F> AttrBuilder<F>
         AttrBuilder {
             callback: callback,
             span: DUMMY_SP,
-            style: ast::AttrOuter,
+            style: ast::AttrStyle::Outer,
             is_sugared_doc: false,
         }
     }
@@ -43,7 +43,7 @@ impl<F> AttrBuilder<F>
     }
 
     pub fn inner(mut self) -> Self {
-        self.style = ast::AttrInner;
+        self.style = ast::AttrStyle::Inner;
         self
     }
 

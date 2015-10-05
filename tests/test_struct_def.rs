@@ -88,7 +88,7 @@ fn test_attrs() {
                                 DUMMY_SP,
                                 ast::Attribute_ {
                                     id: ast::AttrId(0),
-                                    style: ast::AttrOuter,
+                                    style: ast::AttrStyle::Outer,
                                     value: P(respan(
                                         DUMMY_SP,
                                         ast::MetaNameValue(
@@ -103,7 +103,7 @@ fn test_attrs() {
                                 DUMMY_SP,
                                 ast::Attribute_ {
                                     id: ast::AttrId(1),
-                                    style: ast::AttrOuter,
+                                    style: ast::AttrStyle::Outer,
                                     value: P(respan(
                                         DUMMY_SP,
                                         ast::MetaWord(builder.interned_string("automatically_derived")),
