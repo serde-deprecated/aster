@@ -1,7 +1,6 @@
 Rust Syntax Ast Builder
 =======================
-
-[![Build Status](https://api.travis-ci.org/serde-rs/aster.png?branch=master)](https://travis-ci.org/erickt/rust-aster)
+[![Build Status](https://travis-ci.org/serde-rs/aster.svg?branch=master)](https://travis-ci.org/serde-rs/aster)
 [![Latest Version](https://img.shields.io/crates/v/aster.svg)](https://crates.io/crates/aster)
 
 Aster is a framework that simplifies generating Rust AST. It supports using
