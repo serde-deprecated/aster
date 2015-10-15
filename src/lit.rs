@@ -1,3 +1,6 @@
+use std::convert::Into;
+use std::rc::Rc;
+
 use syntax::ast;
 use syntax::codemap::{DUMMY_SP, Span};
 use syntax::ptr::P;
@@ -117,10 +120,24 @@ impl<F> LitBuilder<F>
         self.build_float(value, ast::FloatTy::TyF64)
     }
 
+    pub fn char(self, value: char) -> F::Result {
+        self.build_lit(ast::LitChar(value))
+    }
+
+    pub fn byte(self, value: u8) -> F::Result {
+        self.build_lit(ast::LitByte(value))
+    }
+
     pub fn str<S>(self, value: S) -> F::Result
         where S: ToInternedString,
     {
         let value = value.to_interned_string();
         self.build_lit(ast::LitStr(value, ast::CookedStr))
+    }
+
+    pub fn byte_str<T>(self, value: T) -> F::Result
+        where T: Into<Vec<u8>>,
+    {
+        self.build_lit(ast::LitByteStr(Rc::new(value.into())))
     }
 }

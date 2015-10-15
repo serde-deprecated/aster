@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use syntax::ast;
 use syntax::codemap::{DUMMY_SP, Spanned};
 use syntax::ptr::P;
@@ -60,6 +62,30 @@ fn test_bool() {
 }
 
 #[test]
+fn test_char() {
+    let builder = AstBuilder::new();
+
+    assert_eq!(builder.lit().char('a'),
+        P(Spanned {
+            span: DUMMY_SP,
+            node: ast::LitChar('a')
+        })
+    );
+}
+
+#[test]
+fn test_byte() {
+    let builder = AstBuilder::new();
+
+    assert_eq!(builder.lit().byte(b'a'),
+        P(Spanned {
+            span: DUMMY_SP,
+            node: ast::LitByte(b'a')
+        })
+    );
+}
+
+#[test]
 fn test_str() {
     let builder = AstBuilder::new();
 
@@ -70,6 +96,18 @@ fn test_str() {
                 builder.interned_string("string"),
                 ast::CookedStr,
             ),
+        })
+    );
+}
+
+#[test]
+fn test_byte_str() {
+    let builder = AstBuilder::new();
+
+    assert_eq!(builder.lit().byte_str(&b"string"[..]),
+        P(Spanned {
+            span: DUMMY_SP,
+            node: ast::LitByteStr(Rc::new(Vec::from(&b"string"[..]))),
         })
     );
 }
