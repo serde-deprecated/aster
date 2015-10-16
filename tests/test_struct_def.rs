@@ -11,10 +11,10 @@ fn test_empty() {
 
     assert_eq!(
         struct_def,
-        P(ast::StructDef {
-            fields: vec![],
-            ctor_id: None,
-        })
+        P(ast::VariantData::Struct(
+            vec![],
+            ast::DUMMY_NODE_ID,
+        ))
     );
 }
 
@@ -28,8 +28,8 @@ fn test_fields() {
 
     assert_eq!(
         struct_def,
-        P(ast::StructDef {
-            fields: vec![
+        P(ast::VariantData::Struct(
+            vec![
                 Spanned {
                     span: DUMMY_SP,
                     node: ast::StructField_ {
@@ -55,8 +55,8 @@ fn test_fields() {
                     },
                 },
             ],
-            ctor_id: None,
-        })
+            ast::DUMMY_NODE_ID,
+        ))
     );
 }
 
@@ -72,8 +72,8 @@ fn test_attrs() {
 
     assert_eq!(
         struct_def,
-        P(ast::StructDef {
-            fields: vec![
+        P(ast::VariantData::Struct (
+            vec![
                 Spanned {
                     span: DUMMY_SP,
                     node: ast::StructField_ {
@@ -115,8 +115,8 @@ fn test_attrs() {
                     },
                 },
             ],
-            ctor_id: None,
-        })
+            ast::DUMMY_NODE_ID,
+        ))
     );
 }
 

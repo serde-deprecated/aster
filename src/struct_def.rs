@@ -22,7 +22,7 @@ impl StructDefBuilder {
 }
 
 impl<F> StructDefBuilder<F>
-    where F: Invoke<P<ast::StructDef>>
+    where F: Invoke<P<ast::VariantData>>
 {
     pub fn new_with_callback(callback: F) -> Self {
         StructDefBuilder {
@@ -57,15 +57,15 @@ impl<F> StructDefBuilder<F>
     }
 
     pub fn build(self) -> F::Result {
-        self.callback.invoke(P(ast::StructDef {
-            fields: self.fields,
-            ctor_id: None,
-        }))
+        self.callback.invoke(P(ast::VariantData::Struct(
+            self.fields,
+            ast::DUMMY_NODE_ID,
+        )))
     }
 }
 
 impl<F> Invoke<ast::StructField> for StructDefBuilder<F>
-    where F: Invoke<P<ast::StructDef>>,
+    where F: Invoke<P<ast::VariantData>>,
 {
     type Result = Self;
 
