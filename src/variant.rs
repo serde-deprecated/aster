@@ -1,7 +1,7 @@
 use std::iter::IntoIterator;
 
 use syntax::ast;
-use syntax::codemap::{DUMMY_SP, Span, respan};
+use syntax::codemap::{DUMMY_SP, Span, respan, Spanned};
 use syntax::ptr::P;
 
 use attr::AttrBuilder;
@@ -54,7 +54,7 @@ impl<F> VariantBuilder<F>
     pub fn tuple(self) -> VariantTupleBuilder<F> {
         VariantTupleBuilder {
             builder: self,
-            args: vec![],
+            fields: vec![],
         }
     }
 
@@ -64,12 +64,11 @@ impl<F> VariantBuilder<F>
         })
     }
 
-    pub fn build_variant_kind(self, kind: ast::VariantKind) -> F::Result {
+    pub fn build_variant_kind(self, struct_def: P<ast::VariantData>) -> F::Result {
         let variant_ = ast::Variant_ {
             name: self.id,
             attrs: self.attrs,
-            kind: kind,
-            id: ast::DUMMY_NODE_ID,
+            data: struct_def,
             disr_expr: None,
         };
         let variant = P(respan(self.span, variant_));
@@ -101,7 +100,7 @@ impl<F> Invoke<ast::Attribute> for VariantBuilder<F>
 
 pub struct VariantTupleBuilder<F> {
     builder: VariantBuilder<F>,
-    args: Vec<ast::VariantArg>,
+    fields: Vec<Spanned<ast::StructField_>>,
 }
 
 impl<F> VariantTupleBuilder<F>
@@ -117,10 +116,12 @@ impl<F> VariantTupleBuilder<F>
     }
 
     pub fn with_ty(mut self, ty: P<ast::Ty>) -> Self {
-        self.args.push(ast::VariantArg {
+        self.fields.push(Spanned { span: ty.span, node: ast::StructField_ {
             ty: ty,
+            kind: ast::UnnamedField(ast::Inherited),
+            attrs: Vec::new(),
             id: ast::DUMMY_NODE_ID,
-        });
+        }});
         self
     }
 
@@ -129,8 +130,8 @@ impl<F> VariantTupleBuilder<F>
     }
 
     pub fn build(self) -> F::Result {
-        let kind = ast::TupleVariantKind(self.args);
-        self.builder.build_variant_kind(kind)
+        let kind = ast::VariantData::Tuple(self.fields, ast::DUMMY_NODE_ID);
+        self.builder.build_variant_kind(P(kind))
     }
 }
 
@@ -170,13 +171,12 @@ impl<F> VariantStructBuilder<F>
     }
 }
 
-impl<F> Invoke<P<ast::StructDef>> for VariantStructBuilder<F>
+impl<F> Invoke<P<ast::VariantData>> for VariantStructBuilder<F>
     where F: Invoke<P<ast::Variant>>,
 {
     type Result = F::Result;
 
-    fn invoke(self, struct_def: P<ast::StructDef>) -> F::Result {
-        let kind = ast::StructVariantKind(struct_def);
-        self.builder.build_variant_kind(kind)
+    fn invoke(self, struct_def: P<ast::VariantData>) -> F::Result {
+        self.builder.build_variant_kind(struct_def)
     }
 }

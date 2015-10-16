@@ -168,8 +168,8 @@ fn test_tuple_struct() {
             attrs: vec![],
             id: ast::DUMMY_NODE_ID,
             node: ast::ItemStruct(
-                P(ast::StructDef {
-                    fields: vec![
+                P(ast::VariantData::Struct(
+                    vec![
                         Spanned {
                             span: DUMMY_SP,
                             node: ast::StructField_ {
@@ -193,8 +193,8 @@ fn test_tuple_struct() {
                             },
                         },
                     ],
-                    ctor_id: Some(ast::DUMMY_NODE_ID),
-                }),
+                    ast::DUMMY_NODE_ID,
+                )),
                 builder.generics().build(),
             ),
             vis: ast::Inherited,

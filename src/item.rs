@@ -459,12 +459,12 @@ impl<F> Invoke<ast::Generics> for ItemStructBuilder<F>
     }
 }
 
-impl<F> Invoke<P<ast::StructDef>> for ItemStructBuilder<F>
+impl<F> Invoke<P<ast::VariantData>> for ItemStructBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
     type Result = F::Result;
 
-    fn invoke(self, struct_def: P<ast::StructDef>) -> F::Result {
+    fn invoke(self, struct_def: P<ast::VariantData>) -> F::Result {
         let struct_ = ast::ItemStruct(struct_def, self.generics);
         self.builder.build_item_(self.id, struct_)
     }
@@ -505,10 +505,10 @@ impl<F> ItemTupleStructBuilder<F>
     }
 
     pub fn build(self) -> F::Result {
-        let struct_def = ast::StructDef {
-            fields: self.fields,
-            ctor_id: Some(ast::DUMMY_NODE_ID),
-        };
+        let struct_def = ast::VariantData::Struct (
+            self.fields,
+            ast::DUMMY_NODE_ID,
+        );
         let struct_ = ast::ItemStruct(P(struct_def), self.generics);
         self.builder.build_item_(self.id, struct_)
     }

@@ -16,8 +16,7 @@ fn test_empty_tuple_variant() {
             node: ast::Variant_ {
                 name: builder.id("A"),
                 attrs: vec![],
-                kind: ast::TupleVariantKind(vec![]),
-                id: ast::DUMMY_NODE_ID,
+                data: P(ast::VariantData::Tuple(vec![], ast::DUMMY_NODE_ID)),
                 disr_expr: None,
             },
         })
@@ -39,17 +38,23 @@ fn test_tuple_variant() {
             node: ast::Variant_ {
                 name: builder.id("A"),
                 attrs: vec![],
-                kind: ast::TupleVariantKind(vec![
-                    ast::VariantArg {
-                        ty: builder.ty().isize(),
-                        id: ast::DUMMY_NODE_ID,
-                    },
-                    ast::VariantArg {
-                        ty: builder.ty().isize(),
-                        id: ast::DUMMY_NODE_ID,
-                    },
-                ]),
-                id: ast::DUMMY_NODE_ID,
+                data: P(ast::VariantData::Tuple(
+                    vec![
+                        Spanned { span: DUMMY_SP, node: ast::StructField_ {
+                            ty: builder.ty().isize(),
+                            kind: ast::UnnamedField(ast::Inherited),
+                            attrs: Vec::new(),
+                            id: ast::DUMMY_NODE_ID,
+                        }},
+                        Spanned { span: DUMMY_SP, node: ast::StructField_ {
+                            ty: builder.ty().isize(),
+                            kind: ast::UnnamedField(ast::Inherited),
+                            attrs: Vec::new(),
+                            id: ast::DUMMY_NODE_ID,
+                        }},
+                    ],
+                    ast::DUMMY_NODE_ID,
+                )),
                 disr_expr: None,
             },
         })
@@ -71,13 +76,10 @@ fn test_struct_variant() {
             node: ast::Variant_ {
                 name: builder.id("A"),
                 attrs: vec![],
-                kind: ast::StructVariantKind(
-                    builder.struct_def()
-                        .field("a").ty().isize()
-                        .field("b").ty().isize()
-                        .build()
-                ),
-                id: ast::DUMMY_NODE_ID,
+                data: builder.struct_def()
+                             .field("a").ty().isize()
+                             .field("b").ty().isize()
+                             .build(),
                 disr_expr: None,
             },
         })
