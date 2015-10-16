@@ -32,10 +32,11 @@ pub mod path;
 pub mod qpath;
 pub mod stmt;
 pub mod str;
-pub mod struct_def;
+pub mod struct_field;
 pub mod ty;
 pub mod ty_param;
 pub mod variant;
+pub mod variant_data;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -150,8 +151,8 @@ impl AstBuilder {
         fn_decl::ArgBuilder::new(id).span(self.span)
     }
 
-    pub fn struct_def(&self) -> struct_def::StructDefBuilder {
-        struct_def::StructDefBuilder::new().span(self.span)
+    pub fn variant_data(&self) -> variant_data::VariantDataBuilder {
+        variant_data::VariantDataBuilder::new().span(self.span)
     }
 
     pub fn variant<T>(&self, id: T) -> variant::VariantBuilder
@@ -160,10 +161,14 @@ impl AstBuilder {
         variant::VariantBuilder::new(id).span(self.span)
     }
 
-    pub fn field<T>(&self, id: T) -> struct_def::StructFieldBuilder
+    pub fn struct_field<T>(&self, id: T) -> struct_field::StructFieldBuilder
         where T: ident::ToIdent,
     {
-        struct_def::StructFieldBuilder::named(id).span(self.span)
+        struct_field::StructFieldBuilder::named(id).span(self.span)
+    }
+
+    pub fn tuple_field(&self) -> struct_field::StructFieldBuilder {
+        struct_field::StructFieldBuilder::unnamed().span(self.span)
     }
 
     pub fn item(&self) -> item::ItemBuilder {

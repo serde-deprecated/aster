@@ -18,9 +18,14 @@ use invoke::{Invoke, Identity};
 use mac::MacBuilder;
 use method::{Method, MethodBuilder};
 use path::PathBuilder;
-use struct_def::{StructDefBuilder, StructFieldBuilder};
+use struct_field::StructFieldBuilder;
 use ty::TyBuilder;
-use variant::{VariantBuilder, VariantTupleBuilder, VariantStructBuilder};
+use variant::VariantBuilder;
+use variant_data::{
+    VariantDataBuilder,
+    VariantDataStructBuilder,
+    VariantDataTupleBuilder,
+};
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -424,27 +429,27 @@ impl<F> ItemStructBuilder<F>
         GenericsBuilder::new_with_callback(self)
     }
 
-    pub fn with_fields<I>(self, iter: I) -> StructDefBuilder<Self>
+    pub fn with_fields<I>(self, iter: I) -> VariantDataStructBuilder<Self>
         where I: IntoIterator<Item=ast::StructField>,
     {
         let span = self.builder.span;
-        StructDefBuilder::new_with_callback(self).span(span).with_fields(iter)
+        VariantDataBuilder::new_with_callback(self).span(span).struct_().with_fields(iter)
     }
 
-    pub fn with_field(self, field: ast::StructField) -> StructDefBuilder<Self> {
+    pub fn with_field(self, field: ast::StructField) -> VariantDataStructBuilder<Self> {
         let span = self.builder.span;
-        StructDefBuilder::new_with_callback(self).span(span).with_field(field)
+        VariantDataBuilder::new_with_callback(self).span(span).struct_().with_field(field)
     }
 
-    pub fn field<T>(self, id: T) -> StructFieldBuilder<StructDefBuilder<Self>>
+    pub fn field<T>(self, id: T) -> StructFieldBuilder<VariantDataStructBuilder<Self>>
         where T: ToIdent,
     {
         let span = self.builder.span;
-        StructDefBuilder::new_with_callback(self).span(span).field(id)
+        VariantDataBuilder::new_with_callback(self).span(span).struct_().field(id)
     }
 
     pub fn build(self) -> F::Result {
-        StructDefBuilder::new_with_callback(self).build()
+        VariantDataBuilder::new_with_callback(self).struct_().build()
     }
 }
 
@@ -459,13 +464,13 @@ impl<F> Invoke<ast::Generics> for ItemStructBuilder<F>
     }
 }
 
-impl<F> Invoke<P<ast::StructDef>> for ItemStructBuilder<F>
+impl<F> Invoke<P<ast::VariantData>> for ItemStructBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
     type Result = F::Result;
 
-    fn invoke(self, struct_def: P<ast::StructDef>) -> F::Result {
-        let struct_ = ast::ItemStruct(struct_def, self.generics);
+    fn invoke(self, data: P<ast::VariantData>) -> F::Result {
+        let struct_ = ast::ItemStruct(data, self.generics);
         self.builder.build_item_(self.id, struct_)
     }
 }
@@ -505,11 +510,8 @@ impl<F> ItemTupleStructBuilder<F>
     }
 
     pub fn build(self) -> F::Result {
-        let struct_def = ast::StructDef {
-            fields: self.fields,
-            ctor_id: Some(ast::DUMMY_NODE_ID),
-        };
-        let struct_ = ast::ItemStruct(P(struct_def), self.generics);
+        let data = ast::VariantData::Tuple(self.fields, ast::DUMMY_NODE_ID);
+        let struct_ = ast::ItemStruct(P(data), self.generics);
         self.builder.build_item_(self.id, struct_)
     }
 }
@@ -592,16 +594,16 @@ impl<F> ItemEnumBuilder<F>
     pub fn id<T>(self, id: T) -> Self
         where T: ToIdent,
     {
-        self.variant(id).tuple().build()
+        self.variant(id).unit()
     }
 
-    pub fn tuple<T>(self, id: T) -> VariantTupleBuilder<Self>
+    pub fn tuple<T>(self, id: T) -> StructFieldBuilder<VariantDataTupleBuilder<VariantBuilder<Self>>>
         where T: ToIdent,
     {
         self.variant(id).tuple()
     }
 
-    pub fn struct_<T>(self, id: T) -> StructDefBuilder<VariantStructBuilder<Self>>
+    pub fn struct_<T>(self, id: T) -> VariantDataStructBuilder<VariantBuilder<Self>>
         where T: ToIdent,
     {
         self.variant(id).struct_()
