@@ -1,6 +1,6 @@
 use syntax::abi::Abi;
 use syntax::ast;
-use syntax::codemap::{DUMMY_SP, Spanned, respan};
+use syntax::codemap::{DUMMY_SP, respan};
 use syntax::parse::token;
 use syntax::print::pprust;
 use syntax::ptr::P;
@@ -96,7 +96,7 @@ fn test_empty_struct() {
             attrs: vec![],
             id: ast::DUMMY_NODE_ID,
             node: ast::ItemStruct(
-                builder.struct_def().build(),
+                builder.variant_data().struct_().build(),
                 builder.generics().build(),
             ),
             vis: ast::Inherited,
@@ -120,7 +120,7 @@ fn test_struct() {
             attrs: vec![],
             id: ast::DUMMY_NODE_ID,
             node: ast::ItemStruct(
-                builder.struct_def()
+                builder.variant_data().struct_()
                     .field("x").ty().isize()
                     .field("y").ty().isize()
                     .build(),
@@ -143,7 +143,7 @@ fn test_struct_with_fields() {
     let struct_2 = builder.item().struct_("Struct")
         .with_fields(
             vec!["x","y"].iter()
-                .map(|f| builder.field(f).ty().isize())
+                .map(|f| builder.struct_field(f).ty().isize())
                 )
         .build();
 
@@ -168,33 +168,10 @@ fn test_tuple_struct() {
             attrs: vec![],
             id: ast::DUMMY_NODE_ID,
             node: ast::ItemStruct(
-                P(ast::StructDef {
-                    fields: vec![
-                        Spanned {
-                            span: DUMMY_SP,
-                            node: ast::StructField_ {
-                                kind: ast::UnnamedField(
-                                    ast::Inherited,
-                                ),
-                                id: ast::DUMMY_NODE_ID,
-                                ty: builder.ty().isize(),
-                                attrs: vec![],
-                            },
-                        },
-                        Spanned {
-                            span: DUMMY_SP,
-                            node: ast::StructField_ {
-                                kind: ast::UnnamedField(
-                                    ast::Inherited,
-                                ),
-                                id: ast::DUMMY_NODE_ID,
-                                ty: builder.ty().isize(),
-                                attrs: vec![],
-                            },
-                        },
-                    ],
-                    ctor_id: Some(ast::DUMMY_NODE_ID),
-                }),
+                builder.variant_data().tuple()
+                    .ty().isize()
+                    .ty().isize()
+                    .build(),
                 builder.generics().build(),
             ),
             vis: ast::Inherited,
@@ -231,13 +208,14 @@ fn test_enum() {
     let builder = AstBuilder::new();
     let enum_= builder.item().enum_("Enum")
         .id("A")
-        .tuple("B").build()
-        .tuple("C")
+        .tuple("B")
             .ty().isize()
             .build()
-        .tuple("D")
+        .tuple("C")
             .ty().isize()
             .ty().isize()
+            .build()
+        .struct_("D")
             .build()
         .struct_("E")
             .field("a").ty().isize()
@@ -257,14 +235,15 @@ fn test_enum() {
             node: ast::ItemEnum(
                 ast::EnumDef {
                     variants: vec![
-                        builder.variant("A").tuple().build(),
-                        builder.variant("B").tuple().build(),
-                        builder.variant("C").tuple()
+                        builder.variant("A").unit(),
+                        builder.variant("B").tuple()
                             .ty().isize()
                             .build(),
-                        builder.variant("D").tuple()
+                        builder.variant("C").tuple()
                             .ty().isize()
                             .ty().isize()
+                            .build(),
+                        builder.variant("D").struct_()
                             .build(),
                         builder.variant("E").struct_()
                             .field("a").ty().isize()
@@ -416,7 +395,7 @@ fn test_attr() {
             ],
             id: ast::DUMMY_NODE_ID,
             node: ast::ItemStruct(
-                builder.struct_def()
+                builder.variant_data().struct_()
                     .field("x").ty().isize()
                     .field("y").ty().isize()
                     .build(),

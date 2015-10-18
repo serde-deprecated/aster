@@ -5,9 +5,9 @@ use syntax::ptr::P;
 use aster::AstBuilder;
 
 #[test]
-fn test_empty_tuple_variant() {
+fn test_unit_variant() {
     let builder = AstBuilder::new();
-    let variant = builder.variant("A").tuple().build();
+    let variant = builder.variant("A").unit();
 
     assert_eq!(
         variant,
@@ -16,8 +16,7 @@ fn test_empty_tuple_variant() {
             node: ast::Variant_ {
                 name: builder.id("A"),
                 attrs: vec![],
-                kind: ast::TupleVariantKind(vec![]),
-                id: ast::DUMMY_NODE_ID,
+                data: builder.variant_data().unit(),
                 disr_expr: None,
             },
         })
@@ -39,17 +38,10 @@ fn test_tuple_variant() {
             node: ast::Variant_ {
                 name: builder.id("A"),
                 attrs: vec![],
-                kind: ast::TupleVariantKind(vec![
-                    ast::VariantArg {
-                        ty: builder.ty().isize(),
-                        id: ast::DUMMY_NODE_ID,
-                    },
-                    ast::VariantArg {
-                        ty: builder.ty().isize(),
-                        id: ast::DUMMY_NODE_ID,
-                    },
-                ]),
-                id: ast::DUMMY_NODE_ID,
+                data: builder.variant_data().tuple()
+                    .ty().isize()
+                    .ty().isize()
+                    .build(),
                 disr_expr: None,
             },
         })
@@ -71,13 +63,10 @@ fn test_struct_variant() {
             node: ast::Variant_ {
                 name: builder.id("A"),
                 attrs: vec![],
-                kind: ast::StructVariantKind(
-                    builder.struct_def()
-                        .field("a").ty().isize()
-                        .field("b").ty().isize()
-                        .build()
-                ),
-                id: ast::DUMMY_NODE_ID,
+                data: builder.variant_data().struct_()
+                    .field("a").ty().isize()
+                    .field("b").ty().isize()
+                    .build(),
                 disr_expr: None,
             },
         })
