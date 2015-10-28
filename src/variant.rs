@@ -69,7 +69,7 @@ impl<F> VariantBuilder<F>
         let variant_ = ast::Variant_ {
             name: self.id,
             attrs: self.attrs,
-            data: data,
+            data: *data,
             disr_expr: None,
         };
         let variant = P(respan(self.span, variant_));
