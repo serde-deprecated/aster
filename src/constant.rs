@@ -23,14 +23,14 @@ pub struct ConstBuilder<F=Identity> {
 
 impl ConstBuilder {
     pub fn new() -> Self {
-        ConstBuilder::new_with_callback(Identity)
+        ConstBuilder::with_callback(Identity)
     }
 }
 
 impl<F> ConstBuilder<F>
     where F: Invoke<Const>,
 {
-    pub fn new_with_callback(callback: F) -> Self
+    pub fn with_callback(callback: F) -> Self
         where F: Invoke<Const>,
     {
         ConstBuilder {
@@ -51,11 +51,11 @@ impl<F> ConstBuilder<F>
     }
 
     pub fn expr(self) -> ExprBuilder<Self> {
-        ExprBuilder::new_with_callback(self)
+        ExprBuilder::with_callback(self)
     }
 
     pub fn ty(self) -> TyBuilder<Self> {
-        TyBuilder::new_with_callback(self)
+        TyBuilder::with_callback(self)
     }
 
     pub fn build(self, ty: P<ast::Ty>) -> F::Result {

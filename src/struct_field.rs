@@ -67,7 +67,7 @@ impl<F> StructFieldBuilder<F>
 
     pub fn attr(self) -> AttrBuilder<Self> {
         let span = self.span;
-        AttrBuilder::new_with_callback(self).span(span)
+        AttrBuilder::with_callback(self).span(span)
     }
 
     pub fn build_ty(self, ty: P<ast::Ty>) -> F::Result {
@@ -82,7 +82,7 @@ impl<F> StructFieldBuilder<F>
 
     pub fn ty(self) -> TyBuilder<Self> {
         let span = self.span;
-        TyBuilder::new_with_callback(self).span(span)
+        TyBuilder::with_callback(self).span(span)
     }
 }
 

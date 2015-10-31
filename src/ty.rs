@@ -19,14 +19,14 @@ pub struct TyBuilder<F=Identity> {
 
 impl TyBuilder {
     pub fn new() -> Self {
-        TyBuilder::new_with_callback(Identity)
+        TyBuilder::with_callback(Identity)
     }
 }
 
 impl<F> TyBuilder<F>
     where F: Invoke<P<ast::Ty>>,
 {
-    pub fn new_with_callback(callback: F) -> Self {
+    pub fn with_callback(callback: F) -> Self {
         TyBuilder {
             callback: callback,
             span: DUMMY_SP,
@@ -66,11 +66,11 @@ impl<F> TyBuilder<F>
     }
 
     pub fn path(self) -> PathBuilder<TyPathBuilder<F>> {
-        PathBuilder::new_with_callback(TyPathBuilder(self))
+        PathBuilder::with_callback(TyPathBuilder(self))
     }
 
     pub fn qpath(self) -> QPathBuilder<TyQPathBuilder<F>> {
-        QPathBuilder::new_with_callback(TyQPathBuilder(self))
+        QPathBuilder::with_callback(TyQPathBuilder(self))
     }
 
     pub fn isize(self) -> F::Result {
@@ -137,7 +137,7 @@ impl<F> TyBuilder<F>
     }
 
     pub fn slice(self) -> TyBuilder<TySliceBuilder<F>> {
-        TyBuilder::new_with_callback(TySliceBuilder(self))
+        TyBuilder::with_callback(TySliceBuilder(self))
     }
 
     pub fn ref_(self) -> TyRefBuilder<F> {
@@ -153,15 +153,15 @@ impl<F> TyBuilder<F>
     }
 
     pub fn option(self) -> TyBuilder<TyOptionBuilder<F>> {
-        TyBuilder::new_with_callback(TyOptionBuilder(self))
+        TyBuilder::with_callback(TyOptionBuilder(self))
     }
 
     pub fn result(self) -> TyBuilder<TyResultOkBuilder<F>> {
-        TyBuilder::new_with_callback(TyResultOkBuilder(self))
+        TyBuilder::with_callback(TyResultOkBuilder(self))
     }
 
     pub fn phantom_data(self) -> TyBuilder<TyPhantomDataBuilder<F>> {
-        TyBuilder::new_with_callback(TyPhantomDataBuilder(self))
+        TyBuilder::with_callback(TyPhantomDataBuilder(self))
     }
 }
 
@@ -243,7 +243,7 @@ impl<F> TyRefBuilder<F>
     }
 
     pub fn ty(self) -> TyBuilder<Self> {
-        TyBuilder::new_with_callback(self)
+        TyBuilder::with_callback(self)
     }
 }
 
@@ -290,7 +290,7 @@ impl<F> Invoke<P<ast::Ty>> for TyResultOkBuilder<F>
     type Result = TyBuilder<TyResultErrBuilder<F>>;
 
     fn invoke(self, ty: P<ast::Ty>) -> TyBuilder<TyResultErrBuilder<F>> {
-        TyBuilder::new_with_callback(TyResultErrBuilder(self.0, ty))
+        TyBuilder::with_callback(TyResultErrBuilder(self.0, ty))
     }
 }
 
@@ -362,7 +362,7 @@ impl<F> TyTupleBuilder<F>
     }
 
     pub fn ty(self) -> TyBuilder<Self> {
-        TyBuilder::new_with_callback(self)
+        TyBuilder::with_callback(self)
     }
 
     pub fn build(self) -> F::Result {

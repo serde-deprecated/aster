@@ -25,14 +25,14 @@ impl VariantBuilder {
     pub fn new<T>(id: T) -> Self
         where T: ToIdent,
     {
-        VariantBuilder::new_with_callback(id, Identity)
+        VariantBuilder::with_callback(id, Identity)
     }
 }
 
 impl<F> VariantBuilder<F>
     where F: Invoke<P<ast::Variant>>,
 {
-    pub fn new_with_callback<T>(id: T, callback: F) -> Self
+    pub fn with_callback<T>(id: T, callback: F) -> Self
         where T: ToIdent,
     {
         VariantBuilder {
@@ -50,19 +50,19 @@ impl<F> VariantBuilder<F>
 
     pub fn attr(self) -> AttrBuilder<Self> {
         let span = self.span;
-        AttrBuilder::new_with_callback(self).span(span)
+        AttrBuilder::with_callback(self).span(span)
     }
 
     pub fn unit(self) -> F::Result {
-        VariantDataBuilder::new_with_callback(self).unit()
+        VariantDataBuilder::with_callback(self).unit()
     }
 
     pub fn tuple(self) -> StructFieldBuilder<VariantDataTupleBuilder<Self>> {
-        VariantDataBuilder::new_with_callback(self).tuple()
+        VariantDataBuilder::with_callback(self).tuple()
     }
 
     pub fn struct_(self) -> VariantDataStructBuilder<Self> {
-        VariantDataBuilder::new_with_callback(self).struct_()
+        VariantDataBuilder::with_callback(self).struct_()
     }
 
     pub fn build_variant_data(self, data: ast::VariantData) -> F::Result {

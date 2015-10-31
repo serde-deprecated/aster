@@ -21,14 +21,14 @@ pub struct AttrBuilder<F=Identity> {
 
 impl AttrBuilder {
     pub fn new() -> Self {
-        AttrBuilder::new_with_callback(Identity)
+        AttrBuilder::with_callback(Identity)
     }
 }
 
 impl<F> AttrBuilder<F>
     where F: Invoke<ast::Attribute>,
 {
-    pub fn new_with_callback(callback: F) -> Self {
+    pub fn with_callback(callback: F) -> Self {
         AttrBuilder {
             callback: callback,
             span: DUMMY_SP,
@@ -71,13 +71,13 @@ impl<F> AttrBuilder<F>
     pub fn list<T>(self, word: T) -> AttrListBuilder<Self>
         where T: ToInternedString
     {
-        AttrListBuilder::new_with_callback(word, self)
+        AttrListBuilder::with_callback(word, self)
     }
 
     pub fn name_value<T>(self, name: T) -> LitBuilder<AttrNameValueBuilder<Self>>
         where T: ToInternedString,
     {
-        LitBuilder::new_with_callback(AttrNameValueBuilder {
+        LitBuilder::with_callback(AttrNameValueBuilder {
             callback: self,
             name: name.to_interned_string(),
         })
@@ -175,7 +175,7 @@ pub struct AttrListBuilder<F> {
 impl<F> AttrListBuilder<F>
     where F: Invoke<P<ast::MetaItem>>,
 {
-    pub fn new_with_callback<T>(name: T, callback: F) -> Self
+    pub fn with_callback<T>(name: T, callback: F) -> Self
         where T: ToInternedString,
     {
         AttrListBuilder {
@@ -233,13 +233,13 @@ impl<F> AttrListBuilder<F>
     pub fn list<T>(self, name: T) -> AttrListBuilder<Self>
         where T: ToInternedString,
     {
-        AttrListBuilder::new_with_callback(name, self)
+        AttrListBuilder::with_callback(name, self)
     }
 
     pub fn name_value<T>(self, name: T) -> LitBuilder<AttrNameValueBuilder<Self>>
         where T: ToInternedString,
     {
-        LitBuilder::new_with_callback(AttrNameValueBuilder {
+        LitBuilder::with_callback(AttrNameValueBuilder {
             callback: self,
             name: name.to_interned_string(),
         })

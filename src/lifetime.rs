@@ -71,14 +71,14 @@ impl LifetimeDefBuilder {
     pub fn new<N>(name: N) -> Self
         where N: ToName,
     {
-        LifetimeDefBuilder::new_with_callback(name, Identity)
+        LifetimeDefBuilder::with_callback(name, Identity)
     }
 }
 
 impl<F> LifetimeDefBuilder<F>
     where F: Invoke<ast::LifetimeDef>,
 {
-    pub fn new_with_callback<N>(name: N, callback: F) -> Self
+    pub fn with_callback<N>(name: N, callback: F) -> Self
         where N: ToName,
     {
         let lifetime = ast::Lifetime {

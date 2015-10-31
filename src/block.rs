@@ -19,14 +19,14 @@ pub struct BlockBuilder<F=Identity> {
 
 impl BlockBuilder {
     pub fn new() -> Self {
-        BlockBuilder::new_with_callback(Identity)
+        BlockBuilder::with_callback(Identity)
     }
 }
 
 impl<F> BlockBuilder<F>
     where F: Invoke<P<ast::Block>>,
 {
-    pub fn new_with_callback(callback: F) -> Self {
+    pub fn with_callback(callback: F) -> Self {
         BlockBuilder {
             callback: callback,
             span: DUMMY_SP,
@@ -59,7 +59,7 @@ impl<F> BlockBuilder<F>
     }
 
     pub fn stmt(self) -> StmtBuilder<Self> {
-        StmtBuilder::new_with_callback(self)
+        StmtBuilder::with_callback(self)
     }
 
     pub fn build_expr(self, expr: P<ast::Expr>) -> F::Result {
@@ -67,7 +67,7 @@ impl<F> BlockBuilder<F>
     }
 
     pub fn expr(self) -> ExprBuilder<Self> {
-        ExprBuilder::new_with_callback(self)
+        ExprBuilder::with_callback(self)
     }
 
     pub fn build(self) -> F::Result {

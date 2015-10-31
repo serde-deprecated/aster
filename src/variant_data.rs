@@ -16,14 +16,14 @@ pub struct VariantDataBuilder<F=Identity> {
 
 impl VariantDataBuilder {
     pub fn new() -> Self {
-        VariantDataBuilder::new_with_callback(Identity)
+        VariantDataBuilder::with_callback(Identity)
     }
 }
 
 impl<F> VariantDataBuilder<F>
     where F: Invoke<ast::VariantData>
 {
-    pub fn new_with_callback(callback: F) -> Self {
+    pub fn with_callback(callback: F) -> Self {
         VariantDataBuilder {
             callback: callback,
             span: DUMMY_SP,
@@ -92,7 +92,7 @@ impl<F> VariantDataTupleBuilder<F>
 
     pub fn ty(self) -> TyBuilder<Self> {
         let span = self.span;
-        TyBuilder::new_with_callback(self).span(span)
+        TyBuilder::with_callback(self).span(span)
     }
 
     pub fn build(self) -> F::Result {

@@ -38,14 +38,14 @@ pub struct ItemBuilder<F=Identity> {
 
 impl ItemBuilder {
     pub fn new() -> Self {
-        ItemBuilder::new_with_callback(Identity)
+        ItemBuilder::with_callback(Identity)
     }
 }
 
 impl<F> ItemBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
-    pub fn new_with_callback(callback: F) -> Self {
+    pub fn with_callback(callback: F) -> Self {
         ItemBuilder {
             callback: callback,
             span: DUMMY_SP,
@@ -69,7 +69,7 @@ impl<F> ItemBuilder<F>
     }
 
     pub fn attr(self) -> AttrBuilder<Self> {
-        AttrBuilder::new_with_callback(self)
+        AttrBuilder::with_callback(self)
     }
 
     pub fn pub_(mut self) -> Self {
@@ -95,7 +95,7 @@ impl<F> ItemBuilder<F>
         where T: ToIdent,
     {
         let id = id.to_ident();
-        FnDeclBuilder::new_with_callback(ItemFnDeclBuilder {
+        FnDeclBuilder::with_callback(ItemFnDeclBuilder {
             builder: self,
             id: id,
         })
@@ -107,7 +107,7 @@ impl<F> ItemBuilder<F>
     }
 
     pub fn use_(self) -> PathBuilder<ItemUseBuilder<F>> {
-        PathBuilder::new_with_callback(ItemUseBuilder {
+        PathBuilder::with_callback(ItemUseBuilder {
             builder: self,
         })
     }
@@ -200,7 +200,7 @@ impl<F> ItemBuilder<F>
     pub fn const_<T>(self, id: T) -> ConstBuilder<ItemConstBuilder<F>>
         where T: ToIdent,
     {
-        ConstBuilder::new_with_callback(ItemConstBuilder {
+        ConstBuilder::with_callback(ItemConstBuilder {
             builder: self,
             id: id.to_ident(),
         })
@@ -275,7 +275,7 @@ impl<F> ItemFnBuilder<F>
     }
 
     pub fn generics(self) -> GenericsBuilder<Self> {
-        GenericsBuilder::new_with_callback(self)
+        GenericsBuilder::with_callback(self)
     }
 
     pub fn build(self, block: P<ast::Block>) -> F::Result {
@@ -290,7 +290,7 @@ impl<F> ItemFnBuilder<F>
     }
 
     pub fn block(self) -> BlockBuilder<Self> {
-        BlockBuilder::new_with_callback(self)
+        BlockBuilder::with_callback(self)
     }
 }
 
@@ -426,30 +426,30 @@ impl<F> ItemStructBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
     pub fn generics(self) -> GenericsBuilder<Self> {
-        GenericsBuilder::new_with_callback(self)
+        GenericsBuilder::with_callback(self)
     }
 
     pub fn with_fields<I>(self, iter: I) -> VariantDataStructBuilder<Self>
         where I: IntoIterator<Item=ast::StructField>,
     {
         let span = self.builder.span;
-        VariantDataBuilder::new_with_callback(self).span(span).struct_().with_fields(iter)
+        VariantDataBuilder::with_callback(self).span(span).struct_().with_fields(iter)
     }
 
     pub fn with_field(self, field: ast::StructField) -> VariantDataStructBuilder<Self> {
         let span = self.builder.span;
-        VariantDataBuilder::new_with_callback(self).span(span).struct_().with_field(field)
+        VariantDataBuilder::with_callback(self).span(span).struct_().with_field(field)
     }
 
     pub fn field<T>(self, id: T) -> StructFieldBuilder<VariantDataStructBuilder<Self>>
         where T: ToIdent,
     {
         let span = self.builder.span;
-        VariantDataBuilder::new_with_callback(self).span(span).struct_().field(id)
+        VariantDataBuilder::with_callback(self).span(span).struct_().field(id)
     }
 
     pub fn build(self) -> F::Result {
-        VariantDataBuilder::new_with_callback(self).struct_().build()
+        VariantDataBuilder::with_callback(self).struct_().build()
     }
 }
 
@@ -488,7 +488,7 @@ impl<F> ItemTupleStructBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
     pub fn generics(self) -> GenericsBuilder<Self> {
-        GenericsBuilder::new_with_callback(self)
+        GenericsBuilder::with_callback(self)
     }
 
     pub fn with_tys<I>(mut self, iter: I) -> Self
@@ -501,7 +501,7 @@ impl<F> ItemTupleStructBuilder<F>
     }
 
     pub fn ty(self) -> TyBuilder<Self> {
-        TyBuilder::new_with_callback(self)
+        TyBuilder::with_callback(self)
     }
 
     pub fn field(self) -> StructFieldBuilder<Self> {
@@ -561,7 +561,7 @@ impl<F> ItemEnumBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
     pub fn generics(self) -> GenericsBuilder<Self> {
-        GenericsBuilder::new_with_callback(self)
+        GenericsBuilder::with_callback(self)
     }
 
     pub fn with_variants<I>(mut self, iter: I) -> Self
@@ -612,7 +612,7 @@ impl<F> ItemEnumBuilder<F>
     pub fn variant<T>(self, id: T) -> VariantBuilder<Self>
         where T: ToIdent,
     {
-        VariantBuilder::new_with_callback(id, self)
+        VariantBuilder::with_callback(id, self)
     }
 
     pub fn build(self) -> F::Result {
@@ -681,7 +681,7 @@ impl<F> ItemMacBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
     pub fn path(self) -> PathBuilder<Self> {
-        PathBuilder::new_with_callback(self)
+        PathBuilder::with_callback(self)
     }
 
     pub fn build(self, mac: ast::Mac) -> F::Result {
@@ -696,7 +696,7 @@ impl<F> Invoke<ast::Path> for ItemMacBuilder<F>
     type Result = MacBuilder<ItemMacBuilder<F>>;
 
     fn invoke(self, path: ast::Path) -> MacBuilder<Self> {
-        MacBuilder::new_with_callback(self).path(path)
+        MacBuilder::with_callback(self).path(path)
     }
 }
 
@@ -722,11 +722,11 @@ impl<F> ItemTyBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
     pub fn generics(self) -> GenericsBuilder<Self> {
-        GenericsBuilder::new_with_callback(self)
+        GenericsBuilder::with_callback(self)
     }
 
     pub fn ty(self) -> TyBuilder<Self> {
-        TyBuilder::new_with_callback(self)
+        TyBuilder::with_callback(self)
     }
 
     pub fn build_ty(self, ty: P<ast::Ty>) -> F::Result {
@@ -786,7 +786,7 @@ impl<F> ItemImplBuilder<F>
     }
 
     pub fn generics(self) -> GenericsBuilder<Self> {
-        GenericsBuilder::new_with_callback(self)
+        GenericsBuilder::with_callback(self)
     }
 
     pub fn with_trait(mut self, trait_ref: ast::TraitRef) -> Self {
@@ -795,11 +795,11 @@ impl<F> ItemImplBuilder<F>
     }
 
     pub fn trait_(self) -> PathBuilder<Self> {
-        PathBuilder::new_with_callback(self)
+        PathBuilder::with_callback(self)
     }
 
     pub fn ty(self) -> TyBuilder<Self> {
-        TyBuilder::new_with_callback(self)
+        TyBuilder::with_callback(self)
     }
 
     pub fn build_ty(self, ty: P<ast::Ty>) -> F::Result {
@@ -828,7 +828,7 @@ impl<F> ItemImplBuilder<F>
     pub fn item<T>(self, id: T) -> ItemImplItemBuilder<Self>
         where T: ToIdent,
     {
-        ItemImplItemBuilder::new_with_callback(id, self)
+        ItemImplItemBuilder::with_callback(id, self)
     }
 }
 
@@ -888,7 +888,7 @@ pub struct ItemImplItemBuilder<F> {
 impl<F> ItemImplItemBuilder<F>
     where F: Invoke<P<ast::ImplItem>>,
 {
-    pub fn new_with_callback<T>(id: T, callback: F) -> Self
+    pub fn with_callback<T>(id: T, callback: F) -> Self
         where F: Invoke<P<ast::ImplItem>>,
               T: ToIdent,
     {
@@ -912,7 +912,7 @@ impl<F> ItemImplItemBuilder<F>
     }
 
     pub fn attr(self) -> AttrBuilder<Self> {
-        AttrBuilder::new_with_callback(self)
+        AttrBuilder::with_callback(self)
     }
 
     pub fn pub_(mut self) -> Self {
@@ -921,19 +921,19 @@ impl<F> ItemImplItemBuilder<F>
     }
 
     pub fn const_(self) -> ConstBuilder<Self> {
-        ConstBuilder::new_with_callback(self)
+        ConstBuilder::with_callback(self)
     }
 
     pub fn method(self) -> MethodBuilder<Self> {
-        MethodBuilder::new_with_callback(self)
+        MethodBuilder::with_callback(self)
     }
 
     pub fn type_(self) -> TyBuilder<Self> {
-        TyBuilder::new_with_callback(self)
+        TyBuilder::with_callback(self)
     }
 
     pub fn mac(self) -> MacBuilder<Self> {
-        MacBuilder::new_with_callback(self)
+        MacBuilder::with_callback(self)
     }
 
     pub fn build_item(self, node: ast::ImplItem_) -> F::Result {

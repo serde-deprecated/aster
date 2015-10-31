@@ -59,14 +59,14 @@ pub struct PathBuilder<F=Identity> {
 
 impl PathBuilder {
     pub fn new() -> Self {
-        PathBuilder::new_with_callback(Identity)
+        PathBuilder::with_callback(Identity)
     }
 }
 
 impl<F> PathBuilder<F>
     where F: Invoke<ast::Path>,
 {
-    pub fn new_with_callback(callback: F) -> Self {
+    pub fn with_callback(callback: F) -> Self {
         PathBuilder {
             callback: callback,
             span: DUMMY_SP,
@@ -109,7 +109,7 @@ impl<F> PathBuilder<F>
         -> PathSegmentBuilder<PathSegmentsBuilder<F>>
         where I: ToIdent,
     {
-        PathSegmentBuilder::new_with_callback(id, PathSegmentsBuilder {
+        PathSegmentBuilder::with_callback(id, PathSegmentsBuilder {
             callback: self.callback,
             span: self.span,
             global: self.global,
@@ -150,7 +150,7 @@ impl<F> PathSegmentsBuilder<F>
     pub fn segment<T>(self, id: T) -> PathSegmentBuilder<Self>
         where T: ToIdent,
     {
-        PathSegmentBuilder::new_with_callback(id, self)
+        PathSegmentBuilder::with_callback(id, self)
     }
 
     pub fn build(self) -> F::Result {
@@ -185,7 +185,7 @@ pub struct PathSegmentBuilder<F=Identity> {
 impl<F> PathSegmentBuilder<F>
     where F: Invoke<ast::PathSegment>,
 {
-    pub fn new_with_callback<I>(id: I, callback: F) -> Self
+    pub fn with_callback<I>(id: I, callback: F) -> Self
         where I: ToIdent,
     {
         PathSegmentBuilder {
@@ -255,7 +255,7 @@ impl<F> PathSegmentBuilder<F>
     }
 
     pub fn ty(self) -> TyBuilder<Self> {
-        TyBuilder::new_with_callback(self)
+        TyBuilder::with_callback(self)
     }
 
     pub fn build(self) -> F::Result {

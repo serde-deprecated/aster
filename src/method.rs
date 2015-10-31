@@ -33,14 +33,14 @@ pub struct MethodBuilder<F=Identity> {
 
 impl MethodBuilder {
     pub fn new() -> Self {
-        MethodBuilder::new_with_callback(Identity)
+        MethodBuilder::with_callback(Identity)
     }
 }
 
 impl<F> MethodBuilder<F>
     where F: Invoke<Method>,
 {
-    pub fn new_with_callback(callback: F) -> Self {
+    pub fn with_callback(callback: F) -> Self {
         MethodBuilder {
             callback: callback,
             span: DUMMY_SP,
@@ -84,7 +84,7 @@ impl<F> MethodBuilder<F>
     }
 
     pub fn generics(self) -> GenericsBuilder<Self> {
-        GenericsBuilder::new_with_callback(self)
+        GenericsBuilder::with_callback(self)
     }
 
     pub fn with_self(mut self, explicit_self: ast::ExplicitSelf) -> Self {
@@ -93,7 +93,7 @@ impl<F> MethodBuilder<F>
     }
 
     pub fn self_(self) -> SelfBuilder<Self> {
-        SelfBuilder::new_with_callback(self)
+        SelfBuilder::with_callback(self)
     }
 
     pub fn with_fn_decl(mut self, fn_decl: P<ast::FnDecl>) -> Self {
@@ -102,7 +102,7 @@ impl<F> MethodBuilder<F>
     }
 
     pub fn fn_decl(self) -> FnDeclBuilder<Self> {
-        FnDeclBuilder::new_with_callback(self)
+        FnDeclBuilder::with_callback(self)
     }
 
     pub fn with_block(mut self, block: P<ast::Block>) -> Self {
@@ -111,7 +111,7 @@ impl<F> MethodBuilder<F>
     }
 
     pub fn block(self) -> BlockBuilder<Self> {
-        BlockBuilder::new_with_callback(self)
+        BlockBuilder::with_callback(self)
     }
 
     pub fn build(self) -> F::Result {
@@ -180,7 +180,7 @@ pub struct SelfBuilder<F> {
 impl<F> SelfBuilder<F>
     where F: Invoke<ast::ExplicitSelf>,
 {
-    pub fn new_with_callback(callback: F) -> Self {
+    pub fn with_callback(callback: F) -> Self {
         SelfBuilder {
             callback: callback,
             span: DUMMY_SP,
@@ -247,7 +247,7 @@ impl<F> SelfBuilder<F>
 
     /*
     pub fn ty(self) -> TyBuilder<F::Result> {
-        TyBuilder::new_with_callback(self)
+        TyBuilder::with_callback(self)
     }
     */
 }

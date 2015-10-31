@@ -23,7 +23,7 @@ pub struct GenericsBuilder<F=Identity> {
 
 impl GenericsBuilder {
     pub fn new() -> Self {
-        GenericsBuilder::new_with_callback(Identity)
+        GenericsBuilder::with_callback(Identity)
     }
 
     pub fn from_generics(generics: ast::Generics) -> Self {
@@ -34,7 +34,7 @@ impl GenericsBuilder {
 impl<F> GenericsBuilder<F>
     where F: Invoke<ast::Generics>,
 {
-    pub fn new_with_callback(callback: F) -> Self {
+    pub fn with_callback(callback: F) -> Self {
         GenericsBuilder {
             callback: callback,
             span: DUMMY_SP,
@@ -98,7 +98,7 @@ impl<F> GenericsBuilder<F>
     pub fn lifetime<N>(self, name: N) -> LifetimeDefBuilder<Self>
         where N: ToName,
     {
-        LifetimeDefBuilder::new_with_callback(name, self)
+        LifetimeDefBuilder::with_callback(name, self)
     }
 
     pub fn with_ty_params<I>(mut self, iter: I) -> Self
@@ -133,7 +133,7 @@ impl<F> GenericsBuilder<F>
         where I: ToIdent,
     {
         let span = self.span;
-        TyParamBuilder::new_with_callback(id, self).span(span)
+        TyParamBuilder::with_callback(id, self).span(span)
     }
 
     pub fn with_predicates<I>(mut self, iter: I) -> Self

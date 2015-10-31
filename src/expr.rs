@@ -24,14 +24,14 @@ pub struct ExprBuilder<F=Identity> {
 
 impl ExprBuilder {
     pub fn new() -> Self {
-        ExprBuilder::new_with_callback(Identity)
+        ExprBuilder::with_callback(Identity)
     }
 }
 
 impl<F> ExprBuilder<F>
     where F: Invoke<P<ast::Expr>>,
 {
-    pub fn new_with_callback(callback: F) -> Self {
+    pub fn with_callback(callback: F) -> Self {
         ExprBuilder {
             callback: callback,
             span: DUMMY_SP,
@@ -65,11 +65,11 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn path(self) -> PathBuilder<Self> {
-        PathBuilder::new_with_callback(self)
+        PathBuilder::with_callback(self)
     }
 
     pub fn qpath(self) -> QPathBuilder<Self> {
-        QPathBuilder::new_with_callback(self)
+        QPathBuilder::with_callback(self)
     }
 
     pub fn id<I>(self, id: I) -> F::Result
@@ -83,7 +83,7 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn lit(self) -> LitBuilder<Self> {
-        LitBuilder::new_with_callback(self)
+        LitBuilder::with_callback(self)
     }
 
     pub fn bool(self, value: bool) -> F::Result {
@@ -169,7 +169,7 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn unary(self, unop: ast::UnOp) -> ExprBuilder<ExprUnaryBuilder<F>> {
-        ExprBuilder::new_with_callback(ExprUnaryBuilder {
+        ExprBuilder::with_callback(ExprUnaryBuilder {
             builder: self,
             unop: unop,
         })
@@ -270,7 +270,7 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn binary(self, binop: ast::BinOp_) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
-        ExprBuilder::new_with_callback(ExprBinaryLhsBuilder {
+        ExprBuilder::with_callback(ExprBinaryLhsBuilder {
             builder: self,
             binop: binop,
         })
@@ -349,14 +349,14 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn addr_of(self) -> ExprBuilder<ExprAddrOfBuilder<F>> {
-        ExprBuilder::new_with_callback(ExprAddrOfBuilder {
+        ExprBuilder::with_callback(ExprAddrOfBuilder {
             builder: self,
             mutability: ast::Mutability::MutImmutable,
         })
     }
 
     pub fn mut_addr_of(self) -> ExprBuilder<ExprAddrOfBuilder<F>> {
-        ExprBuilder::new_with_callback(ExprAddrOfBuilder {
+        ExprBuilder::with_callback(ExprAddrOfBuilder {
             builder: self,
             mutability: ast::Mutability::MutMutable,
         })
@@ -387,7 +387,7 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn struct_(self) -> PathBuilder<ExprStructBuilder<F>> {
-        PathBuilder::new_with_callback(ExprStructBuilder {
+        PathBuilder::with_callback(ExprStructBuilder {
             builder: self,
         })
     }
@@ -409,7 +409,7 @@ impl<F> ExprBuilder<F>
             .id("std").id("option").id("Option").id("Some")
             .build();
 
-        ExprBuilder::new_with_callback(ExprPathBuilder {
+        ExprBuilder::with_callback(ExprPathBuilder {
             builder: self,
             path: path,
         })
@@ -421,7 +421,7 @@ impl<F> ExprBuilder<F>
             .id("std").id("result").id("Result").id("Ok")
             .build();
 
-        ExprBuilder::new_with_callback(ExprPathBuilder {
+        ExprBuilder::with_callback(ExprPathBuilder {
             builder: self,
             path: path,
         })
@@ -433,7 +433,7 @@ impl<F> ExprBuilder<F>
             .id("std").id("result").id("Result").id("Err")
             .build();
 
-        ExprBuilder::new_with_callback(ExprPathBuilder {
+        ExprBuilder::with_callback(ExprPathBuilder {
             builder: self,
             path: path,
         })
@@ -447,7 +447,7 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn call(self) -> ExprBuilder<ExprCallBuilder<F>> {
-        ExprBuilder::new_with_callback(ExprCallBuilder {
+        ExprBuilder::with_callback(ExprCallBuilder {
             builder: self,
         })
     }
@@ -456,18 +456,18 @@ impl<F> ExprBuilder<F>
         where I: ToIdent,
     {
         let id = respan(self.span, id.to_ident());
-        ExprBuilder::new_with_callback(ExprMethodCallBuilder {
+        ExprBuilder::with_callback(ExprMethodCallBuilder {
             builder: self,
             id: id,
         })
     }
 
     pub fn block(self) -> BlockBuilder<Self> {
-        BlockBuilder::new_with_callback(self)
+        BlockBuilder::with_callback(self)
     }
 
     pub fn paren(self) -> ExprBuilder<ExprParenBuilder<F>> {
-        ExprBuilder::new_with_callback(ExprParenBuilder {
+        ExprBuilder::with_callback(ExprParenBuilder {
             builder: self,
         })
     }
@@ -476,7 +476,7 @@ impl<F> ExprBuilder<F>
         where I: ToIdent,
     {
         let id = respan(self.span, id.to_ident());
-        ExprBuilder::new_with_callback(ExprFieldBuilder {
+        ExprBuilder::with_callback(ExprFieldBuilder {
             builder: self,
             id: id,
         })
@@ -484,7 +484,7 @@ impl<F> ExprBuilder<F>
 
     pub fn tup_field(self, index: usize) -> ExprBuilder<ExprTupFieldBuilder<F>> {
         let index = respan(self.span, index);
-        ExprBuilder::new_with_callback(ExprTupFieldBuilder {
+        ExprBuilder::with_callback(ExprTupFieldBuilder {
             builder: self,
             index: index,
         })
@@ -496,7 +496,7 @@ impl<F> ExprBuilder<F>
             .id("std").id("boxed").id("Box").id("new")
             .build();
 
-        ExprBuilder::new_with_callback(ExprPathBuilder {
+        ExprBuilder::with_callback(ExprPathBuilder {
             builder: self,
             path: path,
         })
@@ -508,7 +508,7 @@ impl<F> ExprBuilder<F>
             .id("std").id("rc").id("Rc").id("new")
             .build();
 
-        ExprBuilder::new_with_callback(ExprPathBuilder {
+        ExprBuilder::with_callback(ExprPathBuilder {
             builder: self,
             path: path,
         })
@@ -520,7 +520,7 @@ impl<F> ExprBuilder<F>
             .id("std").id("arc").id("Arc").id("new")
             .build();
 
-        ExprBuilder::new_with_callback(ExprPathBuilder {
+        ExprBuilder::with_callback(ExprPathBuilder {
             builder: self,
             path: path,
         })
@@ -534,7 +534,7 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn vec(self) -> ExprSliceBuilder<ExprVecBuilder<F>> {
-        ExprBuilder::new_with_callback(ExprVecBuilder {
+        ExprBuilder::with_callback(ExprVecBuilder {
             builder: self,
         }).slice()
     }
@@ -610,7 +610,7 @@ impl<F> Invoke<P<ast::Expr>> for ExprBinaryLhsBuilder<F>
     type Result = ExprBuilder<ExprBinaryRhsBuilder<F>>;
 
     fn invoke(self, lhs: P<ast::Expr>) -> ExprBuilder<ExprBinaryRhsBuilder<F>> {
-        ExprBuilder::new_with_callback(ExprBinaryRhsBuilder {
+        ExprBuilder::with_callback(ExprBinaryRhsBuilder {
             builder: self.builder,
             binop: self.binop,
             lhs: lhs,
@@ -652,7 +652,7 @@ impl<F: Invoke<P<ast::Expr>>> ExprTupleBuilder<F>
     }
 
     pub fn expr(self) -> ExprBuilder<Self> {
-        ExprBuilder::new_with_callback(self)
+        ExprBuilder::with_callback(self)
     }
 
     pub fn build(self) -> F::Result {
@@ -724,14 +724,14 @@ impl<F> ExprStructPathBuilder<F>
     pub fn field<I>(self, id: I) -> ExprBuilder<ExprStructFieldBuilder<I, F>>
         where I: ToIdent,
     {
-        ExprBuilder::new_with_callback(ExprStructFieldBuilder {
+        ExprBuilder::with_callback(ExprStructFieldBuilder {
             builder: self,
             id: id,
         })
     }
 
     pub fn build_with(self) -> ExprBuilder<Self> {
-        ExprBuilder::new_with_callback(self)
+        ExprBuilder::with_callback(self)
     }
 
     pub fn build(self) -> F::Result {
@@ -817,7 +817,7 @@ impl<F> ExprCallArgsBuilder<F>
     }
 
     pub fn arg(self) -> ExprBuilder<Self> {
-        ExprBuilder::new_with_callback(self)
+        ExprBuilder::with_callback(self)
     }
 
     pub fn build(self) -> F::Result {
@@ -882,7 +882,7 @@ impl<F> ExprMethodCallArgsBuilder<F>
     }
 
     pub fn ty(self) -> TyBuilder<Self> {
-        TyBuilder::new_with_callback(self)
+        TyBuilder::with_callback(self)
     }
 
     pub fn with_args<I>(mut self, iter: I) -> Self
@@ -898,7 +898,7 @@ impl<F> ExprMethodCallArgsBuilder<F>
     }
 
     pub fn arg(self) -> ExprBuilder<Self> {
-        ExprBuilder::new_with_callback(self)
+        ExprBuilder::with_callback(self)
     }
 
     pub fn build(self) -> F::Result {
@@ -1031,7 +1031,7 @@ impl<F: Invoke<P<ast::Expr>>> ExprSliceBuilder<F>
     }
 
     pub fn expr(self) -> ExprBuilder<Self> {
-        ExprBuilder::new_with_callback(self)
+        ExprBuilder::with_callback(self)
     }
 
     pub fn build(self) -> F::Result {

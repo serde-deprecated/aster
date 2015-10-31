@@ -26,14 +26,14 @@ pub struct MacBuilder<F=Identity> {
 
 impl MacBuilder {
     pub fn new() -> Self {
-        MacBuilder::new_with_callback(Identity)
+        MacBuilder::with_callback(Identity)
     }
 }
 
 impl<F> MacBuilder<F>
     where F: Invoke<ast::Mac>
 {
-    pub fn new_with_callback(callback: F) -> Self {
+    pub fn with_callback(callback: F) -> Self {
         MacBuilder {
             callback: callback,
             span: DUMMY_SP,
@@ -80,7 +80,7 @@ impl<F> MacBuilder<F>
     }
 
     pub fn expr(self) -> ExprBuilder<Self> {
-        ExprBuilder::new_with_callback(self)
+        ExprBuilder::with_callback(self)
     }
 
 }

@@ -17,14 +17,14 @@ pub struct FnDeclBuilder<F=Identity> {
 
 impl FnDeclBuilder {
     pub fn new() -> FnDeclBuilder {
-        FnDeclBuilder::new_with_callback(Identity)
+        FnDeclBuilder::with_callback(Identity)
     }
 }
 
 impl<F> FnDeclBuilder<F>
     where F: Invoke<P<ast::FnDecl>>,
 {
-    pub fn new_with_callback(callback: F) -> Self {
+    pub fn with_callback(callback: F) -> Self {
         FnDeclBuilder {
             callback: callback,
             span: DUMMY_SP,
@@ -58,7 +58,7 @@ impl<F> FnDeclBuilder<F>
     pub fn arg<I>(self, id: I) -> ArgBuilder<Self>
         where I: ToIdent,
     {
-        ArgBuilder::new_with_callback(id, self)
+        ArgBuilder::with_callback(id, self)
     }
 
     pub fn no_return(self) -> F::Result {
@@ -76,7 +76,7 @@ impl<F> FnDeclBuilder<F>
     }
 
     pub fn return_(self) -> TyBuilder<Self> {
-        TyBuilder::new_with_callback(self)
+        TyBuilder::with_callback(self)
     }
 
     pub fn build(self, output: ast::FunctionRetTy) -> F::Result {
@@ -118,14 +118,14 @@ pub struct ArgBuilder<F=Identity> {
 
 impl ArgBuilder {
     pub fn new<I>(id: I) -> Self where I: ToIdent {
-        ArgBuilder::new_with_callback(id, Identity)
+        ArgBuilder::with_callback(id, Identity)
     }
 }
 
 impl<F> ArgBuilder<F>
     where F: Invoke<ast::Arg>,
 {
-    pub fn new_with_callback<I>(id: I, callback: F) -> ArgBuilder<F>
+    pub fn with_callback<I>(id: I, callback: F) -> ArgBuilder<F>
         where I: ToIdent,
     {
         ArgBuilder {
@@ -159,7 +159,7 @@ impl<F> ArgBuilder<F>
     }
 
     pub fn ty(self) -> TyBuilder<ArgTyBuilder<F>> {
-        TyBuilder::new_with_callback(ArgTyBuilder(self))
+        TyBuilder::with_callback(ArgTyBuilder(self))
     }
 }
 

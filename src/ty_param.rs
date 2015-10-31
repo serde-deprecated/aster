@@ -23,7 +23,7 @@ impl TyParamBuilder {
     pub fn new<I>(id: I) -> Self
         where I: ToIdent,
     {
-        TyParamBuilder::new_with_callback(id, Identity)
+        TyParamBuilder::with_callback(id, Identity)
     }
 
     pub fn from_ty_param(ty_param: ast::TyParam) -> Self {
@@ -34,7 +34,7 @@ impl TyParamBuilder {
 impl<F> TyParamBuilder<F>
     where F: Invoke<ast::TyParam>,
 {
-    pub fn new_with_callback<I>(id: I, callback: F) -> Self
+    pub fn with_callback<I>(id: I, callback: F) -> Self
         where I: ToIdent
     {
         TyParamBuilder {
@@ -77,7 +77,7 @@ impl<F> TyParamBuilder<F>
     pub fn trait_bound<P>(self, path: P) -> PolyTraitRefBuilder<Self>
         where P: IntoPath,
     {
-        PolyTraitRefBuilder::new_with_callback(path, self)
+        PolyTraitRefBuilder::with_callback(path, self)
     }
 
     pub fn lifetime_bound<L>(mut self, lifetime: L) -> Self
@@ -122,7 +122,7 @@ pub struct PolyTraitRefBuilder<F> {
 impl<F> PolyTraitRefBuilder<F>
     where F: Invoke<ast::PolyTraitRef>,
 {
-    pub fn new_with_callback<P>(path: P, callback: F) -> Self
+    pub fn with_callback<P>(path: P, callback: F) -> Self
         where P: IntoPath,
     {
         let trait_ref = ast::TraitRef {
@@ -153,7 +153,7 @@ impl<F> PolyTraitRefBuilder<F>
     pub fn lifetime<N>(self, name: N) -> LifetimeDefBuilder<Self>
         where N: ToName,
     {
-        LifetimeDefBuilder::new_with_callback(name, self)
+        LifetimeDefBuilder::with_callback(name, self)
     }
 
     pub fn build(self) -> F::Result {

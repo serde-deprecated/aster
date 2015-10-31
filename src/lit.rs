@@ -18,14 +18,14 @@ pub struct LitBuilder<F=Identity> {
 
 impl LitBuilder {
     pub fn new() -> LitBuilder {
-        LitBuilder::new_with_callback(Identity)
+        LitBuilder::with_callback(Identity)
     }
 }
 
 impl<F> LitBuilder<F>
     where F: Invoke<P<ast::Lit>>,
 {
-    pub fn new_with_callback(callback: F) -> Self {
+    pub fn with_callback(callback: F) -> Self {
         LitBuilder {
             callback: callback,
             span: DUMMY_SP,

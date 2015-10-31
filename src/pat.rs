@@ -19,7 +19,7 @@ pub struct PatBuilder<F=Identity> {
 
 impl PatBuilder {
     pub fn new() -> Self {
-        PatBuilder::new_with_callback(Identity)
+        PatBuilder::with_callback(Identity)
     }
 }
 
@@ -27,7 +27,7 @@ impl PatBuilder {
 impl<F> PatBuilder<F>
     where F: Invoke<P<ast::Pat>>,
 {
-    pub fn new_with_callback(callback: F) -> Self {
+    pub fn with_callback(callback: F) -> Self {
         PatBuilder {
             callback: callback,
             span: DUMMY_SP,
@@ -97,15 +97,15 @@ impl<F> PatBuilder<F>
     }
 
     pub fn enum_(self) -> PathBuilder<PatEnumBuilder<F>> {
-        PathBuilder::new_with_callback(PatEnumBuilder(self))
+        PathBuilder::with_callback(PatEnumBuilder(self))
     }
 
     pub fn struct_(self) -> PathBuilder<PatStructBuilder<F>> {
-        PathBuilder::new_with_callback(PatStructBuilder(self))
+        PathBuilder::with_callback(PatStructBuilder(self))
     }
 
     pub fn expr(self) -> ExprBuilder<PatExprBuilder<F>> {
-        ExprBuilder::new_with_callback(PatExprBuilder(self))
+        ExprBuilder::with_callback(PatExprBuilder(self))
     }
 
     pub fn tuple(self) -> PatTupleBuilder<F> {
@@ -151,7 +151,7 @@ impl<F> PatEnumPathBuilder<F>
     }
 
     pub fn pat(self) -> PatBuilder<Self> {
-        PatBuilder::new_with_callback(self)
+        PatBuilder::with_callback(self)
     }
 
     pub fn with_ids<I, T>(mut self, iter: I) -> Self
@@ -231,7 +231,7 @@ impl<F> PatStructPathBuilder<F>
     pub fn pat<I>(self, id: I) -> PatBuilder<PatStructFieldBuilder<F>>
         where I: ToIdent,
     {
-        PatBuilder::new_with_callback(PatStructFieldBuilder {
+        PatBuilder::with_callback(PatStructFieldBuilder {
             builder: self,
             id: id.to_ident(),
         })
@@ -321,7 +321,7 @@ impl<F: Invoke<P<ast::Pat>>> PatTupleBuilder<F>
     }
 
     pub fn pat(self) -> PatBuilder<PatTupleBuilder<F>> {
-        PatBuilder::new_with_callback(self)
+        PatBuilder::with_callback(self)
     }
 
     pub fn build(self) -> F::Result {

@@ -19,7 +19,7 @@ pub struct QPathBuilder<F=Identity> {
 
 impl QPathBuilder {
     pub fn new() -> Self {
-        QPathBuilder::new_with_callback(Identity)
+        QPathBuilder::with_callback(Identity)
     }
 }
 
@@ -28,7 +28,7 @@ impl<F> QPathBuilder<F>
 {
     /// Construct a `QPathBuilder` that will call the `callback` with a constructed `ast::QSelf`
     /// and `ast::Path`.
-    pub fn new_with_callback(callback: F) -> Self {
+    pub fn with_callback(callback: F) -> Self {
         QPathBuilder {
             callback: callback,
             span: DUMMY_SP,
@@ -43,7 +43,7 @@ impl<F> QPathBuilder<F>
 
     /// Build a qualified path first by starting with a type builder.
     pub fn ty(self) -> TyBuilder<Self> {
-        TyBuilder::new_with_callback(self)
+        TyBuilder::with_callback(self)
     }
 
     /// Build a qualified path with a concrete type and path.
@@ -77,7 +77,7 @@ impl<F> QPathTyBuilder<F>
 {
     /// Build a qualified path with a path builder.
     pub fn as_(self) -> PathBuilder<Self> {
-        PathBuilder::new_with_callback(self)
+        PathBuilder::with_callback(self)
     }
 
     pub fn id<T>(self, id: T) -> F::Result
@@ -140,7 +140,7 @@ impl<F> QPathQSelfBuilder<F>
     pub fn segment<T>(self, id: T) -> PathSegmentBuilder<QPathQSelfBuilder<F>>
         where T: ToIdent,
     {
-        PathSegmentBuilder::new_with_callback(id, self)
+        PathSegmentBuilder::with_callback(id, self)
     }
 }
 

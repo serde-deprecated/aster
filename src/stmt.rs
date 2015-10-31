@@ -19,14 +19,14 @@ pub struct StmtBuilder<F=Identity> {
 
 impl StmtBuilder {
     pub fn new() -> StmtBuilder {
-        StmtBuilder::new_with_callback(Identity)
+        StmtBuilder::with_callback(Identity)
     }
 }
 
 impl<F> StmtBuilder<F>
     where F: Invoke<P<ast::Stmt>>,
 {
-    pub fn new_with_callback(callback: F) -> Self {
+    pub fn with_callback(callback: F) -> Self {
         StmtBuilder {
             callback: callback,
             span: DUMMY_SP,
@@ -65,14 +65,14 @@ impl<F> StmtBuilder<F>
     }
 
     pub fn let_(self) -> PatBuilder<Self> {
-        PatBuilder::new_with_callback(self)
+        PatBuilder::with_callback(self)
     }
 
     pub fn let_id<I>(self, id: I) -> ExprBuilder<StmtLetIdBuilder<F>>
         where I: ToIdent,
     {
         let span = self.span;
-        ExprBuilder::new_with_callback(StmtLetIdBuilder(self, id.to_ident())).span(span)
+        ExprBuilder::with_callback(StmtLetIdBuilder(self, id.to_ident())).span(span)
     }
 
     pub fn build_expr(self, expr: P<ast::Expr>) -> F::Result {
@@ -81,12 +81,12 @@ impl<F> StmtBuilder<F>
 
     pub fn expr(self) -> ExprBuilder<StmtExprBuilder<F>> {
         let span = self.span;
-        ExprBuilder::new_with_callback(StmtExprBuilder(self)).span(span)
+        ExprBuilder::with_callback(StmtExprBuilder(self)).span(span)
     }
 
     pub fn semi(self) -> ExprBuilder<StmtSemiBuilder<F>> {
         let span = self.span;
-        ExprBuilder::new_with_callback(StmtSemiBuilder(self)).span(span)
+        ExprBuilder::with_callback(StmtSemiBuilder(self)).span(span)
     }
 
     pub fn build_item(self, item: P<ast::Item>) -> F::Result {
@@ -96,7 +96,7 @@ impl<F> StmtBuilder<F>
 
     pub fn item(self) -> ItemBuilder<StmtItemBuilder<F>> {
         let span = self.span;
-        ItemBuilder::new_with_callback(StmtItemBuilder(self)).span(span)
+        ItemBuilder::with_callback(StmtItemBuilder(self)).span(span)
     }
 }
 
@@ -174,7 +174,7 @@ impl<F> StmtLetBuilder<F>
     }
 
     pub fn ty(self) -> TyBuilder<Self> {
-        TyBuilder::new_with_callback(self)
+        TyBuilder::with_callback(self)
     }
 
     pub fn build_expr(self, expr: P<ast::Expr>) -> F::Result {
@@ -182,7 +182,7 @@ impl<F> StmtLetBuilder<F>
     }
 
     pub fn expr(self) -> ExprBuilder<Self> {
-        ExprBuilder::new_with_callback(self)
+        ExprBuilder::with_callback(self)
     }
 
     pub fn build(self) -> F::Result {
@@ -222,7 +222,7 @@ impl<F> StmtLetTyBuilder<F>
     where F: Invoke<P<ast::Stmt>>,
 {
     pub fn expr(self) -> ExprBuilder<Self> {
-        ExprBuilder::new_with_callback(self)
+        ExprBuilder::with_callback(self)
     }
 
     pub fn build(self) -> F::Result {
