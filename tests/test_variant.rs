@@ -16,7 +16,7 @@ fn test_unit_variant() {
             node: ast::Variant_ {
                 name: builder.id("A"),
                 attrs: vec![],
-                data: builder.variant_data().unit(),
+                data: builder.variant_data().unit().and_then(|x| x),
                 disr_expr: None,
             },
         })
@@ -41,7 +41,7 @@ fn test_tuple_variant() {
                 data: builder.variant_data().tuple()
                     .ty().isize()
                     .ty().isize()
-                    .build(),
+                    .build().and_then(|x| x),
                 disr_expr: None,
             },
         })
@@ -66,7 +66,7 @@ fn test_struct_variant() {
                 data: builder.variant_data().struct_()
                     .field("a").ty().isize()
                     .field("b").ty().isize()
-                    .build(),
+                    .build().and_then(|x| x),
                 disr_expr: None,
             },
         })

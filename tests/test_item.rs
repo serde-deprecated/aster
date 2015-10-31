@@ -96,7 +96,7 @@ fn test_empty_struct() {
             attrs: vec![],
             id: ast::DUMMY_NODE_ID,
             node: ast::ItemStruct(
-                builder.variant_data().struct_().build(),
+                builder.variant_data().struct_().build().and_then(|x| x),
                 builder.generics().build(),
             ),
             vis: ast::Inherited,
@@ -123,7 +123,7 @@ fn test_struct() {
                 builder.variant_data().struct_()
                     .field("x").ty().isize()
                     .field("y").ty().isize()
-                    .build(),
+                    .build().and_then(|x| x),
                 builder.generics().build(),
             ),
             vis: ast::Inherited,
@@ -171,7 +171,7 @@ fn test_tuple_struct() {
                 builder.variant_data().tuple()
                     .ty().isize()
                     .ty().isize()
-                    .build(),
+                    .build().and_then(|x| x),
                 builder.generics().build(),
             ),
             vis: ast::Inherited,
@@ -398,7 +398,7 @@ fn test_attr() {
                 builder.variant_data().struct_()
                     .field("x").ty().isize()
                     .field("y").ty().isize()
-                    .build(),
+                    .build().and_then(|x| x),
                 builder.generics().build(),
             ),
             vis: ast::Inherited,
