@@ -12,8 +12,8 @@ unstable = ["clippy", "compiletest_rs"]
 
 [dependencies]
 syntex_syntax = { version = "^0.19.0", optional = true }
-clippy = { version = "*", optional = true }
-compiletest_rs = { version = "*", optional = true }
+clippy = { version = "^0.0.22", optional = true }
+compiletest_rs = { version = "^0.0.10", optional = true }
 
 [[test]]
 name = "test"
