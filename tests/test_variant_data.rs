@@ -1,6 +1,4 @@
 use syntax::ast;
-use syntax::ptr::P;
-
 use aster::AstBuilder;
 
 #[test]
@@ -9,7 +7,7 @@ fn test_unit_variant() {
 
     assert_eq!(
         builder.variant_data().unit(),
-        P(ast::VariantData::Unit(ast::DUMMY_NODE_ID))
+        ast::VariantData::Unit(ast::DUMMY_NODE_ID)
     );
 }
 
@@ -19,10 +17,10 @@ fn test_empty_struct() {
 
     assert_eq!(
         builder.variant_data().struct_().build(),
-        P(ast::VariantData::Struct(
+        ast::VariantData::Struct(
             vec![],
             ast::DUMMY_NODE_ID,
-        ))
+        )
     );
 }
 
@@ -35,13 +33,13 @@ fn test_struct_fields() {
             .field("x").ty().isize()
             .field("y").ty().isize()
             .build(),
-        P(ast::VariantData::Struct(
+        ast::VariantData::Struct(
             vec![
                 builder.struct_field("x").ty().isize(),
                 builder.struct_field("y").ty().isize(),
             ],
             ast::DUMMY_NODE_ID,
-        ))
+        )
     );
 }
 
@@ -54,13 +52,13 @@ fn test_tuple_fields() {
             .ty().isize()
             .ty().isize()
             .build(),
-        P(ast::VariantData::Tuple(
+        ast::VariantData::Tuple(
             vec![
                 builder.tuple_field().ty().isize(),
                 builder.tuple_field().ty().isize(),
             ],
             ast::DUMMY_NODE_ID,
-        ))
+        )
     );
 }
 

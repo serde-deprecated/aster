@@ -65,11 +65,11 @@ impl<F> VariantBuilder<F>
         VariantDataBuilder::new_with_callback(self).struct_()
     }
 
-    pub fn build_variant_data(self, data: P<ast::VariantData>) -> F::Result {
+    pub fn build_variant_data(self, data: ast::VariantData) -> F::Result {
         let variant_ = ast::Variant_ {
             name: self.id,
             attrs: self.attrs,
-            data: *data,
+            data: data,
             disr_expr: None,
         };
         let variant = P(respan(self.span, variant_));
@@ -97,12 +97,12 @@ impl<F> Invoke<ast::Attribute> for VariantBuilder<F>
     }
 }
 
-impl<F> Invoke<P<ast::VariantData>> for VariantBuilder<F>
+impl<F> Invoke<ast::VariantData> for VariantBuilder<F>
     where F: Invoke<P<ast::Variant>>,
 {
     type Result = F::Result;
 
-    fn invoke(self, data: P<ast::VariantData>) -> F::Result {
+    fn invoke(self, data: ast::VariantData) -> F::Result {
         self.build_variant_data(data)
     }
 }

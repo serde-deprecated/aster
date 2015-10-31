@@ -21,7 +21,7 @@ impl VariantDataBuilder {
 }
 
 impl<F> VariantDataBuilder<F>
-    where F: Invoke<P<ast::VariantData>>
+    where F: Invoke<ast::VariantData>
 {
     pub fn new_with_callback(callback: F) -> Self {
         VariantDataBuilder {
@@ -56,7 +56,7 @@ impl<F> VariantDataBuilder<F>
     }
 
     pub fn unit(self) -> F::Result {
-        self.callback.invoke(P(ast::VariantData::Unit(ast::DUMMY_NODE_ID)))
+        self.callback.invoke(ast::VariantData::Unit(ast::DUMMY_NODE_ID))
     }
 }
 
@@ -67,7 +67,7 @@ pub struct VariantDataTupleBuilder<F> {
 }
 
 impl<F> VariantDataTupleBuilder<F>
-    where F: Invoke<P<ast::VariantData>>
+    where F: Invoke<ast::VariantData>
 {
     pub fn with_fields<I>(mut self, iter: I) -> Self
         where I: IntoIterator<Item=ast::StructField>,
@@ -96,12 +96,12 @@ impl<F> VariantDataTupleBuilder<F>
     }
 
     pub fn build(self) -> F::Result {
-        self.callback.invoke(P(ast::VariantData::Tuple(self.fields, ast::DUMMY_NODE_ID)))
+        self.callback.invoke(ast::VariantData::Tuple(self.fields, ast::DUMMY_NODE_ID))
     }
 }
 
 impl<F> Invoke<P<ast::Ty>> for VariantDataTupleBuilder<F>
-    where F: Invoke<P<ast::VariantData>>
+    where F: Invoke<ast::VariantData>,
 {
     type Result = Self;
 
@@ -111,7 +111,7 @@ impl<F> Invoke<P<ast::Ty>> for VariantDataTupleBuilder<F>
 }
 
 impl<F> Invoke<ast::StructField> for VariantDataTupleBuilder<F>
-    where F: Invoke<P<ast::VariantData>>,
+    where F: Invoke<ast::VariantData>,
 {
     type Result = Self;
 
@@ -129,7 +129,7 @@ pub struct VariantDataStructBuilder<F> {
 }
 
 impl<F> VariantDataStructBuilder<F>
-    where F: Invoke<P<ast::VariantData>>
+    where F: Invoke<ast::VariantData>,
 {
     pub fn with_fields<I>(mut self, iter: I) -> Self
         where I: IntoIterator<Item=ast::StructField>,
@@ -151,12 +151,12 @@ impl<F> VariantDataStructBuilder<F>
     }
 
     pub fn build(self) -> F::Result {
-        self.callback.invoke(P(ast::VariantData::Struct(self.fields, ast::DUMMY_NODE_ID)))
+        self.callback.invoke(ast::VariantData::Struct(self.fields, ast::DUMMY_NODE_ID))
     }
 }
 
 impl<F> Invoke<ast::StructField> for VariantDataStructBuilder<F>
-    where F: Invoke<P<ast::VariantData>>,
+    where F: Invoke<ast::VariantData>,
 {
     type Result = Self;
 

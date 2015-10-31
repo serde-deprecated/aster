@@ -464,13 +464,13 @@ impl<F> Invoke<ast::Generics> for ItemStructBuilder<F>
     }
 }
 
-impl<F> Invoke<P<ast::VariantData>> for ItemStructBuilder<F>
+impl<F> Invoke<ast::VariantData> for ItemStructBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
     type Result = F::Result;
 
-    fn invoke(self, data: P<ast::VariantData>) -> F::Result {
-        let struct_ = ast::ItemStruct(*data, self.generics);
+    fn invoke(self, data: ast::VariantData) -> F::Result {
+        let struct_ = ast::ItemStruct(data, self.generics);
         self.builder.build_item_(self.id, struct_)
     }
 }
