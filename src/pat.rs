@@ -53,11 +53,7 @@ impl<F> PatBuilder<F>
     }
 
     pub fn wild(self) -> F::Result {
-        self.build_pat_(ast::Pat_::PatWild(ast::PatWildKind::PatWildSingle))
-    }
-
-    pub fn wild_multi(self) -> F::Result {
-        self.build_pat_(ast::Pat_::PatWild(ast::PatWildKind::PatWildMulti))
+        self.build_pat_(ast::Pat_::PatWild)
     }
 
     pub fn build_id<I>(self, mode: ast::BindingMode, id: I, sub: Option<P<ast::Pat>>) -> F::Result
