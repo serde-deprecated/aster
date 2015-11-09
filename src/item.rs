@@ -125,6 +125,17 @@ impl<F> ItemBuilder<F>
         }
     }
 
+    pub fn unit_struct<T>(self, id: T) -> F::Result
+        where T: ToIdent,
+    {
+        let id = id.to_ident();
+        let data = VariantDataBuilder::new().unit();
+        let generics = GenericsBuilder::new().build();
+
+        let struct_ = ast::ItemStruct(data, generics);
+        self.build_item_(id, struct_)
+    }
+
     pub fn tuple_struct<T>(self, id: T) -> ItemTupleStructBuilder<F>
         where T: ToIdent,
     {
