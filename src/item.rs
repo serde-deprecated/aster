@@ -947,7 +947,7 @@ impl<F> ItemImplItemBuilder<F>
         MacBuilder::with_callback(self)
     }
 
-    pub fn build_item(self, node: ast::ImplItem_) -> F::Result {
+    pub fn build_item(self, node: ast::ImplItemKind) -> F::Result {
         let item = ast::ImplItem {
             id: ast::DUMMY_NODE_ID,
             ident: self.id,
@@ -976,7 +976,7 @@ impl<F> Invoke<Const> for ItemImplItemBuilder<F>
     type Result = F::Result;
 
     fn invoke(self, const_: Const) -> F::Result {
-        let node = ast::ConstImplItem(const_.ty, const_.expr.expect("an expr is required for a const impl item"));
+        let node = ast::ImplItemKind::Const(const_.ty, const_.expr.expect("an expr is required for a const impl item"));
         self.build_item(node)
     }
 }
@@ -987,7 +987,7 @@ impl<F> Invoke<Method> for ItemImplItemBuilder<F>
     type Result = F::Result;
 
     fn invoke(self, method: Method) -> F::Result {
-        let node = ast::MethodImplItem(method.sig, method.block.expect("a block is required for a method impl item"));
+        let node = ast::ImplItemKind::Method(method.sig, method.block.expect("a block is required for a method impl item"));
         self.build_item(node)
     }
 }
@@ -998,7 +998,7 @@ impl<F> Invoke<P<ast::Ty>> for ItemImplItemBuilder<F>
     type Result = F::Result;
 
     fn invoke(self, ty: P<ast::Ty>) -> F::Result {
-        let node = ast::TypeImplItem(ty);
+        let node = ast::ImplItemKind::Type(ty);
         self.build_item(node)
     }
 }
@@ -1009,7 +1009,7 @@ impl<F> Invoke<ast::Mac> for ItemImplItemBuilder<F>
     type Result = F::Result;
 
     fn invoke(self, mac: ast::Mac) -> F::Result {
-        let node = ast::MacImplItem(mac);
+        let node = ast::ImplItemKind::Macro(mac);
         self.build_item(node)
     }
 }

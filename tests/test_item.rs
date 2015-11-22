@@ -542,7 +542,7 @@ fn test_impl() {
                         ident: builder.id("MyFloat"),
                         vis: ast::Visibility::Inherited,
                         attrs: vec![],
-                        node: ast::TypeImplItem(builder.ty().f64()),
+                        node: ast::ImplItemKind::Type(builder.ty().f64()),
                         span: DUMMY_SP,
                     }),
 
@@ -551,7 +551,7 @@ fn test_impl() {
                         ident: builder.id("PI"),
                         vis: ast::Visibility::Inherited,
                         attrs: vec![],
-                        node: ast::ConstImplItem(
+                        node: ast::ImplItemKind::Const(
                             builder.ty().f64(),
                             builder.expr().f64("3.14159265358979323846264338327950288"),
                         ),
@@ -563,7 +563,7 @@ fn test_impl() {
                         ident: builder.id("serialize"),
                         vis: ast::Visibility::Inherited,
                         attrs: vec![],
-                        node: ast::MethodImplItem(
+                        node: ast::ImplItemKind::Method(
                             ast::MethodSig {
                                 unsafety: ast::Unsafety::Normal,
                                 constness: ast::Constness::NotConst,
