@@ -52,6 +52,7 @@ impl<F> ExprBuilder<F>
             id: ast::DUMMY_NODE_ID,
             node: expr,
             span: self.span,
+            attrs: None,
         });
         self.build(expr)
     }
