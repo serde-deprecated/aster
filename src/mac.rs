@@ -3,7 +3,7 @@ use syntax::codemap::{self, DUMMY_SP, Span, respan};
 use syntax::ext::base::ExtCtxt;
 use syntax::ext::expand;
 use syntax::ext::quote::rt::ToTokens;
-use syntax::feature_gate::GatedCfg;
+use syntax::feature_gate::GatedCfgAttr;
 use syntax::parse::ParseSess;
 use syntax::ptr::P;
 
@@ -96,7 +96,7 @@ impl<F> Invoke<P<ast::Expr>> for MacBuilder<F>
 }
 
 fn make_ext_ctxt<'a>(sess: &'a ParseSess,
-                     feature_gated_cfgs: &'a mut Vec<GatedCfg>) -> ExtCtxt<'a> {
+                     feature_gated_cfgs: &'a mut Vec<GatedCfgAttr>) -> ExtCtxt<'a> {
     let info = codemap::ExpnInfo {
         call_site: codemap::DUMMY_SP,
         callee: codemap::NameAndSpan {
