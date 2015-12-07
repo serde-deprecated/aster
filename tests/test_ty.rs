@@ -39,6 +39,7 @@ fn test_qpath() {
                 builder.path().id("into_vec").build(),
             ),
             span: DUMMY_SP,
+            attrs: None,
         })
     );
 
@@ -62,6 +63,7 @@ fn test_qpath() {
                     .build(),
             ),
             span: DUMMY_SP,
+            attrs: None,
         })
     );
 }

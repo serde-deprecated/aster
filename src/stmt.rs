@@ -1,4 +1,5 @@
 use syntax::ast;
+use syntax::attr::AttributesExt;
 use syntax::codemap::{DUMMY_SP, Span, respan};
 use syntax::ptr::P;
 
@@ -15,6 +16,7 @@ use ty::TyBuilder;
 pub struct StmtBuilder<F=Identity> {
     callback: F,
     span: Span,
+    attrs: Vec<ast::Attribute>,
 }
 
 impl StmtBuilder {
@@ -30,6 +32,7 @@ impl<F> StmtBuilder<F>
         StmtBuilder {
             callback: callback,
             span: DUMMY_SP,
+            attrs: vec![],
         }
     }
 
@@ -57,6 +60,7 @@ impl<F> StmtBuilder<F>
             init: init,
             id: ast::DUMMY_NODE_ID,
             span: self.span,
+            attrs: self.attrs.clone().into_thin_attrs(),
         };
 
         let decl = respan(self.span, ast::Decl_::DeclLocal(P(local)));

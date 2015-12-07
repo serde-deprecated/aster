@@ -3,9 +3,11 @@
 use std::iter::IntoIterator;
 
 use syntax::ast;
+use syntax::attr::AttributesExt;
 use syntax::codemap::{DUMMY_SP, Span, Spanned, respan};
 use syntax::ptr::P;
 
+use attr::AttrBuilder;
 use block::BlockBuilder;
 use ident::ToIdent;
 use invoke::{Invoke, Identity};
@@ -20,6 +22,7 @@ use ty::TyBuilder;
 pub struct ExprBuilder<F=Identity> {
     callback: F,
     span: Span,
+    attrs: Vec<ast::Attribute>,
 }
 
 impl ExprBuilder {
@@ -35,6 +38,7 @@ impl<F> ExprBuilder<F>
         ExprBuilder {
             callback: callback,
             span: DUMMY_SP,
+            attrs: vec![],
         }
     }
 
@@ -47,11 +51,21 @@ impl<F> ExprBuilder<F>
         self
     }
 
+    pub fn with_attr(mut self, attr: ast::Attribute) -> Self {
+        self.attrs.push(attr);
+        self
+    }
+
+    pub fn attr(self) -> AttrBuilder<Self> {
+        AttrBuilder::with_callback(self)
+    }
+
     pub fn build_expr_(self, expr: ast::Expr_) -> F::Result {
         let expr = P(ast::Expr {
             id: ast::DUMMY_NODE_ID,
             node: expr,
             span: self.span,
+            attrs: self.attrs.clone().into_thin_attrs(),
         });
         self.build(expr)
     }
@@ -537,6 +551,16 @@ impl<F> ExprBuilder<F>
         ExprBuilder::with_callback(ExprVecBuilder {
             builder: self,
         }).slice()
+    }
+}
+
+impl<F> Invoke<ast::Attribute> for ExprBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = Self;
+
+    fn invoke(self, attr: ast::Attribute) -> Self {
+        self.with_attr(attr)
     }
 }
 

@@ -15,6 +15,7 @@ fn test_lit() {
                 id: ast::DUMMY_NODE_ID,
                 node: ast::ExprLit(lit),
                 span: DUMMY_SP,
+                attrs: None,
             })
         );
     }
@@ -53,6 +54,7 @@ fn test_path() {
                 builder.path().id("x").build(),
             ),
             span: DUMMY_SP,
+            attrs: None,
         })
     );
 }
@@ -77,6 +79,7 @@ fn test_qpath() {
                 builder.path().id("into_vec").build(),
             ),
             span: DUMMY_SP,
+            attrs: None,
         })
     );
 
@@ -100,6 +103,7 @@ fn test_qpath() {
                     .build(),
             ),
             span: DUMMY_SP,
+            attrs: None,
         })
     );
 }
@@ -122,6 +126,7 @@ fn test_bin() {
                 builder.expr().i8(2),
             ),
             span: DUMMY_SP,
+            attrs: None,
         })
     );
 }
@@ -136,6 +141,7 @@ fn test_unit() {
             id: ast::DUMMY_NODE_ID,
             node: ast::ExprTup(vec![]),
             span: DUMMY_SP,
+            attrs: None,
         })
     );
 
@@ -145,6 +151,7 @@ fn test_unit() {
             id: ast::DUMMY_NODE_ID,
             node: ast::ExprTup(vec![]),
             span: DUMMY_SP,
+            attrs: None,
         })
     );
 }
@@ -174,9 +181,11 @@ fn test_tuple() {
                         builder.expr().isize(2),
                     ]),
                     span: DUMMY_SP,
+                    attrs: None,
                 })
             ]),
             span: DUMMY_SP,
+            attrs: None,
         })
     );
 }
@@ -201,6 +210,7 @@ fn test_slice() {
                 builder.expr().i8(3),
             ]),
             span: DUMMY_SP,
+            attrs: None,
         })
     );
 }
