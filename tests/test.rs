@@ -24,6 +24,7 @@ mod test_ty;
 mod test_ty_param;
 mod test_variant;
 mod test_variant_data;
+mod test_where_predicate;
 
 #[cfg(feature = "unstable")]
 mod compile_tests;

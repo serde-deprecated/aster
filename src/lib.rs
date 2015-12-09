@@ -37,6 +37,7 @@ pub mod ty;
 pub mod ty_param;
 pub mod variant;
 pub mod variant_data;
+pub mod where_predicate;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -115,6 +116,10 @@ impl AstBuilder {
 
     pub fn generics(&self) -> generics::GenericsBuilder {
         generics::GenericsBuilder::new().span(self.span)
+    }
+
+    pub fn where_predicate(&self) -> where_predicate::WherePredicateBuilder {
+        where_predicate::WherePredicateBuilder::new().span(self.span)
     }
 
     pub fn from_generics(&self, generics: ast::Generics) -> generics::GenericsBuilder {

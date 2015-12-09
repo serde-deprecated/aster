@@ -10,6 +10,7 @@ use lifetime::{IntoLifetime, IntoLifetimeDef, LifetimeDefBuilder};
 use name::ToName;
 use path::IntoPath;
 use ty_param::TyParamBuilder;
+use where_predicate::WherePredicateBuilder;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -148,6 +149,10 @@ impl<F> GenericsBuilder<F>
         self
     }
 
+    pub fn predicate(self) -> WherePredicateBuilder<Self> {
+        WherePredicateBuilder::with_callback(self)
+    }
+
     pub fn add_lifetime_bound<L>(mut self, lifetime: L) -> Self
         where L: IntoLifetime,
     {
@@ -234,5 +239,15 @@ impl<F> Invoke<ast::TyParam> for GenericsBuilder<F>
 
     fn invoke(self, ty_param: ast::TyParam) -> Self {
         self.with_ty_param(ty_param)
+    }
+}
+
+impl<F> Invoke<ast::WherePredicate> for GenericsBuilder<F>
+    where F: Invoke<ast::Generics>,
+{
+    type Result = Self;
+
+    fn invoke(self, predicate: ast::WherePredicate) -> Self {
+        self.with_predicate(predicate)
     }
 }
