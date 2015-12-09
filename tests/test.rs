@@ -21,6 +21,7 @@ mod test_path;
 mod test_stmt;
 mod test_struct_field;
 mod test_ty;
+mod test_ty_param;
 mod test_variant;
 mod test_variant_data;
 

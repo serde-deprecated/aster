@@ -105,6 +105,10 @@ impl AstBuilder {
         ty_param::TyParamBuilder::new(id).span(self.span)
     }
 
+    pub fn ty_param_bound(&self) -> ty_param::TyParamBoundBuilder {
+        ty_param::TyParamBoundBuilder::new().span(self.span)
+    }
+
     pub fn from_ty_param(&self, ty_param: ast::TyParam) -> ty_param::TyParamBuilder {
         ty_param::TyParamBuilder::from_ty_param(ty_param)
     }
