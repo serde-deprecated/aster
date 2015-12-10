@@ -75,7 +75,6 @@ impl<F> Invoke<P<ast::Ty>> for WherePredicateBuilder<F>
             span: self.span,
             ty: ty,
             bound_lifetimes: Vec::new(),
-            bounds: Vec::new(),
         }
     }
 }
@@ -98,7 +97,6 @@ impl<F> Invoke<P<ast::Ty>> for WhereBoundPredicateBuilder<F>
             span: self.span,
             ty: ty,
             bound_lifetimes: Vec::new(),
-            bounds: Vec::new(),
         }
     }
 }
@@ -110,10 +108,95 @@ pub struct WhereBoundPredicateTyBuilder<F> {
     span: Span,
     ty: P<ast::Ty>,
     bound_lifetimes: Vec<ast::LifetimeDef>,
-    bounds: Vec<ast::TyParamBound>,
 }
 
 impl<F> WhereBoundPredicateTyBuilder<F>
+    where F: Invoke<ast::WherePredicate>,
+{
+    pub fn with_for_lifetime<L>(mut self, lifetime: L) -> Self
+        where L: IntoLifetimeDef,
+    {
+        self.bound_lifetimes.push(lifetime.into_lifetime_def());
+        self
+    }
+
+    pub fn for_lifetime<N>(self, name: N) -> LifetimeDefBuilder<Self>
+        where N: ToName,
+    {
+        LifetimeDefBuilder::with_callback(name, self)
+    }
+
+    pub fn with_bound(self, bound: ast::TyParamBound) -> WhereBoundPredicateTyBoundsBuilder<F> {
+        WhereBoundPredicateTyBoundsBuilder {
+            callback: self.callback,
+            span: self.span,
+            ty: self.ty,
+            bound_lifetimes: self.bound_lifetimes,
+            bounds: vec![bound],
+        }
+    }
+
+    pub fn bound(self) -> TyParamBoundBuilder<WhereBoundPredicateTyBoundsBuilder<F>> {
+        let span = self.span;
+        let builder = WhereBoundPredicateTyBoundsBuilder {
+            callback: self.callback,
+            span: self.span,
+            ty: self.ty,
+            bound_lifetimes: self.bound_lifetimes,
+            bounds: vec![],
+        };
+        TyParamBoundBuilder::with_callback(builder).span(span)
+    }
+
+    pub fn trait_<P>(self, path: P)
+        -> PolyTraitRefBuilder<
+            TraitTyParamBoundBuilder<
+                WhereBoundPredicateTyBoundsBuilder<F>
+            >
+        >
+        where P: IntoPath,
+    {
+        self.bound().trait_(path)
+    }
+
+    pub fn lifetime<L>(self, lifetime: L) -> WhereBoundPredicateTyBoundsBuilder<F>
+        where L: IntoLifetime,
+    {
+        self.bound().lifetime(lifetime)
+    }
+}
+
+impl<F> Invoke<ast::LifetimeDef> for WhereBoundPredicateTyBuilder<F>
+    where F: Invoke<ast::WherePredicate>,
+{
+    type Result = Self;
+
+    fn invoke(self, lifetime: ast::LifetimeDef) -> Self {
+        self.with_for_lifetime(lifetime)
+    }
+}
+
+impl<F> Invoke<ast::TyParamBound> for WhereBoundPredicateTyBuilder<F>
+    where F: Invoke<ast::WherePredicate>,
+{
+    type Result = WhereBoundPredicateTyBoundsBuilder<F>;
+
+    fn invoke(self, bound: ast::TyParamBound) -> Self::Result {
+        self.with_bound(bound)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct WhereBoundPredicateTyBoundsBuilder<F> {
+    callback: F,
+    span: Span,
+    ty: P<ast::Ty>,
+    bound_lifetimes: Vec<ast::LifetimeDef>,
+    bounds: Vec<ast::TyParamBound>,
+}
+
+impl<F> WhereBoundPredicateTyBoundsBuilder<F>
     where F: Invoke<ast::WherePredicate>,
 {
     pub fn with_for_lifetime<L>(mut self, lifetime: L) -> Self
@@ -153,28 +236,18 @@ impl<F> WhereBoundPredicateTyBuilder<F>
     }
 
     pub fn build(self) -> F::Result {
-        assert!(!self.bounds.is_empty());
-
-        let WhereBoundPredicateTyBuilder {
-            callback,
-            span,
-            ty,
-            bound_lifetimes,
-            bounds,
-        } = self;
-
         let predicate = ast::WhereBoundPredicate {
-            span: span,
-            bound_lifetimes: bound_lifetimes,
-            bounded_ty: ty,
-            bounds: OwnedSlice::from_vec(bounds),
+            span: self.span,
+            bound_lifetimes: self.bound_lifetimes,
+            bounded_ty: self.ty,
+            bounds: OwnedSlice::from_vec(self.bounds),
         };
 
-        callback.invoke(ast::WherePredicate::BoundPredicate(predicate))
+        self.callback.invoke(ast::WherePredicate::BoundPredicate(predicate))
     }
 }
 
-impl<F> Invoke<ast::LifetimeDef> for WhereBoundPredicateTyBuilder<F>
+impl<F> Invoke<ast::LifetimeDef> for WhereBoundPredicateTyBoundsBuilder<F>
     where F: Invoke<ast::WherePredicate>,
 {
     type Result = Self;
@@ -184,7 +257,7 @@ impl<F> Invoke<ast::LifetimeDef> for WhereBoundPredicateTyBuilder<F>
     }
 }
 
-impl<F> Invoke<ast::TyParamBound> for WhereBoundPredicateTyBuilder<F>
+impl<F> Invoke<ast::TyParamBound> for WhereBoundPredicateTyBoundsBuilder<F>
     where F: Invoke<ast::WherePredicate>,
 {
     type Result = Self;
@@ -214,20 +287,13 @@ impl<F> WhereRegionPredicateBuilder<F>
     }
 
     pub fn build(self) -> F::Result {
-        let WhereRegionPredicateBuilder {
-            callback,
-            span,
-            lifetime,
-            bounds,
-        } = self;
-
         let predicate = ast::WhereRegionPredicate {
-            span: span,
-            lifetime: lifetime,
-            bounds: bounds,
+            span: self.span,
+            lifetime: self.lifetime,
+            bounds: self.bounds,
         };
 
-        callback.invoke(ast::WherePredicate::RegionPredicate(predicate))
+        self.callback.invoke(ast::WherePredicate::RegionPredicate(predicate))
     }
 }
 
