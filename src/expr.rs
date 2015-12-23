@@ -598,6 +598,12 @@ impl<F> ExprBuilder<F>
         }
     }
 
+    pub fn if_(self) -> ExprBuilder<ExprIfBuilder<F>> {
+        ExprBuilder::with_callback(ExprIfBuilder {
+            builder: self,
+        })
+    }
+
     pub fn paren(self) -> ExprBuilder<ExprParenBuilder<F>> {
         ExprBuilder::with_callback(ExprParenBuilder {
             builder: self,
@@ -1227,6 +1233,185 @@ impl<F> Invoke<P<ast::Block>> for ExprLoopBuilder<F>
         self.builder.build_expr_(ast::ExprLoop(block, self.label))
     }
 }
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprIfBuilder<F> {
+    builder: ExprBuilder<F>,
+}
+
+impl<F> Invoke<P<ast::Expr>> for ExprIfBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = ExprIfThenBuilder<F>;
+
+    fn invoke(self, condition: P<ast::Expr>) -> ExprIfThenBuilder<F> {
+        ExprIfThenBuilder {
+            builder: self.builder,
+            condition: condition,
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprIfThenBuilder<F> {
+    builder: ExprBuilder<F>,
+    condition: P<ast::Expr>,
+}
+
+impl<F> ExprIfThenBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    pub fn build_then(self, block: P<ast::Block>) -> ExprIfThenElseBuilder<F> {
+        ExprIfThenElseBuilder {
+            builder: self.builder,
+            condition: self.condition,
+            then: block,
+            else_ifs: Vec::new(),
+        }
+    }
+
+    pub fn then(self) -> BlockBuilder<Self> {
+        BlockBuilder::with_callback(self)
+    }
+}
+
+impl<F> Invoke<P<ast::Block>> for ExprIfThenBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = ExprIfThenElseBuilder<F>;
+
+    fn invoke(self, block: P<ast::Block>) -> ExprIfThenElseBuilder<F> {
+        self.build_then(block)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprIfThenElseBuilder<F> {
+    builder: ExprBuilder<F>,
+    condition: P<ast::Expr>,
+    then: P<ast::Block>,
+    else_ifs: Vec<(P<ast::Expr>, P<ast::Block>)>,
+}
+
+impl<F> ExprIfThenElseBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    pub fn else_if(self) -> ExprBuilder<ExprElseIfBuilder<F>> {
+        ExprBuilder::with_callback(ExprElseIfBuilder {
+            builder: self,
+        })
+    }
+
+    fn build_else_expr(self, mut else_: P<ast::Expr>) -> F::Result {
+        for (cond, block) in self.else_ifs.into_iter().rev() {
+            else_ = ExprBuilder::new().if_()
+                .build(cond)
+                .build_then(block)
+                .build_else_expr(else_);
+        }
+
+        self.builder.build_expr_(ast::ExprIf(self.condition, self.then, Some(else_)))
+    }
+
+    pub fn build_else(self, block: P<ast::Block>) -> F::Result {
+        let else_ = ExprBuilder::new().build_block(block);
+        self.build_else_expr(else_)
+    }
+
+    pub fn else_(self) -> BlockBuilder<Self> {
+        BlockBuilder::with_callback(self)
+    }
+
+    pub fn build(self) -> F::Result {
+        let mut else_ifs = self.else_ifs.into_iter().rev();
+
+        let else_ = match else_ifs.next() {
+            Some((cond, block)) => {
+                let mut else_ = ExprBuilder::new().if_()
+                    .build(cond)
+                    .build_then(block)
+                    .build();
+
+                for (cond, block) in else_ifs.into_iter().rev() {
+                    else_ = ExprBuilder::new().if_()
+                        .build(cond)
+                        .build_then(block)
+                        .build_else_expr(else_);
+                }
+
+                Some(else_)
+            }
+            None => None
+        };
+
+        self.builder.build_expr_(ast::ExprIf(self.condition, self.then, else_))
+    }
+}
+
+impl<F> Invoke<P<ast::Block>> for ExprIfThenElseBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, block: P<ast::Block>) -> F::Result {
+        self.build_else(block)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprElseIfBuilder<F> {
+    builder: ExprIfThenElseBuilder<F>,
+}
+
+impl<F> Invoke<P<ast::Expr>> for ExprElseIfBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = ExprElseIfThenBuilder<F>;
+
+    fn invoke(self, expr: P<ast::Expr>) -> ExprElseIfThenBuilder<F> {
+        ExprElseIfThenBuilder {
+            builder: self.builder,
+            condition: expr,
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprElseIfThenBuilder<F> {
+    builder: ExprIfThenElseBuilder<F>,
+    condition: P<ast::Expr>,
+}
+
+impl<F> ExprElseIfThenBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    pub fn build_then(mut self, block: P<ast::Block>) -> ExprIfThenElseBuilder<F> {
+        self.builder.else_ifs.push((self.condition, block));
+        self.builder
+    }
+
+    pub fn then(self) -> BlockBuilder<Self> {
+        BlockBuilder::with_callback(self)
+    }
+}
+
+impl<F> Invoke<P<ast::Block>> for ExprElseIfThenBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = ExprIfThenElseBuilder<F>;
+
+    fn invoke(self, block: P<ast::Block>) -> ExprIfThenElseBuilder<F> {
+        self.build_then(block)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 pub struct ExprParenBuilder<F> {
     builder: ExprBuilder<F>,
 }

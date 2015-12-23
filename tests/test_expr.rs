@@ -334,3 +334,87 @@ fn test_loop() {
         )
     );
 }
+
+#[test]
+fn test_if() {
+    let builder = AstBuilder::new();
+
+    let expr = builder.expr().if_()
+        .true_()
+        .then().expr().u32(1)
+        .build();
+
+    assert_eq!(
+        expr,
+        builder.expr().build_expr_(
+            ast::ExprIf(
+                builder.expr().true_(),
+                builder.block().expr().u32(1),
+                None,
+            )
+        )
+    );
+
+    let expr = builder.expr().if_()
+        .true_()
+        .then().expr().u32(1)
+        .else_().expr().u32(2);
+
+    assert_eq!(
+        expr,
+        builder.expr().build_expr_(
+            ast::ExprIf(
+                builder.expr().true_(),
+                builder.block().expr().u32(1),
+                Some(builder.expr().block().expr().u32(2))
+            )
+        )
+    );
+
+    let expr = builder.expr()
+        .if_()
+            .eq().id("x").u32(1)
+        .then()
+            .expr().u32(1)
+        .else_if()
+            .eq().id("x").u32(2)
+        .then()
+            .expr().u32(2)
+        .else_if()
+            .eq().id("x").u32(3)
+        .then()
+            .expr().u32(3)
+        .else_()
+            .expr().u32(4);
+
+    assert_eq!(
+        expr,
+        builder.expr().build_expr_(
+            ast::ExprIf(
+                builder.expr()
+                    .eq().id("x").u32(1),
+                builder.block()
+                    .expr().u32(1),
+                Some(
+                    builder.expr().build_expr_(
+                        ast::ExprIf(
+                            builder.expr()
+                                .eq().id("x").u32(2),
+                            builder.block()
+                                .expr().u32(2),
+                            Some(
+                                builder.expr()
+                                    .if_()
+                                        .eq().id("x").u32(3)
+                                    .then()
+                                        .expr().u32(3)
+                                    .else_()
+                                        .expr().u32(4)
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    );
+}
