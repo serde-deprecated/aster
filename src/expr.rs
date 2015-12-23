@@ -522,6 +522,75 @@ impl<F> ExprBuilder<F>
         BlockBuilder::with_callback(self)
     }
 
+    pub fn build_assign(self, lhs: P<ast::Expr>, rhs: P<ast::Expr>) -> F::Result {
+        self.build_expr_(ast::ExprAssign(lhs, rhs))
+    }
+
+    pub fn assign(self) -> ExprBuilder<ExprAssignBuilder<F>> {
+        ExprBuilder::with_callback(ExprAssignBuilder {
+            builder: self,
+        })
+    }
+
+    pub fn build_assign_op(self,
+                           binop: ast::BinOp_,
+                           lhs: P<ast::Expr>,
+                           rhs: P<ast::Expr>) -> F::Result {
+        let binop = respan(self.span, binop);
+        self.build_expr_(ast::ExprAssignOp(binop, lhs, rhs))
+    }
+
+    pub fn assign_op(self, binop: ast::BinOp_) -> ExprBuilder<ExprAssignOpBuilder<F>> {
+        ExprBuilder::with_callback(ExprAssignOpBuilder {
+            builder: self,
+            binop: binop,
+        })
+    }
+
+    pub fn add_assign(self) -> ExprBuilder<ExprAssignOpBuilder<F>> {
+        self.assign_op(ast::BinOp_::BiAdd)
+    }
+
+    pub fn sub_assign(self) -> ExprBuilder<ExprAssignOpBuilder<F>> {
+        self.assign_op(ast::BinOp_::BiSub)
+    }
+
+    pub fn mul_assign(self) -> ExprBuilder<ExprAssignOpBuilder<F>> {
+        self.assign_op(ast::BinOp_::BiMul)
+    }
+
+    pub fn rem_assign(self) -> ExprBuilder<ExprAssignOpBuilder<F>> {
+        self.assign_op(ast::BinOp_::BiRem)
+    }
+
+    pub fn and_assign(self) -> ExprBuilder<ExprAssignOpBuilder<F>> {
+        self.assign_op(ast::BinOp_::BiAnd)
+    }
+
+    pub fn or_assign(self) -> ExprBuilder<ExprAssignOpBuilder<F>> {
+        self.assign_op(ast::BinOp_::BiOr)
+    }
+
+    pub fn bit_xor_assign(self) -> ExprBuilder<ExprAssignOpBuilder<F>> {
+        self.assign_op(ast::BinOp_::BiBitXor)
+    }
+
+    pub fn bit_and_assign(self) -> ExprBuilder<ExprAssignOpBuilder<F>> {
+        self.assign_op(ast::BinOp_::BiBitAnd)
+    }
+
+    pub fn bit_or_assign(self) -> ExprBuilder<ExprAssignOpBuilder<F>> {
+        self.assign_op(ast::BinOp_::BiBitOr)
+    }
+
+    pub fn bit_shl_assign(self) -> ExprBuilder<ExprAssignOpBuilder<F>> {
+        self.assign_op(ast::BinOp_::BiShl)
+    }
+
+    pub fn bit_shr_assign(self) -> ExprBuilder<ExprAssignOpBuilder<F>> {
+        self.assign_op(ast::BinOp_::BiShr)
+    }
+
     pub fn paren(self) -> ExprBuilder<ExprParenBuilder<F>> {
         ExprBuilder::with_callback(ExprParenBuilder {
             builder: self,
@@ -1047,6 +1116,78 @@ impl<F> Invoke<P<ast::Expr>> for ExprPathBuilder<F>
 
 //////////////////////////////////////////////////////////////////////////////
 
+pub struct ExprAssignBuilder<F> {
+    builder: ExprBuilder<F>,
+}
+
+impl<F> Invoke<P<ast::Expr>> for ExprAssignBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = ExprBuilder<ExprAssignLhsBuilder<F>>;
+
+    fn invoke(self, lhs: P<ast::Expr>) -> ExprBuilder<ExprAssignLhsBuilder<F>> {
+        ExprBuilder::with_callback(ExprAssignLhsBuilder {
+            builder: self.builder,
+            lhs: lhs,
+        })
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprAssignLhsBuilder<F> {
+    builder: ExprBuilder<F>,
+    lhs: P<ast::Expr>,
+}
+
+impl<F> Invoke<P<ast::Expr>> for ExprAssignLhsBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, rhs: P<ast::Expr>) -> F::Result {
+        self.builder.build_assign(self.lhs, rhs)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprAssignOpBuilder<F> {
+    builder: ExprBuilder<F>,
+    binop: ast::BinOp_,
+}
+
+impl<F> Invoke<P<ast::Expr>> for ExprAssignOpBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = ExprBuilder<ExprAssignOpLhsBuilder<F>>;
+
+    fn invoke(self, lhs: P<ast::Expr>) -> ExprBuilder<ExprAssignOpLhsBuilder<F>> {
+        ExprBuilder::with_callback(ExprAssignOpLhsBuilder {
+            builder: self.builder,
+            binop: self.binop,
+            lhs: lhs,
+        })
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprAssignOpLhsBuilder<F> {
+    builder: ExprBuilder<F>,
+    binop: ast::BinOp_,
+    lhs: P<ast::Expr>,
+}
+
+impl<F> Invoke<P<ast::Expr>> for ExprAssignOpLhsBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, rhs: P<ast::Expr>) -> F::Result {
+        self.builder.build_assign_op(self.binop, self.lhs, rhs)
+    }
+}
 pub struct ExprParenBuilder<F> {
     builder: ExprBuilder<F>,
 }
