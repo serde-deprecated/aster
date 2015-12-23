@@ -59,6 +59,20 @@ fn test_bool() {
             node: ast::LitBool(false)
         })
     );
+
+    assert_eq!(builder.lit().true_(),
+        P(Spanned {
+            span: DUMMY_SP,
+            node: ast::LitBool(true)
+        })
+    );
+
+    assert_eq!(builder.lit().false_(),
+        P(Spanned {
+            span: DUMMY_SP,
+            node: ast::LitBool(false)
+        })
+    );
 }
 
 #[test]

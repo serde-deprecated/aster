@@ -20,6 +20,10 @@ fn test_lit() {
         );
     }
 
+    check(builder.expr().bool(true), builder.lit().bool(true));
+    check(builder.expr().true_(), builder.lit().true_());
+    check(builder.expr().false_(), builder.lit().false_());
+
     check(builder.expr().int(5), builder.lit().int(5));
 
     check(builder.expr().i8(5), builder.lit().i8(5));

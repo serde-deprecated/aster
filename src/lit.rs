@@ -48,6 +48,14 @@ impl<F> LitBuilder<F>
         self.build_lit(ast::LitBool(value))
     }
 
+    pub fn true_(self) -> F::Result {
+        self.bool(true)
+    }
+
+    pub fn false_(self) -> F::Result {
+        self.bool(false)
+    }
+
     pub fn int(self, value: i64) -> F::Result {
         let sign = ast::Sign::new(value);
         self.build_lit(ast::LitInt(value as u64, ast::UnsuffixedIntLit(sign)))

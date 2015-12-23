@@ -104,6 +104,14 @@ impl<F> ExprBuilder<F>
         self.lit().bool(value)
     }
 
+    pub fn true_(self) -> F::Result {
+        self.bool(true)
+    }
+
+    pub fn false_(self) -> F::Result {
+        self.bool(false)
+    }
+
     pub fn int(self, value: i64) -> F::Result {
         self.lit().int(value)
     }
