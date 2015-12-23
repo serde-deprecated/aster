@@ -201,12 +201,10 @@ impl<F> ExprBuilder<F>
         self.unary(ast::UnNeg)
     }
 
-    pub fn build_binary(
-        self,
-        binop: ast::BinOp_,
-        lhs: P<ast::Expr>,
-        rhs: P<ast::Expr>,
-    ) -> F::Result {
+    pub fn build_binary(self,
+                        binop: ast::BinOp_,
+                        lhs: P<ast::Expr>,
+                        rhs: P<ast::Expr>) -> F::Result {
         let binop = respan(self.span, binop);
         self.build_expr_(ast::Expr_::ExprBinary(binop, lhs, rhs))
     }

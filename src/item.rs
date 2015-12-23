@@ -162,7 +162,6 @@ impl<F> ItemBuilder<F>
             generics: generics,
             variants: vec![],
         }
-
     }
 
     pub fn extern_crate<T>(self, id: T) -> ItemExternCrateBuilder<F>
