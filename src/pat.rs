@@ -311,12 +311,19 @@ pub struct PatTupleBuilder<F> {
 impl<F: Invoke<P<ast::Pat>>> PatTupleBuilder<F>
     where F: Invoke<P<ast::Pat>>
 {
-    pub fn with_pat(mut self, pat: P<ast::Pat>) -> PatTupleBuilder<F> {
+    pub fn with_pats<I>(mut self, iter: I) -> Self
+        where I: IntoIterator<Item=P<ast::Pat>>,
+    {
+        self.pats.extend(iter);
+        self
+    }
+
+    pub fn with_pat(mut self, pat: P<ast::Pat>) -> Self {
         self.pats.push(pat);
         self
     }
 
-    pub fn pat(self) -> PatBuilder<PatTupleBuilder<F>> {
+    pub fn pat(self) -> PatBuilder<Self> {
         PatBuilder::with_callback(self)
     }
 
