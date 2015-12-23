@@ -506,6 +506,10 @@ impl<F> ExprBuilder<F>
         })
     }
 
+    pub fn build_block(self, block: P<ast::Block>) -> F::Result {
+        self.build_expr_(ast::ExprBlock(block))
+    }
+
     pub fn block(self) -> BlockBuilder<Self> {
         BlockBuilder::with_callback(self)
     }
@@ -630,7 +634,7 @@ impl<F> Invoke<P<ast::Block>> for ExprBuilder<F>
     type Result = F::Result;
 
     fn invoke(self, block: P<ast::Block>) -> F::Result {
-        self.build_expr_(ast::ExprBlock(block))
+        self.build_block(block)
     }
 }
 
