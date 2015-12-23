@@ -1,5 +1,5 @@
 use syntax::ast;
-use syntax::codemap::{DUMMY_SP, Spanned};
+use syntax::codemap::{DUMMY_SP, Spanned, respan};
 use syntax::ptr::P;
 
 use aster::AstBuilder;
@@ -235,5 +235,64 @@ fn test_vec() {
                 .expr().i8(3)
                 .build()
             .build()
+    );
+}
+
+#[test]
+fn test_break() {
+    let builder = AstBuilder::new();
+
+    let expr = builder.expr().break_();
+
+    assert_eq!(
+        expr,
+        builder.expr().build_expr_(ast::ExprBreak(None))
+    );
+
+    let expr = builder.expr().break_to("'a");
+    let id = respan(DUMMY_SP, builder.id("'a"));
+
+    assert_eq!(
+        expr,
+        builder.expr().build_expr_(ast::ExprBreak(Some(id)))
+    );
+}
+
+#[test]
+fn test_continue() {
+    let builder = AstBuilder::new();
+
+    let expr = builder.expr().continue_();
+
+    assert_eq!(
+        expr,
+        builder.expr().build_expr_(ast::ExprAgain(None))
+    );
+
+    let expr = builder.expr().continue_to("'a");
+    let id = respan(DUMMY_SP, builder.id("'a"));
+
+    assert_eq!(
+        expr,
+        builder.expr().build_expr_(ast::ExprAgain(Some(id)))
+    );
+}
+
+#[test]
+fn test_return() {
+    let builder = AstBuilder::new();
+
+    let expr = builder.expr().return_();
+
+    assert_eq!(
+        expr,
+        builder.expr().build_expr_(ast::ExprRet(None))
+    );
+
+    let expr = builder.expr().return_expr().unit();
+
+    assert_eq!(
+        expr,
+        builder.expr().build_expr_(ast::ExprRet(Some(builder.expr().unit())))
     );
 }

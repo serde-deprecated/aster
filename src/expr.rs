@@ -376,6 +376,38 @@ impl<F> ExprBuilder<F>
         })
     }
 
+    pub fn break_(self) -> F::Result {
+        self.build_expr_(ast::Expr_::ExprBreak(None))
+    }
+
+    pub fn break_to<I>(self, label: I) -> F::Result
+        where I: ToIdent,
+    {
+        let label = respan(self.span, label.to_ident());
+        self.build_expr_(ast::Expr_::ExprBreak(Some(label)))
+    }
+
+    pub fn continue_(self) -> F::Result {
+        self.build_expr_(ast::Expr_::ExprAgain(None))
+    }
+
+    pub fn continue_to<I>(self, label: I) -> F::Result
+        where I: ToIdent,
+    {
+        let label = respan(self.span, label.to_ident());
+        self.build_expr_(ast::Expr_::ExprAgain(Some(label)))
+    }
+
+    pub fn return_(self) -> F::Result {
+        self.build_expr_(ast::Expr_::ExprRet(None))
+    }
+
+    pub fn return_expr(self) -> ExprBuilder<ExprReturnBuilder<F>> {
+        ExprBuilder::with_callback(ExprReturnBuilder {
+            builder: self,
+        })
+    }
+
     pub fn unit(self) -> F::Result {
         self.tuple().build()
     }
@@ -655,6 +687,22 @@ impl<F> Invoke<P<ast::Expr>> for ExprBinaryRhsBuilder<F>
 
     fn invoke(self, rhs: P<ast::Expr>) -> F::Result {
         self.builder.build_binary(self.binop, self.lhs, rhs)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprReturnBuilder<F> {
+    builder: ExprBuilder<F>,
+}
+
+impl<F> Invoke<P<ast::Expr>> for ExprReturnBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, expr: P<ast::Expr>) -> F::Result {
+        self.builder.build_expr_(ast::Expr_::ExprRet(Some(expr)))
     }
 }
 
