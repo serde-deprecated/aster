@@ -591,6 +591,13 @@ impl<F> ExprBuilder<F>
         self.assign_op(ast::BinOp_::BiShr)
     }
 
+    pub fn loop_(self) -> ExprLoopBuilder<F> {
+        ExprLoopBuilder {
+            builder: self,
+            label: None,
+        }
+    }
+
     pub fn paren(self) -> ExprBuilder<ExprParenBuilder<F>> {
         ExprBuilder::with_callback(ExprParenBuilder {
             builder: self,
@@ -1186,6 +1193,38 @@ impl<F> Invoke<P<ast::Expr>> for ExprAssignOpLhsBuilder<F>
 
     fn invoke(self, rhs: P<ast::Expr>) -> F::Result {
         self.builder.build_assign_op(self.binop, self.lhs, rhs)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprLoopBuilder<F> {
+    builder: ExprBuilder<F>,
+    label: Option<ast::Ident>,
+}
+
+impl<F> ExprLoopBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    pub fn label<I>(mut self, id: I) -> Self
+        where I: ToIdent,
+    {
+        self.label = Some(id.to_ident());
+        self
+    }
+
+    pub fn block(self) -> BlockBuilder<Self> {
+        BlockBuilder::with_callback(self)
+    }
+}
+
+impl<F> Invoke<P<ast::Block>> for ExprLoopBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, block: P<ast::Block>) -> F::Result {
+        self.builder.build_expr_(ast::ExprLoop(block, self.label))
     }
 }
 pub struct ExprParenBuilder<F> {

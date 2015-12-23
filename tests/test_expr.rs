@@ -300,3 +300,37 @@ fn test_return() {
         builder.expr().build_expr_(ast::ExprRet(Some(builder.expr().unit())))
     );
 }
+
+#[test]
+fn test_loop() {
+    let builder = AstBuilder::new();
+
+    let expr = builder.expr().loop_()
+        .block()
+            .build();
+
+    assert_eq!(
+        expr,
+        builder.expr().build_expr_(
+            ast::ExprLoop(
+                builder.block().build(),
+                None,
+            )
+        )
+    );
+
+    let expr = builder.expr().loop_()
+        .label("'a")
+        .block()
+            .build();
+
+    assert_eq!(
+        expr,
+        builder.expr().build_expr_(
+            ast::ExprLoop(
+                builder.block().build(),
+                Some(builder.id("'a")),
+            )
+        )
+    );
+}
