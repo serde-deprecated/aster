@@ -67,28 +67,28 @@ impl<F> PatBuilder<F>
     pub fn id<I>(self, id: I) -> F::Result
         where I: ToIdent
     {
-        let mode = ast::BindingMode::BindByValue(ast::Mutability::MutImmutable);
+        let mode = ast::BindingMode::ByValue(ast::Mutability::MutImmutable);
         self.build_id(mode, id, None)
     }
 
     pub fn mut_id<I>(self, id: I) -> F::Result
         where I: ToIdent
     {
-        let mode = ast::BindingMode::BindByValue(ast::Mutability::MutMutable);
+        let mode = ast::BindingMode::ByValue(ast::Mutability::MutMutable);
         self.build_id(mode, id, None)
     }
 
     pub fn ref_id<I>(self, id: I) -> F::Result
         where I: ToIdent
     {
-        let mode = ast::BindingMode::BindByRef(ast::Mutability::MutImmutable);
+        let mode = ast::BindingMode::ByRef(ast::Mutability::MutImmutable);
         self.build_id(mode, id, None)
     }
 
     pub fn ref_mut_id<I>(self, id: I) -> F::Result
         where I: ToIdent
     {
-        let mode = ast::BindingMode::BindByRef(ast::Mutability::MutMutable);
+        let mode = ast::BindingMode::ByRef(ast::Mutability::MutMutable);
         self.build_id(mode, id, None)
     }
 
