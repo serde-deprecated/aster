@@ -1,6 +1,6 @@
 use syntax::ast;
 use syntax::codemap::DUMMY_SP;
-use syntax::owned_slice::OwnedSlice;
+use syntax::ptr::P;
 
 use aster::AstBuilder;
 use aster::path::IntoPath;
@@ -16,7 +16,7 @@ fn test_ty_param_empty() {
         ast::TyParam {
             ident: builder.id("T"),
             id: ast::DUMMY_NODE_ID,
-            bounds: OwnedSlice::empty(),
+            bounds: P::empty(),
             default: None,
             span: DUMMY_SP,
         }
@@ -36,7 +36,7 @@ fn test_ty_param_default() {
         ast::TyParam {
             ident: builder.id("T"),
             id: ast::DUMMY_NODE_ID,
-            bounds: OwnedSlice::empty(),
+            bounds: P::empty(),
             default: Some(builder.ty().usize()),
             span: DUMMY_SP,
         }
@@ -59,7 +59,7 @@ fn test_ty_param_bounds() {
         ast::TyParam {
             ident: builder.id("T"),
             id: ast::DUMMY_NODE_ID,
-            bounds: OwnedSlice::from_vec(vec![
+            bounds: P::from_vec(vec![
                 ast::TyParamBound::TraitTyParamBound(
                     ast::PolyTraitRef {
                         bound_lifetimes: vec![

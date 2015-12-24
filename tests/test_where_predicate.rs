@@ -1,6 +1,6 @@
 use syntax::ast;
 use syntax::codemap::DUMMY_SP;
-use syntax::owned_slice::OwnedSlice;
+use syntax::ptr::P;
 
 use aster::AstBuilder;
 use aster::lifetime::{IntoLifetime, IntoLifetimeDef};
@@ -22,7 +22,7 @@ fn test_bound() {
                 "'a".into_lifetime_def(),
             ],
             bounded_ty: builder.ty().id("T"),
-            bounds: OwnedSlice::from_vec(vec![
+            bounds: P::from_vec(vec![
                 builder.ty_param_bound()
                     .trait_("Trait")
                     .build(),

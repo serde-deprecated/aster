@@ -1,6 +1,5 @@
 use syntax::ast;
 use syntax::codemap::{DUMMY_SP, Span};
-use syntax::owned_slice::OwnedSlice;
 use syntax::ptr::P;
 
 use ident::ToIdent;
@@ -103,7 +102,7 @@ impl<F> TyParamBuilder<F>
         self.callback.invoke(ast::TyParam {
             ident: self.id,
             id: ast::DUMMY_NODE_ID,
-            bounds: OwnedSlice::from_vec(self.bounds),
+            bounds: P::from_vec(self.bounds),
             default: self.default,
             span: self.span,
         })

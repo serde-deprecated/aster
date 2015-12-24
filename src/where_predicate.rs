@@ -1,6 +1,5 @@
 use syntax::ast;
 use syntax::codemap::{DUMMY_SP, Span};
-use syntax::owned_slice::OwnedSlice;
 use syntax::ptr::P;
 
 use invoke::{Invoke, Identity};
@@ -240,7 +239,7 @@ impl<F> WhereBoundPredicateTyBoundsBuilder<F>
             span: self.span,
             bound_lifetimes: self.bound_lifetimes,
             bounded_ty: self.ty,
-            bounds: OwnedSlice::from_vec(self.bounds),
+            bounds: P::from_vec(self.bounds),
         };
 
         self.callback.invoke(ast::WherePredicate::BoundPredicate(predicate))

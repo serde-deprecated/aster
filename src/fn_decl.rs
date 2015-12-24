@@ -149,7 +149,7 @@ impl<F> ArgBuilder<F>
             pat: P(ast::Pat {
                 id: ast::DUMMY_NODE_ID,
                 node: ast::PatIdent(
-                    ast::BindByValue(ast::Mutability::MutImmutable),
+                    ast::BindingMode::ByValue(ast::Mutability::MutImmutable),
                     path,
                     None,
                 ),

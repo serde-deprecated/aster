@@ -1,6 +1,6 @@
 use syntax::ast;
 use syntax::codemap::DUMMY_SP;
-use syntax::owned_slice::OwnedSlice;
+use syntax::ptr::P;
 
 use aster::AstBuilder;
 
@@ -107,10 +107,10 @@ fn test_option() {
                     identifier: builder.id("Option"),
                     parameters: ast::AngleBracketedParameters(ast::AngleBracketedParameterData {
                         lifetimes: vec![],
-                        types: OwnedSlice::from_vec(vec![
+                        types: P::from_vec(vec![
                             builder.ty().isize(),
                         ]),
-                        bindings: OwnedSlice::empty(),
+                        bindings: P::empty(),
                     }),
                 },
             ]
@@ -139,8 +139,8 @@ fn test_lifetimes() {
                         lifetimes: vec![
                             builder.lifetime("'a"),
                         ],
-                        types: OwnedSlice::empty(),
-                        bindings: OwnedSlice::empty(),
+                        types: P::empty(),
+                        bindings: P::empty(),
                     }),
                 },
             ]

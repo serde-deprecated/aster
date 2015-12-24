@@ -2,7 +2,6 @@ use std::iter::IntoIterator;
 
 use syntax::ast;
 use syntax::codemap::{DUMMY_SP, Span};
-use syntax::owned_slice::OwnedSlice;
 use syntax::ptr::P;
 
 use invoke::{Invoke, Identity};
@@ -261,8 +260,8 @@ impl<F> PathSegmentBuilder<F>
     pub fn build(self) -> F::Result {
         let data = ast::AngleBracketedParameterData {
             lifetimes: self.lifetimes,
-            types: OwnedSlice::from_vec(self.tys),
-            bindings: OwnedSlice::from_vec(self.bindings),
+            types: P::from_vec(self.tys),
+            bindings: P::from_vec(self.bindings),
         };
 
         let parameters = ast::PathParameters::AngleBracketedParameters(data);

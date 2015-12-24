@@ -2,7 +2,7 @@ use std::iter::IntoIterator;
 
 use syntax::ast;
 use syntax::codemap::{DUMMY_SP, Span};
-use syntax::owned_slice::OwnedSlice;
+use syntax::ptr::P;
 
 use ident::ToIdent;
 use invoke::{Invoke, Identity};
@@ -200,7 +200,7 @@ impl<F> GenericsBuilder<F>
 
     pub fn strip_ty_params(mut self) -> Self {
         for ty_param in &mut self.ty_params {
-            ty_param.bounds = OwnedSlice::empty();
+            ty_param.bounds = P::empty();
         }
         self
     }
@@ -213,7 +213,7 @@ impl<F> GenericsBuilder<F>
     pub fn build(self) -> F::Result {
         self.callback.invoke(ast::Generics {
             lifetimes: self.lifetimes,
-            ty_params: OwnedSlice::from_vec(self.ty_params),
+            ty_params: P::from_vec(self.ty_params),
             where_clause: ast::WhereClause {
                 id: ast::DUMMY_NODE_ID,
                 predicates: self.predicates,
