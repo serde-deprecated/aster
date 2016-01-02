@@ -264,7 +264,7 @@ impl<F> PathSegmentBuilder<F>
             bindings: P::from_vec(self.bindings),
         };
 
-        let parameters = ast::PathParameters::AngleBracketedParameters(data);
+        let parameters = ast::PathParameters::AngleBracketed(data);
 
         self.callback.invoke(ast::PathSegment {
             identifier: self.id,
