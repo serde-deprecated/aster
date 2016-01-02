@@ -105,7 +105,7 @@ fn test_option() {
                 },
                 ast::PathSegment {
                     identifier: builder.id("Option"),
-                    parameters: ast::AngleBracketedParameters(ast::AngleBracketedParameterData {
+                    parameters: ast::AngleBracketed(ast::AngleBracketedParameterData {
                         lifetimes: vec![],
                         types: P::from_vec(vec![
                             builder.ty().isize(),
@@ -135,7 +135,7 @@ fn test_lifetimes() {
             segments: vec![
                 ast::PathSegment {
                     identifier: builder.id("Foo"),
-                    parameters: ast::AngleBracketedParameters(ast::AngleBracketedParameterData {
+                    parameters: ast::AngleBracketed(ast::AngleBracketedParameterData {
                         lifetimes: vec![
                             builder.lifetime("'a"),
                         ],
