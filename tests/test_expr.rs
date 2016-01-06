@@ -418,3 +418,40 @@ fn test_if() {
         )
     );
 }
+
+#[test]
+fn test_match() {
+    let builder = AstBuilder::new();
+
+    let expr = builder.expr().match_().u32(0)
+        .arm()
+            .pat().expr().u32(0)
+            .body().unit()
+        .arm()
+            .pat().expr().u32(1)
+            .body().unit()
+        .arm()
+            .pat().wild()
+            .body().unit()
+        .build();
+
+    assert_eq!(
+        expr,
+        builder.expr().build_expr_(
+            ast::ExprMatch(
+                builder.expr().u32(0),
+                vec![
+                    builder.arm()
+                        .pat().expr().u32(0)
+                        .body().unit(),
+                    builder.arm()
+                        .pat().expr().u32(1)
+                        .body().unit(),
+                    builder.arm()
+                        .pat().wild()
+                        .body().unit(),
+                ]
+            )
+        )
+    );
+}

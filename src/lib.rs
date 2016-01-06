@@ -13,6 +13,7 @@ use syntax::ast;
 use syntax::codemap::{DUMMY_SP, Span};
 use syntax::parse::token;
 
+pub mod arm;
 pub mod attr;
 pub mod block;
 pub mod constant;
@@ -80,6 +81,10 @@ impl AstBuilder {
         where L: lifetime::IntoLifetime
     {
         lifetime.into_lifetime()
+    }
+
+    pub fn arm(&self) -> arm::ArmBuilder {
+        arm::ArmBuilder::new()
     }
 
     pub fn attr(&self) -> attr::AttrBuilder {

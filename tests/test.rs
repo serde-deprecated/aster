@@ -11,6 +11,7 @@ extern crate syntax;
 #[cfg(feature = "unstable")]
 extern crate compiletest_rs as compiletest;
 
+mod test_arm;
 mod test_attr;
 mod test_expr;
 mod test_fn_decl;

@@ -7,6 +7,7 @@ use syntax::attr::AttributesExt;
 use syntax::codemap::{DUMMY_SP, Span, Spanned, respan};
 use syntax::ptr::P;
 
+use arm::ArmBuilder;
 use attr::AttrBuilder;
 use block::BlockBuilder;
 use ident::ToIdent;
@@ -600,6 +601,12 @@ impl<F> ExprBuilder<F>
 
     pub fn if_(self) -> ExprBuilder<ExprIfBuilder<F>> {
         ExprBuilder::with_callback(ExprIfBuilder {
+            builder: self,
+        })
+    }
+
+    pub fn match_(self) -> ExprBuilder<ExprMatchBuilder<F>> {
+        ExprBuilder::with_callback(ExprMatchBuilder {
             builder: self,
         })
     }
@@ -1407,6 +1414,68 @@ impl<F> Invoke<P<ast::Block>> for ExprElseIfThenBuilder<F>
 
     fn invoke(self, block: P<ast::Block>) -> ExprIfThenElseBuilder<F> {
         self.build_then(block)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprMatchBuilder<F> {
+    builder: ExprBuilder<F>,
+}
+
+impl<F> Invoke<P<ast::Expr>> for ExprMatchBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = ExprMatchArmBuilder<F>;
+
+    fn invoke(self, expr: P<ast::Expr>) -> ExprMatchArmBuilder<F> {
+        ExprMatchArmBuilder {
+            builder: self.builder,
+            expr: expr,
+            arms: Vec::new(),
+        }
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprMatchArmBuilder<F> {
+    builder: ExprBuilder<F>,
+    expr: P<ast::Expr>,
+    arms: Vec<ast::Arm>,
+}
+
+impl<F> ExprMatchArmBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    pub fn with_arms<I>(mut self, iter: I) -> Self
+        where I: IntoIterator<Item=ast::Arm>,
+    {
+        self.arms.extend(iter);
+        self
+    }
+
+    pub fn with_arm(mut self, arm: ast::Arm) -> Self {
+        self.arms.push(arm);
+        self
+    }
+
+    pub fn arm(self) -> ArmBuilder<Self> {
+        ArmBuilder::with_callback(self)
+    }
+
+    pub fn build(self) -> F::Result {
+        self.builder.build_expr_(ast::ExprMatch(self.expr, self.arms))
+    }
+}
+
+impl<F> Invoke<ast::Arm> for ExprMatchArmBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = Self;
+
+    fn invoke(self, arm: ast::Arm) -> Self {
+        self.with_arm(arm)
     }
 }
 
