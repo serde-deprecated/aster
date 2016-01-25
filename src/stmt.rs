@@ -51,9 +51,9 @@ impl<F> StmtBuilder<F>
     }
 
     pub fn build_let(self,
-                 pat: P<ast::Pat>,
-                 ty: Option<P<ast::Ty>>,
-                 init: Option<P<ast::Expr>>) -> F::Result {
+                     pat: P<ast::Pat>,
+                     ty: Option<P<ast::Ty>>,
+                     init: Option<P<ast::Expr>>) -> F::Result {
         let local = ast::Local {
             pat: pat,
             ty: ty,
