@@ -137,7 +137,7 @@ impl<F> PathSegmentsBuilder<F>
             self = self.id(id);
         }
 
-        self 
+        self
     }
 
     pub fn id<T>(self, id: T) -> PathSegmentsBuilder<F>
@@ -257,6 +257,20 @@ impl<F> PathSegmentBuilder<F>
         TyBuilder::with_callback(self)
     }
 
+    pub fn with_binding(mut self, binding: P<ast::TypeBinding>) -> Self {
+        self.bindings.push(binding);
+        self
+    }
+
+    pub fn binding<T>(self, id: T) -> TyBuilder<TypeBindingBuilder<F>>
+        where T: ToIdent,
+    {
+        TyBuilder::with_callback(TypeBindingBuilder {
+            id: id.to_ident(),
+            builder: self,
+        })
+    }
+
     pub fn build(self) -> F::Result {
         let data = ast::AngleBracketedParameterData {
             lifetimes: self.lifetimes,
@@ -280,5 +294,30 @@ impl<F> Invoke<P<ast::Ty>> for PathSegmentBuilder<F>
 
     fn invoke(self, ty: P<ast::Ty>) -> Self {
         self.with_ty(ty)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct TypeBindingBuilder<F> {
+    id: ast::Ident,
+    builder: PathSegmentBuilder<F>,
+}
+
+impl<F> Invoke<P<ast::Ty>> for TypeBindingBuilder<F>
+    where F: Invoke<ast::PathSegment>
+{
+    type Result = PathSegmentBuilder<F>;
+
+    fn invoke(self, ty: P<ast::Ty>) -> Self::Result {
+        let id = self.id;
+        let span = self.builder.span;
+
+        self.builder.with_binding(P(ast::TypeBinding {
+            id: ast::DUMMY_NODE_ID,
+            ident: id,
+            ty: ty,
+            span: span,
+        }))
     }
 }
