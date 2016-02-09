@@ -25,7 +25,7 @@ script:
     travis-cargo test -- --features with-syntex &&
     travis-cargo bench -- --features with-syntex &&
     travis-cargo --only nightly build &&
-    travis-cargo --only nightly test -- --features clippy &&
+    travis-cargo --only nightly test -- --features unstable-testing &&
     travis-cargo --only nightly bench &&
     travis-cargo --only stable doc -- --features with-syntex
 
