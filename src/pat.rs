@@ -243,6 +243,20 @@ impl<F> PatStructPathBuilder<F>
         self
     }
 
+    pub fn mut_id<I>(self, id: I) -> Self
+        where I: ToIdent,
+    {
+        let id = id.to_ident();
+        let span = self.builder.span;
+        let pat = PatBuilder::new().span(span).mut_id(id);
+
+        self.with_field_pat(ast::FieldPat {
+            ident: id,
+            pat: pat,
+            is_shorthand: true,
+        })
+    }
+
     pub fn id<I>(self, id: I) -> Self
         where I: ToIdent,
     {
