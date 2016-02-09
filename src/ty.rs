@@ -6,9 +6,11 @@ use syntax::ptr::P;
 
 use ident::ToIdent;
 use invoke::{Invoke, Identity};
+use lifetime::IntoLifetime;
 use name::ToName;
 use path::PathBuilder;
 use qpath::QPathBuilder;
+use ty_param::TyParamBoundBuilder;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -162,6 +164,20 @@ impl<F> TyBuilder<F>
 
     pub fn phantom_data(self) -> TyBuilder<TyPhantomDataBuilder<F>> {
         TyBuilder::with_callback(TyPhantomDataBuilder(self))
+    }
+
+    pub fn box_(self) -> TyBuilder<TyBoxBuilder<F>> {
+        TyBuilder::with_callback(TyBoxBuilder(self))
+    }
+
+    pub fn iterator(self) -> TyBuilder<TyIteratorBuilder<F>> {
+        TyBuilder::with_callback(TyIteratorBuilder(self))
+    }
+
+    pub fn object_sum(self) -> TyBuilder<TyObjectSumBuilder<F>> {
+        TyBuilder::with_callback(TyObjectSumBuilder {
+            builder: self,
+        })
     }
 }
 
@@ -336,6 +352,137 @@ impl<F> Invoke<P<ast::Ty>> for TyPhantomDataBuilder<F>
             .build();
 
         self.0.build_path(path)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct TyBoxBuilder<F>(TyBuilder<F>);
+
+impl<F> Invoke<P<ast::Ty>> for TyBoxBuilder<F>
+    where F: Invoke<P<ast::Ty>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, ty: P<ast::Ty>) -> F::Result {
+        let path = PathBuilder::new()
+            .global()
+            .id("std")
+            .id("boxed")
+            .segment("Box")
+                .with_ty(ty)
+                .build()
+            .build();
+
+        self.0.build_path(path)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct TyIteratorBuilder<F>(TyBuilder<F>);
+
+impl<F> Invoke<P<ast::Ty>> for TyIteratorBuilder<F>
+    where F: Invoke<P<ast::Ty>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, ty: P<ast::Ty>) -> F::Result {
+        let path = PathBuilder::new()
+            .global()
+            .id("std")
+            .id("iter")
+            .segment("Iterator")
+                .binding("Item").build(ty.clone())
+                .build()
+            .build();
+
+        self.0.build_path(path)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct TyObjectSumBuilder<F> {
+    builder: TyBuilder<F>,
+}
+
+impl<F> Invoke<P<ast::Ty>> for TyObjectSumBuilder<F>
+    where F: Invoke<P<ast::Ty>>,
+{
+    type Result = TyObjectSumTyBuilder<F>;
+
+    fn invoke(self, ty: P<ast::Ty>) -> Self::Result {
+        TyObjectSumTyBuilder {
+            builder: self.builder,
+            ty: ty,
+            bounds: Vec::new(),
+        }
+    }
+}
+
+pub struct TyObjectSumTyBuilder<F> {
+    builder: TyBuilder<F>,
+    ty: P<ast::Ty>,
+    bounds: Vec<ast::TyParamBound>,
+}
+
+impl<F> TyObjectSumTyBuilder<F>
+    where F: Invoke<P<ast::Ty>>,
+{
+    pub fn with_bounds<I>(mut self, iter: I) -> Self
+        where I: Iterator<Item=ast::TyParamBound>,
+    {
+        self.bounds.extend(iter);
+        self
+    }
+
+    pub fn with_bound(mut self, bound: ast::TyParamBound) -> Self {
+        self.bounds.push(bound);
+        self
+    }
+
+    pub fn bound(self) -> TyParamBoundBuilder<Self> {
+        TyParamBoundBuilder::with_callback(self)
+    }
+
+    pub fn with_generics(self, generics: ast::Generics) -> Self {
+        self.with_lifetimes(
+            generics.lifetimes.into_iter()
+                .map(|def| def.lifetime)
+        )
+    }
+
+    pub fn with_lifetimes<I, L>(mut self, lifetimes: I) -> Self
+        where I: Iterator<Item=L>,
+              L: IntoLifetime,
+    {
+        for lifetime in lifetimes {
+            self = self.lifetime(lifetime);
+        }
+
+        self
+    }
+
+    pub fn lifetime<L>(self, lifetime: L) -> Self
+        where L: IntoLifetime,
+    {
+        self.bound().lifetime(lifetime)
+    }
+
+    pub fn build(self) -> F::Result {
+        let bounds = P::from_vec(self.bounds);
+        self.builder.build_ty_(ast::Ty_::TyObjectSum(self.ty, bounds))
+    }
+}
+
+impl<F> Invoke<ast::TyParamBound> for TyObjectSumTyBuilder<F>
+    where F: Invoke<P<ast::Ty>>,
+{
+    type Result = Self;
+
+    fn invoke(self, bound: ast::TyParamBound) -> Self {
+        self.with_bound(bound)
     }
 }
 
