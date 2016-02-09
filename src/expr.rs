@@ -13,6 +13,7 @@ use block::BlockBuilder;
 use ident::ToIdent;
 use invoke::{Invoke, Identity};
 use lit::LitBuilder;
+use pat::PatBuilder;
 use path::{IntoPath, PathBuilder};
 use qpath::QPathBuilder;
 use str::ToInternedString;
@@ -691,6 +692,17 @@ impl<F> ExprBuilder<F>
         })
     }
 
+    pub fn default(self) -> F::Result {
+        let path = PathBuilder::new()
+            .global()
+            .ids(&["std", "default", "Default", "default"])
+            .build();
+
+        self.call()
+            .build_path(path)
+            .build()
+    }
+
     pub fn slice(self) -> ExprSliceBuilder<F> {
         ExprSliceBuilder {
             builder: self,
@@ -702,6 +714,15 @@ impl<F> ExprBuilder<F>
         ExprBuilder::with_callback(ExprVecBuilder {
             builder: self,
         }).slice()
+    }
+
+    /// Represents an equivalent to `try!(...)`.
+    pub fn try(self) -> ExprBuilder<ExprTryBuilder<F>> {
+        let span = self.span;
+
+        ExprBuilder::with_callback(ExprTryBuilder {
+            builder: self,
+        }).span(span)
     }
 }
 
@@ -1677,6 +1698,59 @@ impl<F> Invoke<P<ast::Expr>> for ExprVecBuilder<F>
         self.builder.call()
             .build(qpath)
             .arg().box_().build(expr)
+            .build()
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprTryBuilder<F> {
+    builder: ExprBuilder<F>,
+}
+
+impl<F> Invoke<P<ast::Expr>> for ExprTryBuilder<F>
+    where F: Invoke<P<ast::Expr>>
+{
+    type Result = F::Result;
+
+    fn invoke(self, expr: P<ast::Expr>) -> F::Result {
+        let ok_path = PathBuilder::new()
+            .global()
+            .ids(&["std", "result", "Result", "Ok"])
+            .build();
+
+        let ok_pat = PatBuilder::new()
+            .enum_().build(ok_path)
+            .id("value")
+            .build();
+
+        let ok_arm = ArmBuilder::new()
+            .pat().build(ok_pat)
+            .body()
+                .id("value");
+
+        let err_path = PathBuilder::new()
+            .global()
+            .ids(&["std", "result", "Result", "Err"])
+            .build();
+
+        let err_pat = PatBuilder::new()
+            .enum_().build(err_path.clone())
+            .id("value")
+            .build();
+
+        let err_arm = ArmBuilder::new()
+            .pat().build(err_pat)
+            .body()
+                .return_expr()
+                .call()
+                    .build_path(err_path)
+                    .arg().id("value")
+                    .build();
+
+        self.builder.match_().build(expr)
+            .with_arm(ok_arm)
+            .with_arm(err_arm)
             .build()
     }
 }
