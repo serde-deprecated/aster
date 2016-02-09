@@ -860,7 +860,7 @@ impl<F> Invoke<ast::Path> for ItemImplBuilder<F>
     fn invoke(self, path: ast::Path) -> Self {
         self.with_trait(ast::TraitRef {
             path: path,
-            ref_id: 0
+            ref_id: ast::DUMMY_NODE_ID,
         })
     }
 }

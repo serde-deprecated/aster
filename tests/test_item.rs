@@ -533,7 +533,7 @@ fn test_impl() {
                 builder.generics().build(),
                 Some(ast::TraitRef {
                     path: builder.path().id("ser").id("Serialize").build(),
-                    ref_id: 0
+                    ref_id: ast::DUMMY_NODE_ID,
                 }),
                 builder.ty().id("MySerializer"),
                 vec![
