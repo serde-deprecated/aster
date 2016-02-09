@@ -592,6 +592,26 @@ impl<F> ExprBuilder<F>
         self.assign_op(ast::BinOp_::BiShr)
     }
 
+    pub fn build_index(self, lhs: P<ast::Expr>, rhs: P<ast::Expr>) -> F::Result {
+        self.build_expr_(ast::ExprIndex(lhs, rhs))
+    }
+
+    pub fn index(self) -> ExprBuilder<ExprIndexBuilder<F>> {
+        ExprBuilder::with_callback(ExprIndexBuilder {
+            builder: self,
+        })
+    }
+
+    pub fn build_repeat(self, lhs: P<ast::Expr>, rhs: P<ast::Expr>) -> F::Result {
+        self.build_expr_(ast::ExprRepeat(lhs, rhs))
+    }
+
+    pub fn repeat(self) -> ExprBuilder<ExprRepeatBuilder<F>> {
+        ExprBuilder::with_callback(ExprRepeatBuilder {
+            builder: self,
+        })
+    }
+
     pub fn loop_(self) -> ExprLoopBuilder<F> {
         ExprLoopBuilder {
             builder: self,
@@ -1206,6 +1226,78 @@ impl<F> Invoke<P<ast::Expr>> for ExprAssignOpLhsBuilder<F>
 
     fn invoke(self, rhs: P<ast::Expr>) -> F::Result {
         self.builder.build_assign_op(self.binop, self.lhs, rhs)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprIndexBuilder<F> {
+    builder: ExprBuilder<F>,
+}
+
+impl<F> Invoke<P<ast::Expr>> for ExprIndexBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = ExprBuilder<ExprIndexLhsBuilder<F>>;
+
+    fn invoke(self, lhs: P<ast::Expr>) -> ExprBuilder<ExprIndexLhsBuilder<F>> {
+        ExprBuilder::with_callback(ExprIndexLhsBuilder {
+            builder: self.builder,
+            lhs: lhs,
+        })
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprIndexLhsBuilder<F> {
+    builder: ExprBuilder<F>,
+    lhs: P<ast::Expr>,
+}
+
+impl<F> Invoke<P<ast::Expr>> for ExprIndexLhsBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, rhs: P<ast::Expr>) -> F::Result {
+        self.builder.build_index(self.lhs, rhs)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprRepeatBuilder<F> {
+    builder: ExprBuilder<F>,
+}
+
+impl<F> Invoke<P<ast::Expr>> for ExprRepeatBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = ExprBuilder<ExprRepeatLhsBuilder<F>>;
+
+    fn invoke(self, lhs: P<ast::Expr>) -> ExprBuilder<ExprRepeatLhsBuilder<F>> {
+        ExprBuilder::with_callback(ExprRepeatLhsBuilder {
+            builder: self.builder,
+            lhs: lhs,
+        })
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprRepeatLhsBuilder<F> {
+    builder: ExprBuilder<F>,
+    lhs: P<ast::Expr>,
+}
+
+impl<F> Invoke<P<ast::Expr>> for ExprRepeatLhsBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, rhs: P<ast::Expr>) -> F::Result {
+        self.builder.build_repeat(self.lhs, rhs)
     }
 }
 

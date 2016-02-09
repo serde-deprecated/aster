@@ -455,3 +455,41 @@ fn test_match() {
         )
     );
 }
+
+#[test]
+fn test_index() {
+    let builder = AstBuilder::new();
+
+    let expr = builder.expr().index()
+        .id("x")
+        .usize(2);
+
+    assert_eq!(
+        expr,
+        builder.expr().build_expr_(
+            ast::ExprIndex(
+                builder.expr().id("x"),
+                builder.expr().usize(2)
+            )
+        )
+    );
+}
+ 
+#[test]
+fn test_repeat() {
+    let builder = AstBuilder::new();
+
+    let expr = builder.expr().repeat()
+        .u16(1024)
+        .usize(16);
+
+    assert_eq!(
+        expr,
+        builder.expr().build_expr_(
+            ast::ExprRepeat(
+                builder.expr().u16(1024),
+                builder.expr().usize(16)
+            )
+        )
+    );
+}
