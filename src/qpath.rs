@@ -42,6 +42,14 @@ impl<F> QPathBuilder<F>
     }
 
     /// Build a qualified path first by starting with a type builder.
+    pub fn with_ty(self, ty: P<ast::Ty>) -> QPathTyBuilder<F> {
+        QPathTyBuilder {
+            builder: self,
+            ty: ty,
+        }
+    }
+
+    /// Build a qualified path first by starting with a type builder.
     pub fn ty(self) -> TyBuilder<Self> {
         TyBuilder::with_callback(self)
     }
@@ -58,10 +66,7 @@ impl<F> Invoke<P<ast::Ty>> for QPathBuilder<F>
     type Result = QPathTyBuilder<F>;
 
     fn invoke(self, ty: P<ast::Ty>) -> QPathTyBuilder<F> {
-        QPathTyBuilder {
-            builder: self,
-            ty: ty,
-        }
+        self.with_ty(ty)
     }
 }
 

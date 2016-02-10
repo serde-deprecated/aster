@@ -95,6 +95,10 @@ impl AstBuilder {
         path::PathBuilder::new()
     }
 
+    pub fn qpath(&self) -> qpath::QPathBuilder {
+        qpath::QPathBuilder::new()
+    }
+
     pub fn ty(&self) -> ty::TyBuilder {
         ty::TyBuilder::new().span(self.span)
     }
