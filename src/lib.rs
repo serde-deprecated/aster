@@ -159,8 +159,8 @@ impl AstBuilder {
         fn_decl::FnDeclBuilder::new().span(self.span)
     }
 
-    pub fn method(&self) -> method::MethodBuilder {
-        method::MethodBuilder::new().span(self.span)
+    pub fn method_sig(&self) -> method::MethodSigBuilder {
+        method::MethodSigBuilder::new().span(self.span)
     }
 
     pub fn self_(&self) -> method::SelfBuilder {

@@ -16,7 +16,7 @@ use generics::GenericsBuilder;
 use ident::ToIdent;
 use invoke::{Invoke, Identity};
 use mac::MacBuilder;
-use method::{Method, MethodBuilder};
+use method::MethodSigBuilder;
 use path::PathBuilder;
 use struct_field::StructFieldBuilder;
 use ty::TyBuilder;
@@ -848,7 +848,7 @@ impl<F> ItemTraitBuilder<F>
         self.item(id).const_()
     }
 
-    pub fn method<T>(self, id: T) -> MethodBuilder<ItemTraitItemBuilder<Self>>
+    pub fn method<T>(self, id: T) -> MethodSigBuilder<ItemTraitItemBuilder<Self>>
         where T: ToIdent,
     {
         self.item(id).method()
@@ -942,8 +942,8 @@ impl<F> ItemTraitItemBuilder<F>
         ConstBuilder::with_callback(self)
     }
 
-    pub fn method(self) -> MethodBuilder<Self> {
-        MethodBuilder::with_callback(self)
+    pub fn method(self) -> MethodSigBuilder<Self> {
+        MethodSigBuilder::with_callback(self)
     }
 
     pub fn type_(self) -> ItemTraitTypeBuilder<F> {
@@ -988,16 +988,50 @@ impl<F> Invoke<Const> for ItemTraitItemBuilder<F>
     }
 }
 
-impl<F> Invoke<Method> for ItemTraitItemBuilder<F>
+impl<F> Invoke<ast::MethodSig> for ItemTraitItemBuilder<F>
+    where F: Invoke<P<ast::TraitItem>>,
+{
+    type Result = ItemTraitMethodBuilder<F>;
+
+    fn invoke(self, method: ast::MethodSig) -> Self::Result {
+        ItemTraitMethodBuilder {
+            builder: self,
+            method: method,
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ItemTraitMethodBuilder<F> {
+    builder: ItemTraitItemBuilder<F>,
+    method: ast::MethodSig,
+}
+
+impl<F> ItemTraitMethodBuilder<F>
+    where F: Invoke<P<ast::TraitItem>>,
+{
+    pub fn build_option_block(self, block: Option<P<ast::Block>>) -> F::Result {
+        let node = ast::TraitItem_::MethodTraitItem(self.method, block);
+        self.builder.build_item(node)
+    }
+
+    pub fn build_block(self, block: P<ast::Block>) -> F::Result {
+        self.build_option_block(Some(block))
+    }
+
+    pub fn build(self) -> F::Result {
+        self.build_option_block(None)
+    }
+}
+
+impl<F> Invoke<P<ast::Block>> for ItemTraitMethodBuilder<F>
     where F: Invoke<P<ast::TraitItem>>,
 {
     type Result = F::Result;
 
-    fn invoke(self, method: Method) -> F::Result {
-        let node = ast::TraitItem_::MethodTraitItem(
-            method.sig,
-            method.block);
-        self.build_item(node)
+    fn invoke(self, block: P<ast::Block>) -> Self::Result {
+        self.build_block(block)
     }
 }
 
@@ -1147,7 +1181,7 @@ impl<F> ItemImplBuilder<F>
         self.item(id).const_()
     }
 
-    pub fn method<T>(self, id: T) -> MethodBuilder<ItemImplItemBuilder<Self>>
+    pub fn method<T>(self, id: T) -> MethodSigBuilder<ItemImplItemBuilder<Self>>
         where T: ToIdent,
     {
         self.item(id).method()
@@ -1252,8 +1286,8 @@ impl<F> ItemImplItemBuilder<F>
         ConstBuilder::with_callback(self)
     }
 
-    pub fn method(self) -> MethodBuilder<Self> {
-        MethodBuilder::with_callback(self)
+    pub fn method(self) -> MethodSigBuilder<Self> {
+        MethodSigBuilder::with_callback(self)
     }
 
     pub fn type_(self) -> TyBuilder<Self> {
@@ -1298,14 +1332,16 @@ impl<F> Invoke<Const> for ItemImplItemBuilder<F>
     }
 }
 
-impl<F> Invoke<Method> for ItemImplItemBuilder<F>
+impl<F> Invoke<ast::MethodSig> for ItemImplItemBuilder<F>
     where F: Invoke<P<ast::ImplItem>>,
 {
-    type Result = F::Result;
+    type Result = ItemImplMethodBuilder<F>;
 
-    fn invoke(self, method: Method) -> F::Result {
-        let node = ast::ImplItemKind::Method(method.sig, method.block.expect("a block is required for a method impl item"));
-        self.build_item(node)
+    fn invoke(self, method: ast::MethodSig) -> Self::Result {
+        ItemImplMethodBuilder {
+            builder: self,
+            method: method,
+        }
     }
 }
 
@@ -1328,6 +1364,36 @@ impl<F> Invoke<ast::Mac> for ItemImplItemBuilder<F>
     fn invoke(self, mac: ast::Mac) -> F::Result {
         let node = ast::ImplItemKind::Macro(mac);
         self.build_item(node)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ItemImplMethodBuilder<F> {
+    builder: ItemImplItemBuilder<F>,
+    method: ast::MethodSig,
+}
+
+impl<F> ItemImplMethodBuilder<F>
+    where F: Invoke<P<ast::ImplItem>>,
+{
+    pub fn build_block(self, block: P<ast::Block>) -> F::Result {
+        let node = ast::ImplItemKind::Method(self.method, block);
+        self.builder.build_item(node)
+    }
+
+    pub fn build(self) -> BlockBuilder<Self> {
+        BlockBuilder::with_callback(self)
+    }
+}
+
+impl<F> Invoke<P<ast::Block>> for ItemImplMethodBuilder<F>
+    where F: Invoke<P<ast::ImplItem>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, block: P<ast::Block>) -> Self::Result {
+        self.build_block(block)
     }
 }
 

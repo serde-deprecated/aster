@@ -3,23 +3,16 @@ use syntax::ast;
 use syntax::codemap::{DUMMY_SP, Span, respan};
 use syntax::ptr::P;
 
-use block::BlockBuilder;
 use fn_decl::FnDeclBuilder;
 use generics::GenericsBuilder;
 use ident::ToIdent;
 use invoke::{Invoke, Identity};
 use lifetime::IntoLifetime;
+use ty::TyBuilder;
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct Method {
-    pub sig: ast::MethodSig,
-    pub block: Option<P<ast::Block>>,
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-pub struct MethodBuilder<F=Identity> {
+pub struct MethodSigBuilder<F=Identity> {
     callback: F,
     span: Span,
     abi: Abi,
@@ -27,21 +20,20 @@ pub struct MethodBuilder<F=Identity> {
     unsafety: ast::Unsafety,
     constness: ast::Constness,
     explicit_self: ast::ExplicitSelf,
-    fn_decl: P<ast::FnDecl>,
-    block: Option<P<ast::Block>>,
+    self_mutable: ast::Mutability,
 }
 
-impl MethodBuilder {
+impl MethodSigBuilder {
     pub fn new() -> Self {
-        MethodBuilder::with_callback(Identity)
+        MethodSigBuilder::with_callback(Identity)
     }
 }
 
-impl<F> MethodBuilder<F>
-    where F: Invoke<Method>,
+impl<F> MethodSigBuilder<F>
+    where F: Invoke<ast::MethodSig>,
 {
     pub fn with_callback(callback: F) -> Self {
-        MethodBuilder {
+        MethodSigBuilder {
             callback: callback,
             span: DUMMY_SP,
             abi: Abi::Rust,
@@ -49,12 +41,7 @@ impl<F> MethodBuilder<F>
             unsafety: ast::Unsafety::Normal,
             constness: ast::Constness::NotConst,
             explicit_self: respan(DUMMY_SP, ast::ExplicitSelf_::SelfStatic),
-            fn_decl: P(ast::FnDecl {
-                inputs: vec![],
-                output: ast::FunctionRetTy::NoReturn(DUMMY_SP),
-                variadic: false
-            }),
-            block: None,
+            self_mutable: ast::MutImmutable,
         }
     }
 
@@ -87,7 +74,8 @@ impl<F> MethodBuilder<F>
         GenericsBuilder::with_callback(self)
     }
 
-    pub fn with_self(mut self, explicit_self: ast::ExplicitSelf) -> Self {
+    pub fn with_self(mut self, mutable: ast::Mutability, explicit_self: ast::ExplicitSelf) -> Self {
+        self.self_mutable = mutable;
         self.explicit_self = explicit_self;
         self
     }
@@ -96,42 +84,38 @@ impl<F> MethodBuilder<F>
         SelfBuilder::with_callback(self)
     }
 
-    pub fn with_fn_decl(mut self, fn_decl: P<ast::FnDecl>) -> Self {
-        self.fn_decl = fn_decl;
-        self
+    pub fn build_fn_decl(self, mut fn_decl: P<ast::FnDecl>) -> F::Result {
+        // Add `self` to the decl.
+        match self.explicit_self.node {
+            ast::SelfStatic => { }
+            ast::SelfValue(id)
+            | ast::SelfRegion(_, _, id)
+            | ast::SelfExplicit(_, id) => {
+                fn_decl = fn_decl.map(|mut fn_decl| {
+                    let arg = ast::Arg::new_self(self.span, self.self_mutable, id);
+                    fn_decl.inputs.insert(0, arg);
+                    fn_decl
+                });
+            }
+        }
+
+        self.callback.invoke(ast::MethodSig {
+            unsafety: self.unsafety,
+            constness: self.constness,
+            abi: self.abi,
+            decl: fn_decl,
+            generics: self.generics,
+            explicit_self: self.explicit_self,
+        })
     }
 
     pub fn fn_decl(self) -> FnDeclBuilder<Self> {
         FnDeclBuilder::with_callback(self)
     }
-
-    pub fn with_block(mut self, block: P<ast::Block>) -> Self {
-        self.block = Some(block);
-        self
-    }
-
-    pub fn block(self) -> BlockBuilder<Self> {
-        BlockBuilder::with_callback(self)
-    }
-
-    pub fn build(self) -> F::Result {
-        let method_sig = ast::MethodSig {
-            unsafety: self.unsafety,
-            constness: self.constness,
-            abi: self.abi,
-            decl: self.fn_decl,
-            generics: self.generics,
-            explicit_self: self.explicit_self,
-        };
-        self.callback.invoke(Method {
-            sig: method_sig,
-            block: self.block,
-        })
-    }
 }
 
-impl<F> Invoke<ast::Generics> for MethodBuilder<F>
-    where F: Invoke<Method>,
+impl<F> Invoke<ast::Generics> for MethodSigBuilder<F>
+    where F: Invoke<ast::MethodSig>,
 {
     type Result = Self;
 
@@ -140,33 +124,23 @@ impl<F> Invoke<ast::Generics> for MethodBuilder<F>
     }
 }
 
-impl<F> Invoke<ast::ExplicitSelf> for MethodBuilder<F>
-    where F: Invoke<Method>,
+impl<F> Invoke<(ast::Mutability, ast::ExplicitSelf)> for MethodSigBuilder<F>
+    where F: Invoke<ast::MethodSig>,
 {
     type Result = Self;
 
-    fn invoke(self, explicit_self: ast::ExplicitSelf) -> Self {
-        self.with_self(explicit_self)
+    fn invoke(self, (mutable, explicit_self): (ast::Mutability, ast::ExplicitSelf)) -> Self {
+        self.with_self(mutable, explicit_self)
     }
 }
 
-impl<F> Invoke<P<ast::FnDecl>> for MethodBuilder<F>
-    where F: Invoke<Method>,
+impl<F> Invoke<P<ast::FnDecl>> for MethodSigBuilder<F>
+    where F: Invoke<ast::MethodSig>,
 {
-    type Result = Self;
+    type Result = F::Result;
 
-    fn invoke(self, fn_decl: P<ast::FnDecl>) -> Self {
-        self.with_fn_decl(fn_decl)
-    }
-}
-
-impl<F> Invoke<P<ast::Block>> for MethodBuilder<F>
-    where F: Invoke<Method>,
-{
-    type Result = Self;
-
-    fn invoke(self, block: P<ast::Block>) -> Self {
-        self.with_block(block)
+    fn invoke(self, fn_decl: P<ast::FnDecl>) -> Self::Result {
+        self.build_fn_decl(fn_decl)
     }
 }
 
@@ -175,6 +149,7 @@ impl<F> Invoke<P<ast::Block>> for MethodBuilder<F>
 pub struct SelfBuilder<F=Identity> {
     callback: F,
     span: Span,
+    mutable: ast::Mutability,
 }
 
 impl SelfBuilder {
@@ -184,17 +159,18 @@ impl SelfBuilder {
 }
 
 impl<F> SelfBuilder<F>
-    where F: Invoke<ast::ExplicitSelf>,
+    where F: Invoke<(ast::Mutability, ast::ExplicitSelf)>,
 {
     pub fn with_callback(callback: F) -> Self {
         SelfBuilder {
             callback: callback,
             span: DUMMY_SP,
+            mutable: ast::MutImmutable,
         }
     }
 
     pub fn build(self, self_: ast::ExplicitSelf) -> F::Result {
-        self.callback.invoke(self_)
+        self.callback.invoke((self.mutable, self_))
     }
 
     pub fn span(mut self, span: Span) -> Self {
@@ -207,7 +183,16 @@ impl<F> SelfBuilder<F>
         self.build(self_)
     }
 
+    pub fn mut_(mut self) -> Self {
+        self.mutable = ast::MutMutable;
+        self
+    }
+
     pub fn static_(self) -> F::Result {
+        self.build_self_(ast::ExplicitSelf_::SelfStatic)
+    }
+
+    pub fn mut_static(self) -> F::Result {
         self.build_self_(ast::ExplicitSelf_::SelfStatic)
     }
 
@@ -251,15 +236,13 @@ impl<F> SelfBuilder<F>
         ))
     }
 
-    /*
-    pub fn ty(self) -> TyBuilder<F::Result> {
+    pub fn ty(self) -> TyBuilder<Self> {
         TyBuilder::with_callback(self)
     }
-    */
 }
 
 impl<F> Invoke<P<ast::Ty>> for SelfBuilder<F>
-    where F: Invoke<ast::ExplicitSelf>,
+    where F: Invoke<(ast::Mutability, ast::ExplicitSelf)>,
 {
     type Result = F::Result;
 
