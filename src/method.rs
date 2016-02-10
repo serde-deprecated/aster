@@ -172,9 +172,15 @@ impl<F> Invoke<P<ast::Block>> for MethodBuilder<F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct SelfBuilder<F> {
+pub struct SelfBuilder<F=Identity> {
     callback: F,
     span: Span,
+}
+
+impl SelfBuilder {
+    pub fn new() -> Self {
+        SelfBuilder::with_callback(Identity)
+    }
 }
 
 impl<F> SelfBuilder<F>

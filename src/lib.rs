@@ -163,6 +163,10 @@ impl AstBuilder {
         method::MethodBuilder::new().span(self.span)
     }
 
+    pub fn self_(&self) -> method::SelfBuilder {
+        method::SelfBuilder::new().span(self.span)
+    }
+
     pub fn arg<I>(&self, id: I) -> fn_decl::ArgBuilder
         where I: ident::ToIdent,
     {
