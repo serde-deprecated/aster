@@ -842,6 +842,24 @@ impl<F> ItemTraitBuilder<F>
         ItemTraitItemBuilder::with_callback(id, self)
     }
 
+    pub fn const_<T>(self, id: T) -> ConstBuilder<ItemTraitItemBuilder<Self>>
+        where T: ToIdent,
+    {
+        self.item(id).const_()
+    }
+
+    pub fn method<T>(self, id: T) -> MethodBuilder<ItemTraitItemBuilder<Self>>
+        where T: ToIdent,
+    {
+        self.item(id).method()
+    }
+
+    pub fn type_<T>(self, id: T) -> ItemTraitTypeBuilder<Self>
+        where T: ToIdent,
+    {
+        self.item(id).type_()
+    }
+
     pub fn build(self) -> F::Result {
         self.builder.build_item_(self.id, ast::ItemTrait(
             self.unsafety,
@@ -1121,6 +1139,24 @@ impl<F> ItemImplBuilder<F>
         where T: ToIdent,
     {
         ItemImplItemBuilder::with_callback(id, self)
+    }
+
+    pub fn const_<T>(self, id: T) -> ConstBuilder<ItemImplItemBuilder<Self>>
+        where T: ToIdent,
+    {
+        self.item(id).const_()
+    }
+
+    pub fn method<T>(self, id: T) -> MethodBuilder<ItemImplItemBuilder<Self>>
+        where T: ToIdent,
+    {
+        self.item(id).method()
+    }
+
+    pub fn type_<T>(self, id: T) -> TyBuilder<ItemImplItemBuilder<Self>>
+        where T: ToIdent,
+    {
+        self.item(id).type_()
     }
 }
 

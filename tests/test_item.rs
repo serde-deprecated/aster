@@ -502,13 +502,13 @@ fn test_trait() {
     let builder = AstBuilder::new();
     let trait_ = builder.item().trait_("Serialize")
         // Type
-        .item("MyFloat").type_().build()
+        .type_("MyFloat").build()
 
         // Const
-        .item("PI").const_().ty().f64()
+        .const_("PI").ty().f64()
 
         // Method
-        .item("serialize").method()
+        .method("serialize")
             .fn_decl()
                 .default_return()
                 .build()
@@ -579,22 +579,23 @@ fn test_trait() {
 fn test_impl() {
     let builder = AstBuilder::new();
     let impl_ = builder.item().impl_()
-        .trait_().id("ser").id("Serialize").build()
+        .trait_()
+            .ids(&["ser", "Serialize"])
+            .build()
 
         // Type
-        .item("MyFloat").type_().f64()
+        .type_("MyFloat").f64()
 
         // Const
-        .item("PI").const_()
+        .const_("PI")
             .expr().f64("3.14159265358979323846264338327950288")
             .ty().f64()
 
         // Method
-        .item("serialize").method()
-            .fn_decl()
-                .arg("serializer").ty().ref_().mut_().ty().path().id("ser").id("Serialize").build()
-                .default_return()
-            .block().build() // empty method block
+        .method("serialize")
+            .fn_decl().default_return()
+            .block()
+                .build() // empty method block
             .build()
 
         .ty().id("MySerializer");
@@ -646,9 +647,7 @@ fn test_impl() {
                                 unsafety: ast::Unsafety::Normal,
                                 constness: ast::Constness::NotConst,
                                 abi: Abi::Rust,
-                                decl: builder.fn_decl()
-                                    .arg("serializer").ty().ref_().mut_().ty().path().id("ser").id("Serialize").build()
-                                    .default_return(),
+                                decl: builder.fn_decl().default_return(),
                                 generics: builder.generics().build(),
                                 explicit_self: respan(DUMMY_SP, ast::ExplicitSelf_::SelfStatic),
                             },
