@@ -498,6 +498,84 @@ fn test_type() {
 }
 
 #[test]
+fn test_trait() {
+    let builder = AstBuilder::new();
+    let trait_ = builder.item().trait_("Serialize")
+        // Type
+        .item("MyFloat").type_().build()
+
+        // Const
+        .item("PI").const_().ty().f64()
+
+        // Method
+        .item("serialize").method()
+            .fn_decl()
+                .default_return()
+                .build()
+
+
+        .build();
+
+    assert_eq!(
+        trait_,
+        P(ast::Item {
+            ident: builder.id("Serialize"),
+            id: ast::DUMMY_NODE_ID,
+            attrs: vec![],
+            node: ast::ItemTrait(
+                ast::Unsafety::Normal,
+                builder.generics().build(),
+                P::from_vec(vec![
+                ]),
+                vec![
+                    P(ast::TraitItem {
+                        id: ast::DUMMY_NODE_ID,
+                        ident: builder.id("MyFloat"),
+                        attrs: vec![],
+                        node: ast::TraitItem_::TypeTraitItem(
+                            P::from_vec(vec![]),
+                            None,
+                        ),
+                        span: DUMMY_SP,
+                    }),
+
+                    P(ast::TraitItem {
+                        id: ast::DUMMY_NODE_ID,
+                        ident: builder.id("PI"),
+                        attrs: vec![],
+                        node: ast::TraitItem_::ConstTraitItem(
+                            builder.ty().f64(),
+                            None,
+                        ),
+                        span: DUMMY_SP,
+                    }),
+
+                    P(ast::TraitItem {
+                        id: ast::DUMMY_NODE_ID,
+                        ident: builder.id("serialize"),
+                        attrs: vec![],
+                        node: ast::TraitItem_::MethodTraitItem(
+                            ast::MethodSig {
+                                unsafety: ast::Unsafety::Normal,
+                                constness: ast::Constness::NotConst,
+                                abi: Abi::Rust,
+                                decl: builder.fn_decl().default_return(),
+                                generics: builder.generics().build(),
+                                explicit_self: respan(DUMMY_SP, ast::ExplicitSelf_::SelfStatic),
+                            },
+                            None
+                        ),
+                        span: DUMMY_SP,
+                    })
+                ]
+            ),
+            vis: ast::Visibility::Inherited,
+            span: DUMMY_SP,
+        })
+    );
+}
+
+#[test]
 fn test_impl() {
     let builder = AstBuilder::new();
     let impl_ = builder.item().impl_()

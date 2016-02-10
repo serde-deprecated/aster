@@ -20,6 +20,7 @@ use method::{Method, MethodBuilder};
 use path::PathBuilder;
 use struct_field::StructFieldBuilder;
 use ty::TyBuilder;
+use ty_param::TyParamBoundBuilder;
 use variant::VariantBuilder;
 use variant_data::{
     VariantDataBuilder,
@@ -191,6 +192,19 @@ impl<F> ItemBuilder<F>
             builder: self,
             id: id,
             generics: generics,
+        }
+    }
+
+    pub fn trait_<T>(self, id: T) -> ItemTraitBuilder<F>
+        where T: ToIdent,
+    {
+        ItemTraitBuilder {
+            builder: self,
+            id: id.to_ident(),
+            unsafety: ast::Unsafety::Normal,
+            generics: GenericsBuilder::new().build(),
+            bounds: vec![],
+            items: vec![],
         }
     }
 
@@ -762,6 +776,274 @@ impl<F> Invoke<P<ast::Ty>> for ItemTyBuilder<F>
     type Result = F::Result;
 
     fn invoke(self, ty: P<ast::Ty>) -> F::Result {
+        self.build_ty(ty)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ItemTraitBuilder<F> {
+    builder: ItemBuilder<F>,
+    id: ast::Ident,
+    unsafety: ast::Unsafety,
+    generics: ast::Generics,
+    bounds: Vec<ast::TyParamBound>,
+    items: Vec<P<ast::TraitItem>>,
+}
+
+impl<F> ItemTraitBuilder<F>
+    where F: Invoke<P<ast::Item>>,
+{
+    pub fn unsafe_(mut self) -> Self {
+        self.unsafety = ast::Unsafety::Unsafe;
+        self
+    }
+
+    pub fn with_generics(mut self, generics: ast::Generics) -> Self {
+        self.generics = generics;
+        self
+    }
+
+    pub fn generics(self) -> GenericsBuilder<Self> {
+        GenericsBuilder::with_callback(self)
+    }
+
+    pub fn with_bounds<I>(mut self, iter: I) -> Self
+        where I: Iterator<Item=ast::TyParamBound>,
+    {
+        self.bounds.extend(iter);
+        self
+    }
+
+    pub fn with_bound(mut self, bound: ast::TyParamBound) -> Self {
+        self.bounds.push(bound);
+        self
+    }
+
+    pub fn bound(self) -> TyParamBoundBuilder<Self> {
+        TyParamBoundBuilder::with_callback(self)
+    }
+
+    pub fn with_items<I>(mut self, items: I) -> Self
+        where I: IntoIterator<Item=P<ast::TraitItem>>,
+    {
+        self.items.extend(items);
+        self
+    }
+
+    pub fn with_item(mut self, item: P<ast::TraitItem>) -> Self {
+        self.items.push(item);
+        self
+    }
+
+    pub fn item<T>(self, id: T) -> ItemTraitItemBuilder<Self>
+        where T: ToIdent,
+    {
+        ItemTraitItemBuilder::with_callback(id, self)
+    }
+
+    pub fn build(self) -> F::Result {
+        self.builder.build_item_(self.id, ast::ItemTrait(
+            self.unsafety,
+            self.generics,
+            P::from_vec(self.bounds),
+            self.items,
+        ))
+    }
+}
+
+impl<F> Invoke<ast::Generics> for ItemTraitBuilder<F>
+    where F: Invoke<P<ast::Item>>,
+{
+    type Result = Self;
+
+    fn invoke(self, generics: ast::Generics) -> Self {
+        self.with_generics(generics)
+    }
+}
+
+impl<F> Invoke<ast::TyParamBound> for ItemTraitBuilder<F>
+    where F: Invoke<P<ast::Item>>,
+{
+    type Result = Self;
+
+    fn invoke(self, bound: ast::TyParamBound) -> Self {
+        self.with_bound(bound)
+    }
+}
+
+impl<F> Invoke<P<ast::TraitItem>> for ItemTraitBuilder<F>
+    where F: Invoke<P<ast::Item>>,
+{
+    type Result = Self;
+
+    fn invoke(self, item: P<ast::TraitItem>) -> Self {
+        self.with_item(item)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ItemTraitItemBuilder<F> {
+    callback: F,
+    id: ast::Ident,
+    attrs: Vec<ast::Attribute>,
+    span: Span,
+}
+
+impl<F> ItemTraitItemBuilder<F>
+    where F: Invoke<P<ast::TraitItem>>,
+{
+    pub fn with_callback<T>(id: T, callback: F) -> Self
+        where F: Invoke<P<ast::TraitItem>>,
+              T: ToIdent,
+    {
+        ItemTraitItemBuilder {
+            callback: callback,
+            id: id.to_ident(),
+            attrs: vec![],
+            span: DUMMY_SP,
+        }
+    }
+
+    pub fn span(mut self, span: Span) -> Self {
+        self.span = span;
+        self
+    }
+
+    pub fn with_attr(mut self, attr: ast::Attribute) -> Self {
+        self.attrs.push(attr);
+        self
+    }
+
+    pub fn attr(self) -> AttrBuilder<Self> {
+        AttrBuilder::with_callback(self)
+    }
+
+    pub fn const_(self) -> ConstBuilder<Self> {
+        ConstBuilder::with_callback(self)
+    }
+
+    pub fn method(self) -> MethodBuilder<Self> {
+        MethodBuilder::with_callback(self)
+    }
+
+    pub fn type_(self) -> ItemTraitTypeBuilder<F> {
+        ItemTraitTypeBuilder {
+            builder: self,
+            bounds: vec![],
+        }
+    }
+
+    pub fn build_item(self, node: ast::TraitItem_) -> F::Result {
+        let item = ast::TraitItem {
+            id: ast::DUMMY_NODE_ID,
+            ident: self.id,
+            attrs: self.attrs,
+            node: node,
+            span: self.span,
+        };
+        self.callback.invoke(P(item))
+    }
+}
+
+impl<F> Invoke<ast::Attribute> for ItemTraitItemBuilder<F>
+    where F: Invoke<P<ast::TraitItem>>,
+{
+    type Result = Self;
+
+    fn invoke(self, attr: ast::Attribute) -> Self {
+        self.with_attr(attr)
+    }
+}
+
+impl<F> Invoke<Const> for ItemTraitItemBuilder<F>
+    where F: Invoke<P<ast::TraitItem>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, const_: Const) -> F::Result {
+        let node = ast::TraitItem_::ConstTraitItem(
+            const_.ty,
+            const_.expr);
+        self.build_item(node)
+    }
+}
+
+impl<F> Invoke<Method> for ItemTraitItemBuilder<F>
+    where F: Invoke<P<ast::TraitItem>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, method: Method) -> F::Result {
+        let node = ast::TraitItem_::MethodTraitItem(
+            method.sig,
+            method.block);
+        self.build_item(node)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ItemTraitTypeBuilder<F> {
+    builder: ItemTraitItemBuilder<F>,
+    bounds: Vec<ast::TyParamBound>,
+}
+
+impl<F> ItemTraitTypeBuilder<F>
+    where F: Invoke<P<ast::TraitItem>>,
+{
+    pub fn with_bounds<I>(mut self, iter: I) -> Self
+        where I: Iterator<Item=ast::TyParamBound>,
+    {
+        self.bounds.extend(iter);
+        self
+    }
+
+    pub fn with_bound(mut self, bound: ast::TyParamBound) -> Self {
+        self.bounds.push(bound);
+        self
+    }
+
+    pub fn bound(self) -> TyParamBoundBuilder<Self> {
+        TyParamBoundBuilder::with_callback(self)
+    }
+
+    pub fn build_option_ty(self, ty: Option<P<ast::Ty>>) -> F::Result {
+        let bounds = P::from_vec(self.bounds);
+        let node = ast::TraitItem_::TypeTraitItem(bounds, ty);
+        self.builder.build_item(node)
+    }
+
+    pub fn build_ty(self, ty: P<ast::Ty>) -> F::Result {
+        self.build_option_ty(Some(ty))
+    }
+
+    pub fn ty(self) -> TyBuilder<Self> {
+        TyBuilder::with_callback(self)
+    }
+
+    pub fn build(self) -> F::Result {
+        self.build_option_ty(None)
+    }
+}
+
+impl<F> Invoke<ast::TyParamBound> for ItemTraitTypeBuilder<F>
+    where F: Invoke<P<ast::TraitItem>>,
+{
+    type Result = ItemTraitTypeBuilder<F>;
+
+    fn invoke(self, bound: ast::TyParamBound) -> Self::Result {
+        self.with_bound(bound)
+    }
+}
+
+impl<F> Invoke<P<ast::Ty>> for ItemTraitTypeBuilder<F>
+    where F: Invoke<P<ast::TraitItem>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, ty: P<ast::Ty>) -> Self::Result {
         self.build_ty(ty)
     }
 }
