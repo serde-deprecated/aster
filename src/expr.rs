@@ -1,4 +1,4 @@
-#![cfg_attr(feature = "unstable", allow(should_implement_trait))]
+#![cfg_attr(feature = "unstable-testing", allow(should_implement_trait))]
 
 use std::iter::IntoIterator;
 

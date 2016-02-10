@@ -167,10 +167,8 @@ impl AstBuilder {
         method::SelfBuilder::new().span(self.span)
     }
 
-    pub fn arg<I>(&self, id: I) -> fn_decl::ArgBuilder
-        where I: ident::ToIdent,
-    {
-        fn_decl::ArgBuilder::new(id).span(self.span)
+    pub fn arg(&self) -> fn_decl::ArgBuilder {
+        fn_decl::ArgBuilder::new().span(self.span)
     }
 
     pub fn variant_data(&self) -> variant_data::VariantDataBuilder {

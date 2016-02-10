@@ -1,9 +1,10 @@
 use syntax::ast;
-use syntax::codemap::{DUMMY_SP, Span, respan};
+use syntax::codemap::{DUMMY_SP, Span};
 use syntax::ptr::P;
 
 use ident::ToIdent;
 use invoke::{Invoke, Identity};
+use pat::PatBuilder;
 use ty::TyBuilder;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -55,10 +56,32 @@ impl<F> FnDeclBuilder<F>
         self
     }
 
-    pub fn arg<I>(self, id: I) -> ArgBuilder<Self>
-        where I: ToIdent,
+    pub fn arg(self) -> ArgBuilder<Self> {
+        ArgBuilder::with_callback(self)
+    }
+
+    pub fn arg_id<T>(self, id: T) -> ArgPatBuilder<Self>
+        where T: ToIdent,
     {
-        ArgBuilder::with_callback(id, self)
+        self.arg().pat().id(id)
+    }
+
+    pub fn arg_ref_id<T>(self, id: T) -> ArgPatBuilder<Self>
+        where T: ToIdent,
+    {
+        self.arg().ref_id(id)
+    }
+
+    pub fn arg_mut_id<T>(self, id: T) -> ArgPatBuilder<Self>
+        where T: ToIdent,
+    {
+        self.arg().mut_id(id)
+    }
+
+    pub fn arg_ref_mut_id<T>(self, id: T) -> ArgPatBuilder<Self>
+        where T: ToIdent,
+    {
+        self.arg().ref_mut_id(id)
     }
 
     pub fn no_return(self) -> F::Result {
@@ -113,25 +136,21 @@ impl<F> Invoke<P<ast::Ty>> for FnDeclBuilder<F>
 pub struct ArgBuilder<F=Identity> {
     callback: F,
     span: Span,
-    id: ast::Ident,
 }
 
 impl ArgBuilder {
-    pub fn new<I>(id: I) -> Self where I: ToIdent {
-        ArgBuilder::with_callback(id, Identity)
+    pub fn new() -> Self {
+        ArgBuilder::with_callback( Identity)
     }
 }
 
 impl<F> ArgBuilder<F>
     where F: Invoke<ast::Arg>,
 {
-    pub fn with_callback<I>(id: I, callback: F) -> ArgBuilder<F>
-        where I: ToIdent,
-    {
+    pub fn with_callback(callback: F) -> ArgBuilder<F> {
         ArgBuilder {
             callback: callback,
             span: DUMMY_SP,
-            id: id.to_ident(),
         }
     }
 
@@ -140,38 +159,84 @@ impl<F> ArgBuilder<F>
         self
     }
 
-    pub fn build_ty(self, ty: P<ast::Ty>) -> F::Result {
-        let path = respan(self.span, self.id);
-
-        self.callback.invoke(ast::Arg {
-            id: ast::DUMMY_NODE_ID,
-            ty: ty,
-            pat: P(ast::Pat {
-                id: ast::DUMMY_NODE_ID,
-                node: ast::PatIdent(
-                    ast::BindingMode::ByValue(ast::Mutability::MutImmutable),
-                    path,
-                    None,
-                ),
-                span: self.span,
-            }),
-        })
+    pub fn with_pat(self, pat: P<ast::Pat>) -> ArgPatBuilder<F> {
+        ArgPatBuilder {
+            callback: self.callback,
+            span: self.span,
+            pat: pat,
+        }
     }
 
-    pub fn ty(self) -> TyBuilder<ArgTyBuilder<F>> {
-        TyBuilder::with_callback(ArgTyBuilder(self))
+    pub fn pat(self) -> PatBuilder<Self> {
+        PatBuilder::with_callback(self)
+    }
+
+    pub fn id<T>(self, id: T) -> ArgPatBuilder<F>
+        where T: ToIdent,
+    {
+        self.pat().id(id)
+    }
+
+    pub fn ref_id<T>(self, id: T) -> ArgPatBuilder<F>
+        where T: ToIdent,
+    {
+        self.pat().ref_id(id)
+    }
+
+    pub fn mut_id<T>(self, id: T) -> ArgPatBuilder<F>
+        where T: ToIdent,
+    {
+        self.pat().mut_id(id)
+    }
+
+    pub fn ref_mut_id<T>(self, id: T) -> ArgPatBuilder<F>
+        where T: ToIdent,
+    {
+        self.pat().ref_mut_id(id)
+    }
+}
+
+impl<F> Invoke<P<ast::Pat>> for ArgBuilder<F>
+    where F: Invoke<ast::Arg>
+{
+    type Result = ArgPatBuilder<F>;
+
+    fn invoke(self, pat: P<ast::Pat>) -> Self::Result {
+        self.with_pat(pat)
     }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ArgTyBuilder<F>(ArgBuilder<F>);
+pub struct ArgPatBuilder<F> {
+    callback: F,
+    span: Span,
+    pat: P<ast::Pat>,
+}
 
-impl<F: Invoke<ast::Arg>> Invoke<P<ast::Ty>> for ArgTyBuilder<F>
+impl<F> ArgPatBuilder<F>
+    where F: Invoke<ast::Arg>
+{
+    pub fn with_ty(self, ty: P<ast::Ty>) -> F::Result {
+        self.callback.invoke(ast::Arg {
+            id: ast::DUMMY_NODE_ID,
+            ty: ty,
+            pat: self.pat,
+        })
+    }
+
+    pub fn ty(self) -> TyBuilder<Self> {
+        let span = self.span;
+        TyBuilder::with_callback(self).span(span)
+    }
+}
+
+impl<F> Invoke<P<ast::Ty>> for ArgPatBuilder<F>
+    where F: Invoke<ast::Arg>
 {
     type Result = F::Result;
 
     fn invoke(self, ty: P<ast::Ty>) -> F::Result {
-        self.0.build_ty(ty)
+        self.with_ty(ty)
     }
 }

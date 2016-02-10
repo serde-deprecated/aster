@@ -123,6 +123,10 @@ impl<F> TyBuilder<F>
         self.id("f64")
     }
 
+    pub fn bool(self) -> F::Result {
+        self.id("bool")
+    }
+
     pub fn unit(self) -> F::Result {
         self.tuple().build()
     }

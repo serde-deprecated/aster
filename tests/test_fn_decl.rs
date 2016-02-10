@@ -23,8 +23,8 @@ fn test_no_args_return_isize() {
 fn test_args_return_isize() {
     let builder = AstBuilder::new();
     let fn_decl = builder.fn_decl()
-        .arg("x").ty().isize()
-        .arg("y").ty().isize()
+        .arg_id("x").ty().isize()
+        .arg_id("y").ty().isize()
         .return_().isize();
 
     assert_eq!(
