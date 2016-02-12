@@ -13,7 +13,7 @@ fn test_no_args_return_isize() {
         fn_decl,
         P(ast::FnDecl {
             inputs: vec![],
-            output: ast::Return(builder.ty().isize()),
+            output: ast::FunctionRetTy::Ty(builder.ty().isize()),
             variadic: false,
         })
     );
@@ -42,7 +42,7 @@ fn test_args_return_isize() {
                     id: ast::DUMMY_NODE_ID,
                 },
             ],
-            output: ast::Return(builder.ty().isize()),
+            output: ast::FunctionRetTy::Ty(builder.ty().isize()),
             variadic: false,
         })
     );
@@ -57,7 +57,7 @@ fn test_no_return() {
         fn_decl,
         P(ast::FnDecl {
             inputs: vec![],
-            output: ast::NoReturn(DUMMY_SP),
+            output: ast::FunctionRetTy::None(DUMMY_SP),
             variadic: false,
         })
     );
@@ -72,7 +72,7 @@ fn test_default_return() {
         fn_decl,
         P(ast::FnDecl {
             inputs: vec![],
-            output: ast::DefaultReturn(DUMMY_SP),
+            output: ast::FunctionRetTy::Default(DUMMY_SP),
             variadic: false,
         })
     );

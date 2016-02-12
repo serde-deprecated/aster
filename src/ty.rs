@@ -44,7 +44,7 @@ impl<F> TyBuilder<F>
         self
     }
 
-    pub fn build_ty_(self, ty_: ast::Ty_) -> F::Result {
+    pub fn build_ty_kind(self, ty_: ast::TyKind) -> F::Result {
         let span = self.span;
         self.build(P(ast::Ty {
             id: ast::DUMMY_NODE_ID,
@@ -60,11 +60,11 @@ impl<F> TyBuilder<F>
     }
 
     pub fn build_path(self, path: ast::Path) -> F::Result {
-        self.build_ty_(ast::Ty_::TyPath(None, path))
+        self.build_ty_kind(ast::TyKind::Path(None, path))
     }
 
     pub fn build_qpath(self, qself: ast::QSelf, path: ast::Path) -> F::Result {
-        self.build_ty_(ast::Ty_::TyPath(Some(qself), path))
+        self.build_ty_kind(ast::TyKind::Path(Some(qself), path))
     }
 
     pub fn path(self) -> PathBuilder<TyPathBuilder<F>> {
@@ -139,7 +139,7 @@ impl<F> TyBuilder<F>
     }
 
     pub fn build_slice(self, ty: P<ast::Ty>) -> F::Result {
-        self.build_ty_(ast::Ty_::TyVec(ty))
+        self.build_ty_kind(ast::TyKind::Vec(ty))
     }
 
     pub fn slice(self) -> TyBuilder<TySliceBuilder<F>> {
@@ -150,12 +150,12 @@ impl<F> TyBuilder<F>
         TyRefBuilder {
             builder: self,
             lifetime: None,
-            mutability: ast::MutImmutable,
+            mutability: ast::Mutability::Immutable,
         }
     }
 
     pub fn infer(self) -> F::Result {
-        self.build_ty_(ast::TyInfer)
+        self.build_ty_kind(ast::TyKind::Infer)
     }
 
     pub fn option(self) -> TyBuilder<TyOptionBuilder<F>> {
@@ -239,7 +239,7 @@ impl<F> TyRefBuilder<F>
     where F: Invoke<P<ast::Ty>>,
 {
     pub fn mut_(mut self) -> Self {
-        self.mutability = ast::MutMutable;
+        self.mutability = ast::Mutability::Mutable;
         self
     }
 
@@ -259,7 +259,7 @@ impl<F> TyRefBuilder<F>
             ty: ty,
             mutbl: self.mutability,
         };
-        self.builder.build_ty_(ast::TyRptr(self.lifetime, ty))
+        self.builder.build_ty_kind(ast::TyKind::Rptr(self.lifetime, ty))
     }
 
     pub fn ty(self) -> TyBuilder<Self> {
@@ -476,7 +476,7 @@ impl<F> TyObjectSumTyBuilder<F>
 
     pub fn build(self) -> F::Result {
         let bounds = P::from_vec(self.bounds);
-        self.builder.build_ty_(ast::Ty_::TyObjectSum(self.ty, bounds))
+        self.builder.build_ty_kind(ast::TyKind::ObjectSum(self.ty, bounds))
     }
 }
 
@@ -517,7 +517,7 @@ impl<F> TyTupleBuilder<F>
     }
 
     pub fn build(self) -> F::Result {
-        self.builder.build_ty_(ast::TyTup(self.tys))
+        self.builder.build_ty_kind(ast::TyKind::Tup(self.tys))
     }
 }
 

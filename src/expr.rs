@@ -62,7 +62,7 @@ impl<F> ExprBuilder<F>
         AttrBuilder::with_callback(self)
     }
 
-    pub fn build_expr_(self, expr: ast::Expr_) -> F::Result {
+    pub fn build_expr_kind(self, expr: ast::ExprKind) -> F::Result {
         let expr = P(ast::Expr {
             id: ast::DUMMY_NODE_ID,
             node: expr,
@@ -73,11 +73,11 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn build_path(self, path: ast::Path) -> F::Result {
-        self.build_expr_(ast::Expr_::ExprPath(None, path))
+        self.build_expr_kind(ast::ExprKind::Path(None, path))
     }
 
     pub fn build_qpath(self, qself: ast::QSelf, path: ast::Path) -> F::Result {
-        self.build_expr_(ast::Expr_::ExprPath(Some(qself), path))
+        self.build_expr_kind(ast::ExprKind::Path(Some(qself), path))
     }
 
     pub fn path(self) -> PathBuilder<Self> {
@@ -95,7 +95,7 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn build_lit(self, lit: P<ast::Lit>) -> F::Result {
-        self.build_expr_(ast::Expr_::ExprLit(lit))
+        self.build_expr_kind(ast::ExprKind::Lit(lit))
     }
 
     pub fn lit(self) -> LitBuilder<Self> {
@@ -115,27 +115,55 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn int(self, value: i64) -> F::Result {
-        self.lit().int(value)
+        if value < 0 {
+            self.neg().lit().int(-value)
+        } else {
+            self.lit().int(value)
+        }
+    }
+
+    pub fn uint(self, value: u64) -> F::Result {
+        self.lit().uint(value as u64)
     }
 
     pub fn isize(self, value: isize) -> F::Result {
-        self.lit().isize(value)
+        if value < 0 {
+            self.neg().lit().isize(-value)
+        } else {
+            self.lit().isize(value)
+        }
     }
 
     pub fn i8(self, value: i8) -> F::Result {
-        self.lit().i8(value)
+        if value < 0 {
+            self.neg().lit().i8(-value)
+        } else {
+            self.lit().i8(value)
+        }
     }
 
     pub fn i16(self, value: i16) -> F::Result {
-        self.lit().i16(value)
+        if value < 0 {
+            self.neg().lit().i16(-value)
+        } else {
+            self.lit().i16(value)
+        }
     }
 
     pub fn i32(self, value: i32) -> F::Result {
-        self.lit().i32(value)
+        if value < 0 {
+            self.neg().lit().i32(-value)
+        } else {
+            self.lit().i32(value)
+        }
     }
 
     pub fn i64(self, value: i64) -> F::Result {
-        self.lit().i64(value)
+        if value < 0 {
+            self.neg().lit().i64(-value)
+        } else {
+            self.lit().i64(value)
+        }
     }
 
     pub fn usize(self, value: usize) -> F::Result {
@@ -177,19 +205,19 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn build_unary(self, unop: ast::UnOp, expr: P<ast::Expr>) -> F::Result {
-        self.build_expr_(ast::ExprUnary(unop, expr))
+        self.build_expr_kind(ast::ExprKind::Unary(unop, expr))
     }
 
     pub fn build_deref(self, expr: P<ast::Expr>) -> F::Result {
-        self.build_unary(ast::UnDeref, expr)
+        self.build_unary(ast::UnOp::Deref, expr)
     }
 
     pub fn build_not(self, expr: P<ast::Expr>) -> F::Result {
-        self.build_unary(ast::UnNot, expr)
+        self.build_unary(ast::UnOp::Not, expr)
     }
 
     pub fn build_neg(self, expr: P<ast::Expr>) -> F::Result {
-        self.build_unary(ast::UnNeg, expr)
+        self.build_unary(ast::UnOp::Neg, expr)
     }
 
     pub fn unary(self, unop: ast::UnOp) -> ExprBuilder<ExprUnaryBuilder<F>> {
@@ -200,98 +228,98 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn deref(self) -> ExprBuilder<ExprUnaryBuilder<F>> {
-        self.unary(ast::UnDeref)
+        self.unary(ast::UnOp::Deref)
     }
 
     pub fn not(self) -> ExprBuilder<ExprUnaryBuilder<F>> {
-        self.unary(ast::UnNot)
+        self.unary(ast::UnOp::Not)
     }
 
     pub fn neg(self) -> ExprBuilder<ExprUnaryBuilder<F>> {
-        self.unary(ast::UnNeg)
+        self.unary(ast::UnOp::Neg)
     }
 
     pub fn build_binary(self,
-                        binop: ast::BinOp_,
+                        binop: ast::BinOpKind,
                         lhs: P<ast::Expr>,
                         rhs: P<ast::Expr>) -> F::Result {
         let binop = respan(self.span, binop);
-        self.build_expr_(ast::Expr_::ExprBinary(binop, lhs, rhs))
+        self.build_expr_kind(ast::ExprKind::Binary(binop, lhs, rhs))
     }
 
     pub fn build_add(self, lhs: P<ast::Expr>, rhs: P<ast::Expr>) -> F::Result {
-        self.build_binary(ast::BinOp_::BiAdd, lhs, rhs)
+        self.build_binary(ast::BinOpKind::Add, lhs, rhs)
     }
 
     pub fn build_sub(self, lhs: P<ast::Expr>, rhs: P<ast::Expr>) -> F::Result {
-        self.build_binary(ast::BinOp_::BiSub, lhs, rhs)
+        self.build_binary(ast::BinOpKind::Sub, lhs, rhs)
     }
 
     pub fn build_mul(self, lhs: P<ast::Expr>, rhs: P<ast::Expr>) -> F::Result {
-        self.build_binary(ast::BinOp_::BiMul, lhs, rhs)
+        self.build_binary(ast::BinOpKind::Mul, lhs, rhs)
     }
 
     pub fn build_div(self, lhs: P<ast::Expr>, rhs: P<ast::Expr>) -> F::Result {
-        self.build_binary(ast::BinOp_::BiDiv, lhs, rhs)
+        self.build_binary(ast::BinOpKind::Div, lhs, rhs)
     }
 
     pub fn build_rem(self, lhs: P<ast::Expr>, rhs: P<ast::Expr>) -> F::Result {
-        self.build_binary(ast::BinOp_::BiRem, lhs, rhs)
+        self.build_binary(ast::BinOpKind::Rem, lhs, rhs)
     }
 
     pub fn build_and(self, lhs: P<ast::Expr>, rhs: P<ast::Expr>) -> F::Result {
-        self.build_binary(ast::BinOp_::BiAnd, lhs, rhs)
+        self.build_binary(ast::BinOpKind::And, lhs, rhs)
     }
 
     pub fn build_or(self, lhs: P<ast::Expr>, rhs: P<ast::Expr>) -> F::Result {
-        self.build_binary(ast::BinOp_::BiOr, lhs, rhs)
+        self.build_binary(ast::BinOpKind::Or, lhs, rhs)
     }
 
     pub fn build_bit_xor(self, lhs: P<ast::Expr>, rhs: P<ast::Expr>) -> F::Result {
-        self.build_binary(ast::BinOp_::BiBitXor, lhs, rhs)
+        self.build_binary(ast::BinOpKind::BitXor, lhs, rhs)
     }
 
     pub fn build_bit_and(self, lhs: P<ast::Expr>, rhs: P<ast::Expr>) -> F::Result {
-        self.build_binary(ast::BinOp_::BiBitAnd, lhs, rhs)
+        self.build_binary(ast::BinOpKind::BitAnd, lhs, rhs)
     }
 
     pub fn build_bit_or(self, lhs: P<ast::Expr>, rhs: P<ast::Expr>) -> F::Result {
-        self.build_binary(ast::BinOp_::BiBitOr, lhs, rhs)
+        self.build_binary(ast::BinOpKind::BitOr, lhs, rhs)
     }
 
     pub fn build_shl(self, lhs: P<ast::Expr>, rhs: P<ast::Expr>) -> F::Result {
-        self.build_binary(ast::BinOp_::BiShl, lhs, rhs)
+        self.build_binary(ast::BinOpKind::Shl, lhs, rhs)
     }
 
     pub fn build_shr(self, lhs: P<ast::Expr>, rhs: P<ast::Expr>) -> F::Result {
-        self.build_binary(ast::BinOp_::BiShr, lhs, rhs)
+        self.build_binary(ast::BinOpKind::Shr, lhs, rhs)
     }
 
     pub fn build_eq(self, lhs: P<ast::Expr>, rhs: P<ast::Expr>) -> F::Result {
-        self.build_binary(ast::BinOp_::BiEq, lhs, rhs)
+        self.build_binary(ast::BinOpKind::Eq, lhs, rhs)
     }
 
     pub fn build_lt(self, lhs: P<ast::Expr>, rhs: P<ast::Expr>) -> F::Result {
-        self.build_binary(ast::BinOp_::BiLt, lhs, rhs)
+        self.build_binary(ast::BinOpKind::Lt, lhs, rhs)
     }
 
     pub fn build_le(self, lhs: P<ast::Expr>, rhs: P<ast::Expr>) -> F::Result {
-        self.build_binary(ast::BinOp_::BiLe, lhs, rhs)
+        self.build_binary(ast::BinOpKind::Le, lhs, rhs)
     }
 
     pub fn build_ne(self, lhs: P<ast::Expr>, rhs: P<ast::Expr>) -> F::Result {
-        self.build_binary(ast::BinOp_::BiNe, lhs, rhs)
+        self.build_binary(ast::BinOpKind::Ne, lhs, rhs)
     }
 
     pub fn build_ge(self, lhs: P<ast::Expr>, rhs: P<ast::Expr>) -> F::Result {
-        self.build_binary(ast::BinOp_::BiGe, lhs, rhs)
+        self.build_binary(ast::BinOpKind::Ge, lhs, rhs)
     }
 
     pub fn build_gt(self, lhs: P<ast::Expr>, rhs: P<ast::Expr>) -> F::Result {
-        self.build_binary(ast::BinOp_::BiGt, lhs, rhs)
+        self.build_binary(ast::BinOpKind::Gt, lhs, rhs)
     }
 
-    pub fn binary(self, binop: ast::BinOp_) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
+    pub fn binary(self, binop: ast::BinOpKind) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
         ExprBuilder::with_callback(ExprBinaryLhsBuilder {
             builder: self,
             binop: binop,
@@ -299,115 +327,115 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn add(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
-        self.binary(ast::BinOp_::BiAdd)
+        self.binary(ast::BinOpKind::Add)
     }
 
     pub fn sub(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
-        self.binary(ast::BinOp_::BiSub)
+        self.binary(ast::BinOpKind::Sub)
     }
 
     pub fn mul(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
-        self.binary(ast::BinOp_::BiMul)
+        self.binary(ast::BinOpKind::Mul)
     }
 
     pub fn div(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
-        self.binary(ast::BinOp_::BiDiv)
+        self.binary(ast::BinOpKind::Div)
     }
 
     pub fn rem(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
-        self.binary(ast::BinOp_::BiRem)
+        self.binary(ast::BinOpKind::Rem)
     }
 
     pub fn and(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
-        self.binary(ast::BinOp_::BiAnd)
+        self.binary(ast::BinOpKind::And)
     }
 
     pub fn or(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
-        self.binary(ast::BinOp_::BiOr)
+        self.binary(ast::BinOpKind::Or)
     }
 
     pub fn bit_xor(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
-        self.binary(ast::BinOp_::BiBitXor)
+        self.binary(ast::BinOpKind::BitXor)
     }
 
     pub fn bit_and(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
-        self.binary(ast::BinOp_::BiBitAnd)
+        self.binary(ast::BinOpKind::BitAnd)
     }
 
     pub fn bit_or(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
-        self.binary(ast::BinOp_::BiBitOr)
+        self.binary(ast::BinOpKind::BitOr)
     }
 
     pub fn shl(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
-        self.binary(ast::BinOp_::BiShl)
+        self.binary(ast::BinOpKind::Shl)
     }
 
     pub fn shr(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
-        self.binary(ast::BinOp_::BiShr)
+        self.binary(ast::BinOpKind::Shr)
     }
 
     pub fn eq(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
-        self.binary(ast::BinOp_::BiEq)
+        self.binary(ast::BinOpKind::Eq)
     }
 
     pub fn lt(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
-        self.binary(ast::BinOp_::BiLt)
+        self.binary(ast::BinOpKind::Lt)
     }
 
     pub fn le(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
-        self.binary(ast::BinOp_::BiLe)
+        self.binary(ast::BinOpKind::Le)
     }
 
     pub fn ne(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
-        self.binary(ast::BinOp_::BiNe)
+        self.binary(ast::BinOpKind::Ne)
     }
 
     pub fn ge(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
-        self.binary(ast::BinOp_::BiGe)
+        self.binary(ast::BinOpKind::Ge)
     }
 
     pub fn gt(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
-        self.binary(ast::BinOp_::BiGt)
+        self.binary(ast::BinOpKind::Gt)
     }
 
     pub fn addr_of(self) -> ExprBuilder<ExprAddrOfBuilder<F>> {
         ExprBuilder::with_callback(ExprAddrOfBuilder {
             builder: self,
-            mutability: ast::Mutability::MutImmutable,
+            mutability: ast::Mutability::Immutable,
         })
     }
 
     pub fn mut_addr_of(self) -> ExprBuilder<ExprAddrOfBuilder<F>> {
         ExprBuilder::with_callback(ExprAddrOfBuilder {
             builder: self,
-            mutability: ast::Mutability::MutMutable,
+            mutability: ast::Mutability::Mutable,
         })
     }
 
     pub fn break_(self) -> F::Result {
-        self.build_expr_(ast::Expr_::ExprBreak(None))
+        self.build_expr_kind(ast::ExprKind::Break(None))
     }
 
     pub fn break_to<I>(self, label: I) -> F::Result
         where I: ToIdent,
     {
         let label = respan(self.span, label.to_ident());
-        self.build_expr_(ast::Expr_::ExprBreak(Some(label)))
+        self.build_expr_kind(ast::ExprKind::Break(Some(label)))
     }
 
     pub fn continue_(self) -> F::Result {
-        self.build_expr_(ast::Expr_::ExprAgain(None))
+        self.build_expr_kind(ast::ExprKind::Again(None))
     }
 
     pub fn continue_to<I>(self, label: I) -> F::Result
         where I: ToIdent,
     {
         let label = respan(self.span, label.to_ident());
-        self.build_expr_(ast::Expr_::ExprAgain(Some(label)))
+        self.build_expr_kind(ast::ExprKind::Again(Some(label)))
     }
 
     pub fn return_(self) -> F::Result {
-        self.build_expr_(ast::Expr_::ExprRet(None))
+        self.build_expr_kind(ast::ExprKind::Ret(None))
     }
 
     pub fn return_expr(self) -> ExprBuilder<ExprReturnBuilder<F>> {
@@ -517,7 +545,7 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn build_block(self, block: P<ast::Block>) -> F::Result {
-        self.build_expr_(ast::ExprBlock(block))
+        self.build_expr_kind(ast::ExprKind::Block(block))
     }
 
     pub fn block(self) -> BlockBuilder<Self> {
@@ -525,7 +553,7 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn build_assign(self, lhs: P<ast::Expr>, rhs: P<ast::Expr>) -> F::Result {
-        self.build_expr_(ast::ExprAssign(lhs, rhs))
+        self.build_expr_kind(ast::ExprKind::Assign(lhs, rhs))
     }
 
     pub fn assign(self) -> ExprBuilder<ExprAssignBuilder<F>> {
@@ -535,14 +563,14 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn build_assign_op(self,
-                           binop: ast::BinOp_,
+                           binop: ast::BinOpKind,
                            lhs: P<ast::Expr>,
                            rhs: P<ast::Expr>) -> F::Result {
         let binop = respan(self.span, binop);
-        self.build_expr_(ast::ExprAssignOp(binop, lhs, rhs))
+        self.build_expr_kind(ast::ExprKind::AssignOp(binop, lhs, rhs))
     }
 
-    pub fn assign_op(self, binop: ast::BinOp_) -> ExprBuilder<ExprAssignOpBuilder<F>> {
+    pub fn assign_op(self, binop: ast::BinOpKind) -> ExprBuilder<ExprAssignOpBuilder<F>> {
         ExprBuilder::with_callback(ExprAssignOpBuilder {
             builder: self,
             binop: binop,
@@ -550,51 +578,51 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn add_assign(self) -> ExprBuilder<ExprAssignOpBuilder<F>> {
-        self.assign_op(ast::BinOp_::BiAdd)
+        self.assign_op(ast::BinOpKind::Add)
     }
 
     pub fn sub_assign(self) -> ExprBuilder<ExprAssignOpBuilder<F>> {
-        self.assign_op(ast::BinOp_::BiSub)
+        self.assign_op(ast::BinOpKind::Sub)
     }
 
     pub fn mul_assign(self) -> ExprBuilder<ExprAssignOpBuilder<F>> {
-        self.assign_op(ast::BinOp_::BiMul)
+        self.assign_op(ast::BinOpKind::Mul)
     }
 
     pub fn rem_assign(self) -> ExprBuilder<ExprAssignOpBuilder<F>> {
-        self.assign_op(ast::BinOp_::BiRem)
+        self.assign_op(ast::BinOpKind::Rem)
     }
 
     pub fn and_assign(self) -> ExprBuilder<ExprAssignOpBuilder<F>> {
-        self.assign_op(ast::BinOp_::BiAnd)
+        self.assign_op(ast::BinOpKind::And)
     }
 
     pub fn or_assign(self) -> ExprBuilder<ExprAssignOpBuilder<F>> {
-        self.assign_op(ast::BinOp_::BiOr)
+        self.assign_op(ast::BinOpKind::Or)
     }
 
     pub fn bit_xor_assign(self) -> ExprBuilder<ExprAssignOpBuilder<F>> {
-        self.assign_op(ast::BinOp_::BiBitXor)
+        self.assign_op(ast::BinOpKind::BitXor)
     }
 
     pub fn bit_and_assign(self) -> ExprBuilder<ExprAssignOpBuilder<F>> {
-        self.assign_op(ast::BinOp_::BiBitAnd)
+        self.assign_op(ast::BinOpKind::BitAnd)
     }
 
     pub fn bit_or_assign(self) -> ExprBuilder<ExprAssignOpBuilder<F>> {
-        self.assign_op(ast::BinOp_::BiBitOr)
+        self.assign_op(ast::BinOpKind::BitOr)
     }
 
     pub fn bit_shl_assign(self) -> ExprBuilder<ExprAssignOpBuilder<F>> {
-        self.assign_op(ast::BinOp_::BiShl)
+        self.assign_op(ast::BinOpKind::Shl)
     }
 
     pub fn bit_shr_assign(self) -> ExprBuilder<ExprAssignOpBuilder<F>> {
-        self.assign_op(ast::BinOp_::BiShr)
+        self.assign_op(ast::BinOpKind::Shr)
     }
 
     pub fn build_index(self, lhs: P<ast::Expr>, rhs: P<ast::Expr>) -> F::Result {
-        self.build_expr_(ast::ExprIndex(lhs, rhs))
+        self.build_expr_kind(ast::ExprKind::Index(lhs, rhs))
     }
 
     pub fn index(self) -> ExprBuilder<ExprIndexBuilder<F>> {
@@ -604,7 +632,7 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn build_repeat(self, lhs: P<ast::Expr>, rhs: P<ast::Expr>) -> F::Result {
-        self.build_expr_(ast::ExprRepeat(lhs, rhs))
+        self.build_expr_kind(ast::ExprKind::Repeat(lhs, rhs))
     }
 
     pub fn repeat(self) -> ExprBuilder<ExprRepeatBuilder<F>> {
@@ -797,7 +825,7 @@ impl<F> Invoke<P<ast::Expr>> for ExprUnaryBuilder<F>
 
 pub struct ExprBinaryLhsBuilder<F> {
     builder: ExprBuilder<F>,
-    binop: ast::BinOp_,
+    binop: ast::BinOpKind,
 }
 
 impl<F> Invoke<P<ast::Expr>> for ExprBinaryLhsBuilder<F>
@@ -816,7 +844,7 @@ impl<F> Invoke<P<ast::Expr>> for ExprBinaryLhsBuilder<F>
 
 pub struct ExprBinaryRhsBuilder<F> {
     builder: ExprBuilder<F>,
-    binop: ast::BinOp_,
+    binop: ast::BinOpKind,
     lhs: P<ast::Expr>,
 }
 
@@ -842,7 +870,7 @@ impl<F> Invoke<P<ast::Expr>> for ExprReturnBuilder<F>
     type Result = F::Result;
 
     fn invoke(self, expr: P<ast::Expr>) -> F::Result {
-        self.builder.build_expr_(ast::Expr_::ExprRet(Some(expr)))
+        self.builder.build_expr_kind(ast::ExprKind::Ret(Some(expr)))
     }
 }
 
@@ -868,7 +896,7 @@ impl<F: Invoke<P<ast::Expr>>> ExprTupleBuilder<F>
     }
 
     pub fn build(self) -> F::Result {
-        self.builder.build_expr_(ast::ExprTup(self.exprs))
+        self.builder.build_expr_kind(ast::ExprKind::Tup(self.exprs))
     }
 }
 
@@ -947,8 +975,8 @@ impl<F> ExprStructPathBuilder<F>
     }
 
     pub fn build(self) -> F::Result {
-        let expr_ = ast::ExprStruct(self.path, self.fields, None);
-        self.builder.build_expr_(expr_)
+        let expr_kind = ast::ExprKind::Struct(self.path, self.fields, None);
+        self.builder.build_expr_kind(expr_kind)
     }
 }
 
@@ -958,8 +986,8 @@ impl<F> Invoke<P<ast::Expr>> for ExprStructPathBuilder<F>
     type Result = F::Result;
 
     fn invoke(self, expr: P<ast::Expr>) -> F::Result {
-        let expr_ = ast::ExprStruct(self.path, self.fields, Some(expr));
-        self.builder.build_expr_(expr_)
+        let expr_kind = ast::ExprKind::Struct(self.path, self.fields, Some(expr));
+        self.builder.build_expr_kind(expr_kind)
     }
 }
 
@@ -1033,7 +1061,7 @@ impl<F> ExprCallArgsBuilder<F>
     }
 
     pub fn build(self) -> F::Result {
-        self.builder.build_expr_(ast::ExprCall(self.fn_, self.args))
+        self.builder.build_expr_kind(ast::ExprKind::Call(self.fn_, self.args))
     }
 }
 
@@ -1114,7 +1142,7 @@ impl<F> ExprMethodCallArgsBuilder<F>
     }
 
     pub fn build(self) -> F::Result {
-        self.builder.build_expr_(ast::ExprMethodCall(self.id, self.tys, self.args))
+        self.builder.build_expr_kind(ast::ExprKind::MethodCall(self.id, self.tys, self.args))
     }
 }
 
@@ -1151,7 +1179,7 @@ impl<F> Invoke<P<ast::Expr>> for ExprAddrOfBuilder<F>
     type Result = F::Result;
 
     fn invoke(self, expr: P<ast::Expr>) -> F::Result {
-        self.builder.build_expr_(ast::ExprAddrOf(self.mutability, expr))
+        self.builder.build_expr_kind(ast::ExprKind::AddrOf(self.mutability, expr))
     }
 }
 
@@ -1215,7 +1243,7 @@ impl<F> Invoke<P<ast::Expr>> for ExprAssignLhsBuilder<F>
 
 pub struct ExprAssignOpBuilder<F> {
     builder: ExprBuilder<F>,
-    binop: ast::BinOp_,
+    binop: ast::BinOpKind,
 }
 
 impl<F> Invoke<P<ast::Expr>> for ExprAssignOpBuilder<F>
@@ -1236,7 +1264,7 @@ impl<F> Invoke<P<ast::Expr>> for ExprAssignOpBuilder<F>
 
 pub struct ExprAssignOpLhsBuilder<F> {
     builder: ExprBuilder<F>,
-    binop: ast::BinOp_,
+    binop: ast::BinOpKind,
     lhs: P<ast::Expr>,
 }
 
@@ -1350,7 +1378,7 @@ impl<F> Invoke<P<ast::Block>> for ExprLoopBuilder<F>
     type Result = F::Result;
 
     fn invoke(self, block: P<ast::Block>) -> F::Result {
-        self.builder.build_expr_(ast::ExprLoop(block, self.label))
+        self.builder.build_expr_kind(ast::ExprKind::Loop(block, self.label))
     }
 }
 
@@ -1433,7 +1461,7 @@ impl<F> ExprIfThenElseBuilder<F>
                 .build_else_expr(else_);
         }
 
-        self.builder.build_expr_(ast::ExprIf(self.condition, self.then, Some(else_)))
+        self.builder.build_expr_kind(ast::ExprKind::If(self.condition, self.then, Some(else_)))
     }
 
     pub fn build_else(self, block: P<ast::Block>) -> F::Result {
@@ -1467,7 +1495,7 @@ impl<F> ExprIfThenElseBuilder<F>
             None => None
         };
 
-        self.builder.build_expr_(ast::ExprIf(self.condition, self.then, else_))
+        self.builder.build_expr_kind(ast::ExprKind::If(self.condition, self.then, else_))
     }
 }
 
@@ -1578,7 +1606,7 @@ impl<F> ExprMatchArmBuilder<F>
     }
 
     pub fn build(self) -> F::Result {
-        self.builder.build_expr_(ast::ExprMatch(self.expr, self.arms))
+        self.builder.build_expr_kind(ast::ExprKind::Match(self.expr, self.arms))
     }
 }
 
@@ -1604,7 +1632,7 @@ impl<F> Invoke<P<ast::Expr>> for ExprParenBuilder<F>
     type Result = F::Result;
 
     fn invoke(self, expr: P<ast::Expr>) -> F::Result {
-        self.builder.build_expr_(ast::ExprParen(expr))
+        self.builder.build_expr_kind(ast::ExprKind::Paren(expr))
     }
 }
 
@@ -1621,7 +1649,7 @@ impl<F> Invoke<P<ast::Expr>> for ExprFieldBuilder<F>
     type Result = F::Result;
 
     fn invoke(self, expr: P<ast::Expr>) -> F::Result {
-        self.builder.build_expr_(ast::ExprField(expr, self.id))
+        self.builder.build_expr_kind(ast::ExprKind::Field(expr, self.id))
     }
 }
 
@@ -1638,7 +1666,7 @@ impl<F> Invoke<P<ast::Expr>> for ExprTupFieldBuilder<F>
     type Result = F::Result;
 
     fn invoke(self, expr: P<ast::Expr>) -> F::Result {
-        self.builder.build_expr_(ast::ExprTupField(expr, self.index))
+        self.builder.build_expr_kind(ast::ExprKind::TupField(expr, self.index))
     }
 }
 
@@ -1664,7 +1692,7 @@ impl<F: Invoke<P<ast::Expr>>> ExprSliceBuilder<F>
     }
 
     pub fn build(self) -> F::Result {
-        self.builder.build_expr_(ast::ExprVec(self.exprs))
+        self.builder.build_expr_kind(ast::ExprKind::Vec(self.exprs))
     }
 }
 

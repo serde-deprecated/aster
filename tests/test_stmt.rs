@@ -13,10 +13,10 @@ fn test_let() {
             .let_().id("x").build(),
         P(respan(
             DUMMY_SP,
-            ast::StmtDecl(
+            ast::StmtKind::Decl(
                 P(respan(
                     DUMMY_SP,
-                    ast::DeclLocal(P(ast::Local {
+                    ast::DeclKind::Local(P(ast::Local {
                         pat: builder.pat().id("x"),
                         ty: None,
                         init: None,
@@ -35,10 +35,10 @@ fn test_let() {
             .let_().id("x").ty().i8().build(),
         P(respan(
             DUMMY_SP,
-            ast::StmtDecl(
+            ast::StmtKind::Decl(
                 P(respan(
                     DUMMY_SP,
-                    ast::DeclLocal(P(ast::Local {
+                    ast::DeclKind::Local(P(ast::Local {
                         pat: builder.pat().id("x"),
                         ty: Some(builder.ty().i8()),
                         init: None,
@@ -57,10 +57,10 @@ fn test_let() {
             .let_().id("x").expr().i8(5),
         P(respan(
             DUMMY_SP,
-            ast::StmtDecl(
+            ast::StmtKind::Decl(
                 P(respan(
                     DUMMY_SP,
-                    ast::DeclLocal(P(ast::Local {
+                    ast::DeclKind::Local(P(ast::Local {
                         pat: builder.pat().id("x"),
                         ty: None,
                         init: Some(builder.expr().i8(5)),
@@ -79,10 +79,10 @@ fn test_let() {
             .let_().id("x").ty().i8().expr().i8(5),
         P(respan(
             DUMMY_SP,
-            ast::StmtDecl(
+            ast::StmtKind::Decl(
                 P(respan(
                     DUMMY_SP,
-                    ast::DeclLocal(P(ast::Local {
+                    ast::DeclKind::Local(P(ast::Local {
                         pat: builder.pat().id("x"),
                         ty: Some(builder.ty().i8()),
                         init: Some(builder.expr().i8(5)),
@@ -108,10 +108,10 @@ fn test_let() {
                 .build(),
         P(respan(
             DUMMY_SP,
-            ast::StmtDecl(
+            ast::StmtKind::Decl(
                 P(respan(
                     DUMMY_SP,
-                    ast::DeclLocal(P(ast::Local {
+                    ast::DeclKind::Local(P(ast::Local {
                         pat: builder.pat().tuple()
                             .pat().id("x")
                             .pat().id("y")

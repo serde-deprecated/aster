@@ -13,7 +13,7 @@ fn test_lit() {
             expr,
             P(ast::Expr {
                 id: ast::DUMMY_NODE_ID,
-                node: ast::ExprLit(lit),
+                node: ast::ExprKind::Lit(lit),
                 span: DUMMY_SP,
                 attrs: None,
             })
@@ -53,7 +53,7 @@ fn test_path() {
         expr,
         P(ast::Expr {
             id: ast::DUMMY_NODE_ID,
-            node: ast::ExprPath(
+            node: ast::ExprKind::Path(
                 None,
                 builder.path().id("x").build(),
             ),
@@ -75,7 +75,7 @@ fn test_qpath() {
         expr,
         P(ast::Expr {
             id: ast::DUMMY_NODE_ID,
-            node: ast::ExprPath(
+            node: ast::ExprKind::Path(
                 Some(ast::QSelf {
                     ty: builder.ty().slice().infer(),
                     position: 0,
@@ -96,7 +96,7 @@ fn test_qpath() {
         expr,
         P(ast::Expr {
             id: ast::DUMMY_NODE_ID,
-            node: ast::ExprPath(
+            node: ast::ExprKind::Path(
                 Some(ast::QSelf {
                     ty: builder.ty().slice().infer(),
                     position: 1,
@@ -121,10 +121,10 @@ fn test_bin() {
         builder.expr().add().i8(1).i8(2),
         P(ast::Expr {
             id: ast::DUMMY_NODE_ID,
-            node: ast::ExprBinary(
+            node: ast::ExprKind::Binary(
                 Spanned {
                     span: DUMMY_SP,
-                    node: ast::BiAdd,
+                    node: ast::BinOpKind::Add,
                 },
                 builder.expr().i8(1),
                 builder.expr().i8(2),
@@ -143,7 +143,7 @@ fn test_unit() {
         builder.expr().unit(),
         P(ast::Expr {
             id: ast::DUMMY_NODE_ID,
-            node: ast::ExprTup(vec![]),
+            node: ast::ExprKind::Tup(vec![]),
             span: DUMMY_SP,
             attrs: None,
         })
@@ -153,7 +153,7 @@ fn test_unit() {
         builder.expr().tuple().build(),
         P(ast::Expr {
             id: ast::DUMMY_NODE_ID,
-            node: ast::ExprTup(vec![]),
+            node: ast::ExprKind::Tup(vec![]),
             span: DUMMY_SP,
             attrs: None,
         })
@@ -176,11 +176,11 @@ fn test_tuple() {
         expr,
         P(ast::Expr {
             id: ast::DUMMY_NODE_ID,
-            node: ast::ExprTup(vec![
+            node: ast::ExprKind::Tup(vec![
                 builder.expr().i8(1),
                 P(ast::Expr {
                     id: ast::DUMMY_NODE_ID,
-                    node: ast::ExprTup(vec![
+                    node: ast::ExprKind::Tup(vec![
                         builder.expr().unit(),
                         builder.expr().isize(2),
                     ]),
@@ -208,7 +208,7 @@ fn test_slice() {
         expr,
         P(ast::Expr {
             id: ast::DUMMY_NODE_ID,
-            node: ast::ExprVec(vec![
+            node: ast::ExprKind::Vec(vec![
                 builder.expr().i8(1),
                 builder.expr().i8(2),
                 builder.expr().i8(3),
@@ -250,7 +250,7 @@ fn test_break() {
 
     assert_eq!(
         expr,
-        builder.expr().build_expr_(ast::ExprBreak(None))
+        builder.expr().build_expr_kind(ast::ExprKind::Break(None))
     );
 
     let expr = builder.expr().break_to("'a");
@@ -258,7 +258,7 @@ fn test_break() {
 
     assert_eq!(
         expr,
-        builder.expr().build_expr_(ast::ExprBreak(Some(id)))
+        builder.expr().build_expr_kind(ast::ExprKind::Break(Some(id)))
     );
 }
 
@@ -270,7 +270,7 @@ fn test_continue() {
 
     assert_eq!(
         expr,
-        builder.expr().build_expr_(ast::ExprAgain(None))
+        builder.expr().build_expr_kind(ast::ExprKind::Again(None))
     );
 
     let expr = builder.expr().continue_to("'a");
@@ -278,7 +278,7 @@ fn test_continue() {
 
     assert_eq!(
         expr,
-        builder.expr().build_expr_(ast::ExprAgain(Some(id)))
+        builder.expr().build_expr_kind(ast::ExprKind::Again(Some(id)))
     );
 }
 
@@ -290,14 +290,14 @@ fn test_return() {
 
     assert_eq!(
         expr,
-        builder.expr().build_expr_(ast::ExprRet(None))
+        builder.expr().build_expr_kind(ast::ExprKind::Ret(None))
     );
 
     let expr = builder.expr().return_expr().unit();
 
     assert_eq!(
         expr,
-        builder.expr().build_expr_(ast::ExprRet(Some(builder.expr().unit())))
+        builder.expr().build_expr_kind(ast::ExprKind::Ret(Some(builder.expr().unit())))
     );
 }
 
@@ -311,8 +311,8 @@ fn test_loop() {
 
     assert_eq!(
         expr,
-        builder.expr().build_expr_(
-            ast::ExprLoop(
+        builder.expr().build_expr_kind(
+            ast::ExprKind::Loop(
                 builder.block().build(),
                 None,
             )
@@ -326,8 +326,8 @@ fn test_loop() {
 
     assert_eq!(
         expr,
-        builder.expr().build_expr_(
-            ast::ExprLoop(
+        builder.expr().build_expr_kind(
+            ast::ExprKind::Loop(
                 builder.block().build(),
                 Some(builder.id("'a")),
             )
@@ -346,8 +346,8 @@ fn test_if() {
 
     assert_eq!(
         expr,
-        builder.expr().build_expr_(
-            ast::ExprIf(
+        builder.expr().build_expr_kind(
+            ast::ExprKind::If(
                 builder.expr().true_(),
                 builder.block().expr().u32(1),
                 None,
@@ -362,8 +362,8 @@ fn test_if() {
 
     assert_eq!(
         expr,
-        builder.expr().build_expr_(
-            ast::ExprIf(
+        builder.expr().build_expr_kind(
+            ast::ExprKind::If(
                 builder.expr().true_(),
                 builder.block().expr().u32(1),
                 Some(builder.expr().block().expr().u32(2))
@@ -389,15 +389,15 @@ fn test_if() {
 
     assert_eq!(
         expr,
-        builder.expr().build_expr_(
-            ast::ExprIf(
+        builder.expr().build_expr_kind(
+            ast::ExprKind::If(
                 builder.expr()
                     .eq().id("x").u32(1),
                 builder.block()
                     .expr().u32(1),
                 Some(
-                    builder.expr().build_expr_(
-                        ast::ExprIf(
+                    builder.expr().build_expr_kind(
+                        ast::ExprKind::If(
                             builder.expr()
                                 .eq().id("x").u32(2),
                             builder.block()
@@ -437,8 +437,8 @@ fn test_match() {
 
     assert_eq!(
         expr,
-        builder.expr().build_expr_(
-            ast::ExprMatch(
+        builder.expr().build_expr_kind(
+            ast::ExprKind::Match(
                 builder.expr().u32(0),
                 vec![
                     builder.arm()
@@ -466,15 +466,15 @@ fn test_index() {
 
     assert_eq!(
         expr,
-        builder.expr().build_expr_(
-            ast::ExprIndex(
+        builder.expr().build_expr_kind(
+            ast::ExprKind::Index(
                 builder.expr().id("x"),
                 builder.expr().usize(2)
             )
         )
     );
 }
- 
+
 #[test]
 fn test_repeat() {
     let builder = AstBuilder::new();
@@ -485,8 +485,8 @@ fn test_repeat() {
 
     assert_eq!(
         expr,
-        builder.expr().build_expr_(
-            ast::ExprRepeat(
+        builder.expr().build_expr_kind(
+            ast::ExprKind::Repeat(
                 builder.expr().u16(1024),
                 builder.expr().usize(16)
             )

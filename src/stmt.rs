@@ -45,7 +45,7 @@ impl<F> StmtBuilder<F>
         self
     }
 
-    pub fn build_stmt_(self, stmt_: ast::Stmt_) -> F::Result {
+    pub fn build_stmt_kind(self, stmt_: ast::StmtKind) -> F::Result {
         let stmt = P(respan(self.span, stmt_));
         self.build(stmt)
     }
@@ -63,9 +63,9 @@ impl<F> StmtBuilder<F>
             attrs: self.attrs.clone().into_thin_attrs(),
         };
 
-        let decl = respan(self.span, ast::Decl_::DeclLocal(P(local)));
+        let decl = respan(self.span, ast::DeclKind::Local(P(local)));
 
-        self.build_stmt_(ast::StmtDecl(P(decl), ast::DUMMY_NODE_ID))
+        self.build_stmt_kind(ast::StmtKind::Decl(P(decl), ast::DUMMY_NODE_ID))
     }
 
     pub fn let_(self) -> PatBuilder<Self> {
@@ -80,7 +80,7 @@ impl<F> StmtBuilder<F>
     }
 
     pub fn build_expr(self, expr: P<ast::Expr>) -> F::Result {
-        self.build_stmt_(ast::Stmt_::StmtExpr(expr, ast::DUMMY_NODE_ID))
+        self.build_stmt_kind(ast::StmtKind::Expr(expr, ast::DUMMY_NODE_ID))
     }
 
     pub fn expr(self) -> ExprBuilder<StmtExprBuilder<F>> {
@@ -94,8 +94,8 @@ impl<F> StmtBuilder<F>
     }
 
     pub fn build_item(self, item: P<ast::Item>) -> F::Result {
-        let decl = respan(self.span, ast::Decl_::DeclItem(item));
-        self.build_stmt_(ast::StmtDecl(P(decl), ast::DUMMY_NODE_ID))
+        let decl = respan(self.span, ast::DeclKind::Item(item));
+        self.build_stmt_kind(ast::StmtKind::Decl(P(decl), ast::DUMMY_NODE_ID))
     }
 
     pub fn item(self) -> ItemBuilder<StmtItemBuilder<F>> {
@@ -155,7 +155,7 @@ impl<F> Invoke<P<ast::Expr>> for StmtSemiBuilder<F>
     type Result = F::Result;
 
     fn invoke(self, expr: P<ast::Expr>) -> F::Result {
-        self.0.build_stmt_(ast::Stmt_::StmtSemi(expr, ast::DUMMY_NODE_ID))
+        self.0.build_stmt_kind(ast::StmtKind::Semi(expr, ast::DUMMY_NODE_ID))
     }
 }
 
@@ -257,4 +257,3 @@ impl<F> Invoke<P<ast::Item>> for StmtItemBuilder<F>
         self.0.build_item(item)
     }
 }
-

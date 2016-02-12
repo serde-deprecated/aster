@@ -16,7 +16,7 @@ fn test_doc() {
                 style: ast::AttrStyle::Outer,
                 value: P(respan(
                     DUMMY_SP,
-                    ast::MetaNameValue(
+                    ast::MetaItemKind::NameValue(
                         builder.interned_string("doc"),
                         (*builder.lit().str("/// doc string")).clone(),
                     ),

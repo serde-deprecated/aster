@@ -31,7 +31,7 @@ impl<F> BlockBuilder<F>
             callback: callback,
             span: DUMMY_SP,
             stmts: Vec::new(),
-            block_check_mode: ast::BlockCheckMode::DefaultBlock,
+            block_check_mode: ast::BlockCheckMode::Default,
         }
     }
 
@@ -42,7 +42,7 @@ impl<F> BlockBuilder<F>
 
     pub fn unsafe_(mut self) -> Self {
         let source = ast::UnsafeSource::CompilerGenerated;
-        self.block_check_mode = ast::BlockCheckMode::UnsafeBlock(source);
+        self.block_check_mode = ast::BlockCheckMode::Unsafe(source);
         self
     }
 

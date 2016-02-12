@@ -28,7 +28,7 @@ fn test_fn() {
             ident: builder.id("foo"),
             attrs: vec![],
             id: ast::DUMMY_NODE_ID,
-            node: ast::ItemFn(
+            node: ast::ItemKind::Fn(
                 builder.fn_decl().return_().isize(),
                 ast::Unsafety::Normal,
                 ast::Constness::NotConst,
@@ -36,7 +36,7 @@ fn test_fn() {
                 builder.generics().build(),
                 block
             ),
-            vis: ast::Inherited,
+            vis: ast::Visibility::Inherited,
             span: DUMMY_SP,
         })
     );
@@ -66,7 +66,7 @@ fn test_generic_fn() {
             ident: builder.id("foo"),
             attrs: vec![],
             id: ast::DUMMY_NODE_ID,
-            node: ast::ItemFn(
+            node: ast::ItemKind::Fn(
                 builder.fn_decl().return_().isize(),
                 ast::Unsafety::Normal,
                 ast::Constness::NotConst,
@@ -78,7 +78,7 @@ fn test_generic_fn() {
                     .build(),
                 block
             ),
-            vis: ast::Inherited,
+            vis: ast::Visibility::Inherited,
             span: DUMMY_SP,
         })
     );
@@ -95,11 +95,11 @@ fn test_empty_struct() {
             ident: builder.id("Struct"),
             attrs: vec![],
             id: ast::DUMMY_NODE_ID,
-            node: ast::ItemStruct(
+            node: ast::ItemKind::Struct(
                 builder.variant_data().struct_().build(),
                 builder.generics().build(),
             ),
-            vis: ast::Inherited,
+            vis: ast::Visibility::Inherited,
             span: DUMMY_SP,
         })
     );
@@ -119,14 +119,14 @@ fn test_struct() {
             ident: builder.id("Struct"),
             attrs: vec![],
             id: ast::DUMMY_NODE_ID,
-            node: ast::ItemStruct(
+            node: ast::ItemKind::Struct(
                 builder.variant_data().struct_()
                     .field("x").ty().isize()
                     .field("y").ty().isize()
                     .build(),
                 builder.generics().build(),
             ),
-            vis: ast::Inherited,
+            vis: ast::Visibility::Inherited,
             span: DUMMY_SP,
         })
     );
@@ -167,14 +167,14 @@ fn test_tuple_struct() {
             ident: builder.id("Struct"),
             attrs: vec![],
             id: ast::DUMMY_NODE_ID,
-            node: ast::ItemStruct(
+            node: ast::ItemKind::Struct(
                 builder.variant_data().tuple()
                     .ty().isize()
                     .ty().isize()
                     .build(),
                 builder.generics().build(),
             ),
-            vis: ast::Inherited,
+            vis: ast::Visibility::Inherited,
             span: DUMMY_SP,
         })
     );
@@ -191,13 +191,13 @@ fn test_empty_enum() {
             ident: builder.id("Enum"),
             attrs: vec![],
             id: ast::DUMMY_NODE_ID,
-            node: ast::ItemEnum(
+            node: ast::ItemKind::Enum(
                 ast::EnumDef {
                     variants: vec![],
                 },
                 builder.generics().build(),
             ),
-            vis: ast::Inherited,
+            vis: ast::Visibility::Inherited,
             span: DUMMY_SP,
         })
     );
@@ -232,7 +232,7 @@ fn test_enum() {
             ident: builder.id("Enum"),
             attrs: vec![],
             id: ast::DUMMY_NODE_ID,
-            node: ast::ItemEnum(
+            node: ast::ItemKind::Enum(
                 ast::EnumDef {
                     variants: vec![
                         builder.variant("A").unit(),
@@ -256,7 +256,7 @@ fn test_enum() {
                 },
                 builder.generics().build(),
             ),
-            vis: ast::Inherited,
+            vis: ast::Visibility::Inherited,
             span: DUMMY_SP,
         })
     );
@@ -271,10 +271,10 @@ fn test_use() {
                 ident: token::special_idents::invalid,
                 attrs: vec![],
                 id: ast::DUMMY_NODE_ID,
-                node: ast::ItemUse(
+                node: ast::ItemKind::Use(
                     P(respan(DUMMY_SP, view_path))
                 ),
-                vis: ast::Inherited,
+                vis: ast::Visibility::Inherited,
                 span: DUMMY_SP,
             })
         );
@@ -343,16 +343,16 @@ fn test_use() {
         ast::ViewPathList(
             builder.path().ids(&["std", "vec"]).build(),
             vec![
-                respan(DUMMY_SP, ast::PathListMod {
+                respan(DUMMY_SP, ast::PathListItemKind::Mod {
                     id: ast::DUMMY_NODE_ID,
                     rename: None
                 }),
-                respan(DUMMY_SP, ast::PathListIdent {
+                respan(DUMMY_SP, ast::PathListItemKind::Ident {
                     name: "Vec".to_ident(),
                     id: ast::DUMMY_NODE_ID,
                     rename: None
                 }),
-                respan(DUMMY_SP, ast::PathListIdent {
+                respan(DUMMY_SP, ast::PathListItemKind::Ident {
                     name: "IntoIter".to_ident(),
                     id: ast::DUMMY_NODE_ID,
                     rename: None
@@ -384,7 +384,7 @@ fn test_attr() {
                         style: ast::AttrStyle::Outer,
                         value: P(respan(
                             DUMMY_SP,
-                            ast::MetaNameValue(
+                            ast::MetaItemKind::NameValue(
                                 builder.interned_string("doc"),
                                 (*builder.lit().str("/// doc string")).clone(),
                             ),
@@ -394,14 +394,14 @@ fn test_attr() {
                 ),
             ],
             id: ast::DUMMY_NODE_ID,
-            node: ast::ItemStruct(
+            node: ast::ItemKind::Struct(
                 builder.variant_data().struct_()
                     .field("x").ty().isize()
                     .field("y").ty().isize()
                     .build(),
                 builder.generics().build(),
             ),
-            vis: ast::Inherited,
+            vis: ast::Visibility::Inherited,
             span: DUMMY_SP,
         })
     );
@@ -420,8 +420,8 @@ fn test_extern_crate() {
             ident: builder.id("aster"),
             attrs: vec![],
             id: ast::DUMMY_NODE_ID,
-            node: ast::ItemExternCrate(None),
-            vis: ast::Inherited,
+            node: ast::ItemKind::ExternCrate(None),
+            vis: ast::Visibility::Inherited,
             span: DUMMY_SP,
         })
     );
@@ -436,8 +436,8 @@ fn test_extern_crate() {
             ident: builder.id("aster"),
             attrs: vec![],
             id: ast::DUMMY_NODE_ID,
-            node: ast::ItemExternCrate(Some("aster1".to_name())),
-            vis: ast::Inherited,
+            node: ast::ItemKind::ExternCrate(Some("aster1".to_name())),
+            vis: ast::Visibility::Inherited,
             span: DUMMY_SP,
         })
     );
@@ -487,11 +487,11 @@ fn test_type() {
             ident: builder.id("MyT"),
             id: ast::DUMMY_NODE_ID,
             attrs: vec![],
-            node: ast::ItemTy(
+            node: ast::ItemKind::Ty(
                 builder.ty().isize(),
                 builder.generics().build(),
             ),
-            vis: ast::Inherited,
+            vis: ast::Visibility::Inherited,
             span: DUMMY_SP,
         })
     );
@@ -522,7 +522,7 @@ fn test_trait() {
             ident: builder.id("Serialize"),
             id: ast::DUMMY_NODE_ID,
             attrs: vec![],
-            node: ast::ItemTrait(
+            node: ast::ItemKind::Trait(
                 ast::Unsafety::Normal,
                 builder.generics().build(),
                 P::from_vec(vec![
@@ -532,7 +532,7 @@ fn test_trait() {
                         id: ast::DUMMY_NODE_ID,
                         ident: builder.id("MyFloat"),
                         attrs: vec![],
-                        node: ast::TraitItem_::TypeTraitItem(
+                        node: ast::TraitItemKind::Type(
                             P::from_vec(vec![]),
                             None,
                         ),
@@ -543,7 +543,7 @@ fn test_trait() {
                         id: ast::DUMMY_NODE_ID,
                         ident: builder.id("PI"),
                         attrs: vec![],
-                        node: ast::TraitItem_::ConstTraitItem(
+                        node: ast::TraitItemKind::Const(
                             builder.ty().f64(),
                             None,
                         ),
@@ -554,14 +554,14 @@ fn test_trait() {
                         id: ast::DUMMY_NODE_ID,
                         ident: builder.id("serialize"),
                         attrs: vec![],
-                        node: ast::TraitItem_::MethodTraitItem(
+                        node: ast::TraitItemKind::Method(
                             ast::MethodSig {
                                 unsafety: ast::Unsafety::Normal,
                                 constness: ast::Constness::NotConst,
                                 abi: Abi::Rust,
                                 decl: builder.fn_decl().default_return(),
                                 generics: builder.generics().build(),
-                                explicit_self: respan(DUMMY_SP, ast::ExplicitSelf_::SelfStatic),
+                                explicit_self: respan(DUMMY_SP, ast::SelfKind::Static),
                             },
                             None
                         ),
@@ -605,7 +605,7 @@ fn test_impl() {
             ident: builder.id(""),
             id: ast::DUMMY_NODE_ID,
             attrs: vec![],
-            node: ast::ItemImpl(
+            node: ast::ItemKind::Impl(
                 ast::Unsafety::Normal,
                 ast::ImplPolarity::Positive,
                 builder.generics().build(),
@@ -648,7 +648,7 @@ fn test_impl() {
                                 abi: Abi::Rust,
                                 decl: builder.fn_decl().default_return(),
                                 generics: builder.generics().build(),
-                                explicit_self: respan(DUMMY_SP, ast::ExplicitSelf_::SelfStatic),
+                                explicit_self: respan(DUMMY_SP, ast::SelfKind::Static),
                             },
                             builder.block().build()
                         ),
@@ -675,7 +675,7 @@ fn test_const() {
             ident: builder.id("PI"),
             id: ast::DUMMY_NODE_ID,
             attrs: vec![],
-            node: ast::ItemConst(
+            node: ast::ItemKind::Const(
                 builder.ty().f64(),
                 builder.expr().f64("3.14159265358979323846264338327950288")
             ),

@@ -15,7 +15,7 @@ fn test_named() {
             ast::StructField_ {
                 kind: ast::NamedField(
                     builder.id("x"),
-                    ast::Inherited,
+                    ast::Visibility::Inherited,
                 ),
                 id: ast::DUMMY_NODE_ID,
                 ty: builder.ty().isize(),
@@ -34,7 +34,7 @@ fn test_unnamed() {
         respan(
             DUMMY_SP,
             ast::StructField_ {
-                kind: ast::UnnamedField(ast::Inherited),
+                kind: ast::UnnamedField(ast::Visibility::Inherited),
                 id: ast::DUMMY_NODE_ID,
                 ty: builder.ty().isize(),
                 attrs: vec![],
@@ -57,7 +57,7 @@ fn test_attrs() {
             ast::StructField_ {
                 kind: ast::NamedField(
                     builder.id("x"),
-                    ast::Inherited,
+                    ast::Visibility::Inherited,
                 ),
                 id: ast::DUMMY_NODE_ID,
                 ty: builder.ty().isize(),
@@ -69,7 +69,7 @@ fn test_attrs() {
                             style: ast::AttrStyle::Outer,
                             value: P(respan(
                                 DUMMY_SP,
-                                ast::MetaNameValue(
+                                ast::MetaItemKind::NameValue(
                                     builder.interned_string("doc"),
                                     (*builder.lit().str("/// doc string")).clone(),
                                 ),
@@ -84,7 +84,7 @@ fn test_attrs() {
                             style: ast::AttrStyle::Outer,
                             value: P(respan(
                                 DUMMY_SP,
-                                ast::MetaWord(builder.interned_string("automatically_derived")),
+                                ast::MetaItemKind::Word(builder.interned_string("automatically_derived")),
                             )),
                             is_sugared_doc: false,
                         }
@@ -94,4 +94,3 @@ fn test_attrs() {
         )
     );
 }
-

@@ -40,8 +40,8 @@ impl<F> MethodSigBuilder<F>
             generics: GenericsBuilder::new().build(),
             unsafety: ast::Unsafety::Normal,
             constness: ast::Constness::NotConst,
-            explicit_self: respan(DUMMY_SP, ast::ExplicitSelf_::SelfStatic),
-            self_mutable: ast::MutImmutable,
+            explicit_self: respan(DUMMY_SP, ast::SelfKind::Static),
+            self_mutable: ast::Mutability::Immutable,
         }
     }
 
@@ -87,10 +87,10 @@ impl<F> MethodSigBuilder<F>
     pub fn build_fn_decl(self, mut fn_decl: P<ast::FnDecl>) -> F::Result {
         // Add `self` to the decl.
         match self.explicit_self.node {
-            ast::SelfStatic => { }
-            ast::SelfValue(id)
-            | ast::SelfRegion(_, _, id)
-            | ast::SelfExplicit(_, id) => {
+            ast::SelfKind::Static => { }
+            ast::SelfKind::Value(id)
+            | ast::SelfKind::Region(_, _, id)
+            | ast::SelfKind::Explicit(_, id) => {
                 fn_decl = fn_decl.map(|mut fn_decl| {
                     let arg = ast::Arg::new_self(self.span, self.self_mutable, id);
                     fn_decl.inputs.insert(0, arg);
@@ -165,7 +165,7 @@ impl<F> SelfBuilder<F>
         SelfBuilder {
             callback: callback,
             span: DUMMY_SP,
-            mutable: ast::MutImmutable,
+            mutable: ast::Mutability::Immutable,
         }
     }
 
@@ -178,32 +178,32 @@ impl<F> SelfBuilder<F>
         self
     }
 
-    pub fn build_self_(self, self_: ast::ExplicitSelf_) -> F::Result {
+    pub fn build_self_kind(self, self_: ast::SelfKind) -> F::Result {
         let self_ = respan(self.span, self_);
         self.build(self_)
     }
 
     pub fn mut_(mut self) -> Self {
-        self.mutable = ast::MutMutable;
+        self.mutable = ast::Mutability::Mutable;
         self
     }
 
     pub fn static_(self) -> F::Result {
-        self.build_self_(ast::ExplicitSelf_::SelfStatic)
+        self.build_self_kind(ast::SelfKind::Static)
     }
 
     pub fn mut_static(self) -> F::Result {
-        self.build_self_(ast::ExplicitSelf_::SelfStatic)
+        self.build_self_kind(ast::SelfKind::Static)
     }
 
     pub fn value(self) -> F::Result {
-        self.build_self_(ast::ExplicitSelf_::SelfValue("self".to_ident()))
+        self.build_self_kind(ast::SelfKind::Value("self".to_ident()))
     }
 
     pub fn ref_(self) -> F::Result {
-        self.build_self_(ast::ExplicitSelf_::SelfRegion(
+        self.build_self_kind(ast::SelfKind::Region(
             None,
-            ast::Mutability::MutImmutable,
+            ast::Mutability::Immutable,
             "self".to_ident(),
         ))
     }
@@ -211,17 +211,17 @@ impl<F> SelfBuilder<F>
     pub fn ref_lifetime<L>(self, lifetime: L) -> F::Result
         where L: IntoLifetime,
     {
-        self.build_self_(ast::ExplicitSelf_::SelfRegion(
+        self.build_self_kind(ast::SelfKind::Region(
             Some(lifetime.into_lifetime()),
-            ast::Mutability::MutImmutable,
+            ast::Mutability::Immutable,
             "self".to_ident(),
         ))
     }
 
     pub fn ref_mut(self) -> F::Result {
-        self.build_self_(ast::ExplicitSelf_::SelfRegion(
+        self.build_self_kind(ast::SelfKind::Region(
             None,
-            ast::Mutability::MutMutable,
+            ast::Mutability::Mutable,
             "self".to_ident(),
         ))
     }
@@ -229,9 +229,9 @@ impl<F> SelfBuilder<F>
     pub fn ref_mut_lifetime<L>(self, lifetime: L) -> F::Result
         where L: IntoLifetime,
     {
-        self.build_self_(ast::ExplicitSelf_::SelfRegion(
+        self.build_self_kind(ast::SelfKind::Region(
             Some(lifetime.into_lifetime()),
-            ast::Mutability::MutMutable,
+            ast::Mutability::Mutable,
             "self".to_ident(),
         ))
     }
@@ -247,6 +247,6 @@ impl<F> Invoke<P<ast::Ty>> for SelfBuilder<F>
     type Result = F::Result;
 
     fn invoke(self, ty: P<ast::Ty>) -> F::Result {
-        self.build_self_(ast::ExplicitSelf_::SelfExplicit(ty, "self".to_ident()))
+        self.build_self_kind(ast::SelfKind::Explicit(ty, "self".to_ident()))
     }
 }

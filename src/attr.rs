@@ -57,7 +57,7 @@ impl<F> AttrBuilder<F>
         self.callback.invoke(attr)
     }
 
-    pub fn build_meta_item_(self, item: ast::MetaItem_) -> F::Result {
+    pub fn build_meta_item_(self, item: ast::MetaItemKind) -> F::Result {
         let item = P(respan(self.span, item));
         self.build_meta_item(item)
     }
@@ -65,7 +65,7 @@ impl<F> AttrBuilder<F>
     pub fn word<T>(self, word: T) -> F::Result
         where T: ToInternedString
     {
-        self.build_meta_item_(ast::MetaWord(word.to_interned_string()))
+        self.build_meta_item_(ast::MetaItemKind::Word(word.to_interned_string()))
     }
 
     pub fn list<T>(self, word: T) -> AttrListBuilder<Self>
@@ -153,12 +153,12 @@ impl<F> Invoke<P<ast::MetaItem>> for AttrBuilder<F>
     }
 }
 
-impl<F> Invoke<ast::MetaItem_> for AttrBuilder<F>
+impl<F> Invoke<ast::MetaItemKind> for AttrBuilder<F>
     where F: Invoke<ast::Attribute>,
 {
     type Result = F::Result;
 
-    fn invoke(self, item: ast::MetaItem_) -> F::Result {
+    fn invoke(self, item: ast::MetaItemKind) -> F::Result {
         self.build_meta_item_(item)
     }
 }
@@ -199,7 +199,7 @@ impl<F> AttrListBuilder<F>
     }
 
     pub fn with_meta_items_<I>(self, iter: I) -> Self
-        where I: IntoIterator<Item=ast::MetaItem_>,
+        where I: IntoIterator<Item=ast::MetaItemKind>,
     {
         let iter = iter.into_iter();
         let span = self.span;
@@ -211,7 +211,7 @@ impl<F> AttrListBuilder<F>
         self
     }
 
-    pub fn with_meta_item_(self, item: ast::MetaItem_) -> Self {
+    pub fn with_meta_item_kind(self, item: ast::MetaItemKind) -> Self {
         let span = self.span;
         self.with_meta_item(P(respan(span, item)))
     }
@@ -221,13 +221,13 @@ impl<F> AttrListBuilder<F>
               T: ToInternedString,
     {
         let iter = iter.into_iter();
-        self.with_meta_items_(iter.map(|word| ast::MetaWord(word.to_interned_string())))
+        self.with_meta_items_(iter.map(|word| ast::MetaItemKind::Word(word.to_interned_string())))
     }
 
     pub fn word<T>(self, word: T) -> Self
         where T: ToInternedString,
     {
-        self.with_meta_item_(ast::MetaWord(word.to_interned_string()))
+        self.with_meta_item_kind(ast::MetaItemKind::Word(word.to_interned_string()))
     }
 
     pub fn list<T>(self, name: T) -> AttrListBuilder<Self>
@@ -246,7 +246,7 @@ impl<F> AttrListBuilder<F>
     }
 
     pub fn build(self) -> F::Result {
-        let item = respan(self.span, ast::MetaList(self.name, self.items));
+        let item = respan(self.span, ast::MetaItemKind::List(self.name, self.items));
         self.callback.invoke(P(item))
     }
 }
@@ -261,13 +261,13 @@ impl<F> Invoke<P<ast::MetaItem>> for AttrListBuilder<F>
     }
 }
 
-impl<F> Invoke<ast::MetaItem_> for AttrListBuilder<F>
+impl<F> Invoke<ast::MetaItemKind> for AttrListBuilder<F>
     where F: Invoke<P<ast::MetaItem>>,
 {
     type Result = Self;
 
-    fn invoke(self, item: ast::MetaItem_) -> Self {
-        self.with_meta_item_(item)
+    fn invoke(self, item: ast::MetaItemKind) -> Self {
+        self.with_meta_item_kind(item)
     }
 }
 
@@ -278,12 +278,11 @@ pub struct AttrNameValueBuilder<F> {
     name: token::InternedString,
 }
 
-impl<F: Invoke<ast::MetaItem_>> Invoke<P<ast::Lit>> for AttrNameValueBuilder<F> {
+impl<F: Invoke<ast::MetaItemKind>> Invoke<P<ast::Lit>> for AttrNameValueBuilder<F> {
     type Result = F::Result;
 
     fn invoke(self, value: P<ast::Lit>) -> F::Result {
-        let item = ast::MetaNameValue(self.name, (*value).clone());
+        let item = ast::MetaItemKind::NameValue(self.name, (*value).clone());
         self.callback.invoke(item)
     }
 }
-
