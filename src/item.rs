@@ -1427,7 +1427,7 @@ impl<F> ItemImplMethodBuilder<F>
         self.builder.build_item(node)
     }
 
-    pub fn build(self) -> BlockBuilder<Self> {
+    pub fn block(self) -> BlockBuilder<Self> {
         BlockBuilder::with_callback(self)
     }
 }

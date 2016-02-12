@@ -594,8 +594,7 @@ fn test_impl() {
         // Method
         .method("serialize")
             .fn_decl().default_return()
-            .build() // empty method block
-            .build()
+            .block().build() // empty method block
 
         .ty().id("MySerializer");
 
