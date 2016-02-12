@@ -440,6 +440,12 @@ impl<F> ExprBuilder<F>
         }
     }
 
+    pub fn struct_id<T>(self, id: T) -> ExprStructPathBuilder<F>
+        where T: ToIdent,
+    {
+        self.struct_().id(id).build()
+    }
+
     pub fn struct_(self) -> PathBuilder<ExprStructBuilder<F>> {
         PathBuilder::with_callback(ExprStructBuilder {
             builder: self,

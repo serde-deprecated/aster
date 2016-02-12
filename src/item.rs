@@ -909,11 +909,19 @@ impl<F> Invoke<P<ast::TraitItem>> for ItemTraitBuilder<F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ItemTraitItemBuilder<F> {
+pub struct ItemTraitItemBuilder<F=Identity> {
     callback: F,
     id: ast::Ident,
     attrs: Vec<ast::Attribute>,
     span: Span,
+}
+
+impl ItemTraitItemBuilder {
+    pub fn new<T>(id: T) -> Self
+        where T: ToIdent,
+    {
+        Self::with_callback(id, Identity)
+    }
 }
 
 impl<F> ItemTraitItemBuilder<F>
@@ -1253,12 +1261,20 @@ impl<F> Invoke<P<ast::Ty>> for ItemImplBuilder<F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ItemImplItemBuilder<F> {
+pub struct ItemImplItemBuilder<F=Identity> {
     callback: F,
     id: ast::Ident,
     vis: ast::Visibility,
     attrs: Vec<ast::Attribute>,
     span: Span,
+}
+
+impl ItemImplItemBuilder {
+    pub fn new<T>(id: T) -> Self
+        where T: ToIdent,
+    {
+        Self::with_callback(id, Identity)
+    }
 }
 
 impl<F> ItemImplItemBuilder<F>

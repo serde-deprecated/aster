@@ -195,6 +195,18 @@ impl AstBuilder {
         item::ItemBuilder::new().span(self.span)
     }
 
+    pub fn trait_item<T>(&self, id: T) -> item::ItemTraitItemBuilder
+        where T: ident::ToIdent,
+    {
+        item::ItemTraitItemBuilder::new(id).span(self.span)
+    }
+
+    pub fn impl_item<T>(&self, id: T) -> item::ItemImplItemBuilder
+        where T: ident::ToIdent,
+    {
+        item::ItemImplItemBuilder::new(id).span(self.span)
+    }
+
     pub fn const_(&self) -> constant::ConstBuilder {
         constant::ConstBuilder::new().span(self.span)
     }
