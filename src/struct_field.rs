@@ -65,6 +65,13 @@ impl<F> StructFieldBuilder<F>
         self
     }
 
+    pub fn with_attrs<I>(mut self, iter: I) -> Self
+        where I: IntoIterator<Item=ast::Attribute>,
+    {
+        self.attrs.extend(iter);
+        self
+    }
+
     pub fn attr(self) -> AttrBuilder<Self> {
         let span = self.span;
         AttrBuilder::with_callback(self).span(span)

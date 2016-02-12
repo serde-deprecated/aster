@@ -64,6 +64,13 @@ impl<F> ItemBuilder<F>
         self
     }
 
+    pub fn with_attrs<I>(mut self, iter: I) -> Self
+        where I: IntoIterator<Item=ast::Attribute>,
+    {
+        self.attrs.extend(iter);
+        self
+    }
+
     pub fn with_attr(mut self, attr: ast::Attribute) -> Self {
         self.attrs.push(attr);
         self
@@ -929,6 +936,13 @@ impl<F> ItemTraitItemBuilder<F>
         self
     }
 
+    pub fn with_attrs<I>(mut self, iter: I) -> Self
+        where I: IntoIterator<Item=ast::Attribute>,
+    {
+        self.attrs.extend(iter);
+        self
+    }
+
     pub fn with_attr(mut self, attr: ast::Attribute) -> Self {
         self.attrs.push(attr);
         self
@@ -1265,6 +1279,13 @@ impl<F> ItemImplItemBuilder<F>
 
     pub fn span(mut self, span: Span) -> Self {
         self.span = span;
+        self
+    }
+
+    pub fn with_attrs<I>(mut self, iter: I) -> Self
+        where I: IntoIterator<Item=ast::Attribute>,
+    {
+        self.attrs.extend(iter);
         self
     }
 

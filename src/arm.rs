@@ -41,6 +41,13 @@ impl<F> ArmBuilder<F>
         self
     }
 
+    pub fn with_attrs<I>(mut self, iter: I) -> Self
+        where I: IntoIterator<Item=ast::Attribute>,
+    {
+        self.attrs.extend(iter);
+        self
+    }
+
     pub fn with_attr(mut self, attr: ast::Attribute) -> Self {
         self.attrs.push(attr);
         self
