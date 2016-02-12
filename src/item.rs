@@ -456,6 +456,11 @@ pub struct ItemStructBuilder<F> {
 impl<F> ItemStructBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
+    pub fn with_generics(mut self, generics: ast::Generics) -> Self {
+        self.generics = generics;
+        self
+    }
+
     pub fn generics(self) -> GenericsBuilder<Self> {
         GenericsBuilder::with_callback(self)
     }
@@ -489,9 +494,8 @@ impl<F> Invoke<ast::Generics> for ItemStructBuilder<F>
 {
     type Result = Self;
 
-    fn invoke(mut self, generics: ast::Generics) -> Self {
-        self.generics = generics;
-        self
+    fn invoke(self, generics: ast::Generics) -> Self {
+        self.with_generics(generics)
     }
 }
 
@@ -1323,6 +1327,13 @@ impl<F> ItemImplItemBuilder<F>
         ConstBuilder::with_callback(self)
     }
 
+    pub fn build_method(self, method: ast::MethodSig) -> ItemImplMethodBuilder<F> {
+        ItemImplMethodBuilder {
+            builder: self,
+            method: method,
+        }
+    }
+
     pub fn method(self) -> MethodSigBuilder<Self> {
         MethodSigBuilder::with_callback(self)
     }
@@ -1375,10 +1386,7 @@ impl<F> Invoke<ast::MethodSig> for ItemImplItemBuilder<F>
     type Result = ItemImplMethodBuilder<F>;
 
     fn invoke(self, method: ast::MethodSig) -> Self::Result {
-        ItemImplMethodBuilder {
-            builder: self,
-            method: method,
-        }
+        self.build_method(method)
     }
 }
 
