@@ -370,15 +370,15 @@ impl<F> ExprBuilder<F>
         self.binary(ast::BinOp_::BiGt)
     }
 
-    pub fn addr_of(self) -> ExprBuilder<ExprAddrOfBuilder<F>> {
-        ExprBuilder::with_callback(ExprAddrOfBuilder {
+    pub fn ref_(self) -> ExprBuilder<ExprRefBuilder<F>> {
+        ExprBuilder::with_callback(ExprRefBuilder {
             builder: self,
             mutability: ast::Mutability::MutImmutable,
         })
     }
 
-    pub fn mut_addr_of(self) -> ExprBuilder<ExprAddrOfBuilder<F>> {
-        ExprBuilder::with_callback(ExprAddrOfBuilder {
+    pub fn mut_ref(self) -> ExprBuilder<ExprRefBuilder<F>> {
+        ExprBuilder::with_callback(ExprRefBuilder {
             builder: self,
             mutability: ast::Mutability::MutMutable,
         })
@@ -1140,12 +1140,12 @@ impl<F> Invoke<P<ast::Expr>> for ExprMethodCallArgsBuilder<F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ExprAddrOfBuilder<F> {
+pub struct ExprRefBuilder<F> {
     builder: ExprBuilder<F>,
     mutability: ast::Mutability,
 }
 
-impl<F> Invoke<P<ast::Expr>> for ExprAddrOfBuilder<F>
+impl<F> Invoke<P<ast::Expr>> for ExprRefBuilder<F>
     where F: Invoke<P<ast::Expr>>,
 {
     type Result = F::Result;
