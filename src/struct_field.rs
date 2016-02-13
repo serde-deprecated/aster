@@ -59,8 +59,10 @@ impl<F> StructFieldBuilder<F>
 
     pub fn pub_(mut self) -> Self {
         match self.kind {
-            ast::StructFieldKind::NamedField(_, ref mut vis) => { *vis = ast::Visibility::Public; }
-            ast::StructFieldKind::UnnamedField(ref mut vis) => { *vis = ast::Visibility::Public; }
+            ast::StructFieldKind::NamedField(_, ref mut vis)
+            | ast::StructFieldKind::UnnamedField(ref mut vis) => {
+                *vis = ast::Visibility::Public;
+            }
         }
         self
     }

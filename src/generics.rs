@@ -159,12 +159,12 @@ impl<F> GenericsBuilder<F>
         let lifetime = lifetime.into_lifetime();
 
         for lifetime_def in &mut self.lifetimes {
-            lifetime_def.bounds.push(lifetime.clone());
+            lifetime_def.bounds.push(lifetime);
         }
 
         for ty_param in &mut self.ty_params {
             *ty_param = TyParamBuilder::from_ty_param(ty_param.clone())
-                .lifetime_bound(lifetime.clone())
+                .lifetime_bound(lifetime)
                 .build();
         }
 
