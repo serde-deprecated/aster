@@ -85,14 +85,14 @@ impl<F> ItemBuilder<F>
         self
     }
 
-    pub fn build_item_<T>(self, id: T, item_: ast::Item_) -> F::Result
+    pub fn build_item_kind<T>(self, id: T, item_kind: ast::ItemKind) -> F::Result
         where T: ToIdent,
     {
         let item = ast::Item {
             ident: id.to_ident(),
             attrs: self.attrs,
             id: ast::DUMMY_NODE_ID,
-            node: item_,
+            node: item_kind,
             vis: self.vis,
             span: self.span,
         };
@@ -110,8 +110,8 @@ impl<F> ItemBuilder<F>
     }
 
     pub fn build_use(self, view_path: ast::ViewPath_) -> F::Result {
-        let item = ast::ItemUse(P(respan(self.span, view_path)));
-        self.build_item_(token::special_idents::invalid, item)
+        let item = ast::ItemKind::Use(P(respan(self.span, view_path)));
+        self.build_item_kind(token::special_idents::invalid, item)
     }
 
     pub fn use_(self) -> PathBuilder<ItemUseBuilder<F>> {
@@ -140,8 +140,8 @@ impl<F> ItemBuilder<F>
         let data = VariantDataBuilder::new().unit();
         let generics = GenericsBuilder::new().build();
 
-        let struct_ = ast::ItemStruct(data, generics);
-        self.build_item_(id, struct_)
+        let struct_ = ast::ItemKind::Struct(data, generics);
+        self.build_item_kind(id, struct_)
     }
 
     pub fn tuple_struct<T>(self, id: T) -> ItemTupleStructBuilder<F>
@@ -310,7 +310,7 @@ impl<F> ItemFnBuilder<F>
     }
 
     pub fn build(self, block: P<ast::Block>) -> F::Result {
-        self.builder.build_item_(self.id, ast::Item_::ItemFn(
+        self.builder.build_item_kind(self.id, ast::ItemKind::Fn(
             self.fn_decl,
             self.unsafety,
             self.constness,
@@ -422,7 +422,7 @@ impl<F> ItemUsePathListBuilder<F>
     }
 
     pub fn self_(mut self) -> Self {
-        self.idents.push(respan(self.span, ast::PathListMod {
+        self.idents.push(respan(self.span, ast::PathListItemKind::Mod {
             id: ast::DUMMY_NODE_ID,
             rename: None,
         }));
@@ -432,7 +432,7 @@ impl<F> ItemUsePathListBuilder<F>
     pub fn id<T>(mut self, id: T) -> Self
         where T: ToIdent,
     {
-        self.idents.push(respan(self.span, ast::PathListIdent {
+        self.idents.push(respan(self.span, ast::PathListItemKind::Ident {
             name: id.to_ident(),
             rename: None,
             id: ast::DUMMY_NODE_ID,
@@ -505,8 +505,8 @@ impl<F> Invoke<ast::VariantData> for ItemStructBuilder<F>
     type Result = F::Result;
 
     fn invoke(self, data: ast::VariantData) -> F::Result {
-        let struct_ = ast::ItemStruct(data, self.generics);
-        self.builder.build_item_(self.id, struct_)
+        let struct_ = ast::ItemKind::Struct(data, self.generics);
+        self.builder.build_item_kind(self.id, struct_)
     }
 }
 
@@ -546,8 +546,8 @@ impl<F> ItemTupleStructBuilder<F>
 
     pub fn build(self) -> F::Result {
         let data = ast::VariantData::Tuple(self.fields, ast::DUMMY_NODE_ID);
-        let struct_ = ast::ItemStruct(data, self.generics);
-        self.builder.build_item_(self.id, struct_)
+        let struct_ = ast::ItemKind::Struct(data, self.generics);
+        self.builder.build_item_kind(self.id, struct_)
     }
 }
 
@@ -654,8 +654,8 @@ impl<F> ItemEnumBuilder<F>
         let enum_def = ast::EnumDef {
             variants: self.variants,
         };
-        let enum_ = ast::ItemEnum(enum_def, self.generics);
-        self.builder.build_item_(self.id, enum_)
+        let enum_ = ast::ItemKind::Enum(enum_def, self.generics);
+        self.builder.build_item_kind(self.id, enum_)
     }
 }
 
@@ -692,13 +692,13 @@ impl<F> ItemExternCrateBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
     pub fn with_name(self, name: ast::Name) -> F::Result {
-        let extern_ = ast::ItemExternCrate(Some(name));
-        self.builder.build_item_(self.id, extern_)
+        let extern_ = ast::ItemKind::ExternCrate(Some(name));
+        self.builder.build_item_kind(self.id, extern_)
     }
 
     pub fn build(self) -> F::Result {
-        let extern_ = ast::ItemExternCrate(None);
-        self.builder.build_item_(self.id, extern_)
+        let extern_ = ast::ItemKind::ExternCrate(None);
+        self.builder.build_item_kind(self.id, extern_)
     }
 }
 
@@ -720,8 +720,8 @@ impl<F> ItemMacBuilder<F>
     }
 
     pub fn build(self, mac: ast::Mac) -> F::Result {
-        let item_mac = ast::ItemMac(mac);
-        self.builder.build_item_(ast::Name(0).to_ident(), item_mac)
+        let item_mac = ast::ItemKind::Mac(mac);
+        self.builder.build_item_kind(ast::Name(0).to_ident(), item_mac)
     }
 }
 
@@ -765,8 +765,8 @@ impl<F> ItemTyBuilder<F>
     }
 
     pub fn build_ty(self, ty: P<ast::Ty>) -> F::Result {
-        let ty_ = ast::ItemTy(ty, self.generics);
-        self.builder.build_item_(self.id, ty_)
+        let ty_ = ast::ItemKind::Ty(ty, self.generics);
+        self.builder.build_item_kind(self.id, ty_)
     }
 }
 
@@ -872,7 +872,7 @@ impl<F> ItemTraitBuilder<F>
     }
 
     pub fn build(self) -> F::Result {
-        self.builder.build_item_(self.id, ast::ItemTrait(
+        self.builder.build_item_kind(self.id, ast::ItemKind::Trait(
             self.unsafety,
             self.generics,
             P::from_vec(self.bounds),
@@ -979,7 +979,7 @@ impl<F> ItemTraitItemBuilder<F>
         }
     }
 
-    pub fn build_item(self, node: ast::TraitItem_) -> F::Result {
+    pub fn build_item(self, node: ast::TraitItemKind) -> F::Result {
         let item = ast::TraitItem {
             id: ast::DUMMY_NODE_ID,
             ident: self.id,
@@ -1007,7 +1007,7 @@ impl<F> Invoke<Const> for ItemTraitItemBuilder<F>
     type Result = F::Result;
 
     fn invoke(self, const_: Const) -> F::Result {
-        let node = ast::TraitItem_::ConstTraitItem(
+        let node = ast::TraitItemKind::Const(
             const_.ty,
             const_.expr);
         self.build_item(node)
@@ -1038,7 +1038,7 @@ impl<F> ItemTraitMethodBuilder<F>
     where F: Invoke<P<ast::TraitItem>>,
 {
     pub fn build_option_block(self, block: Option<P<ast::Block>>) -> F::Result {
-        let node = ast::TraitItem_::MethodTraitItem(self.method, block);
+        let node = ast::TraitItemKind::Method(self.method, block);
         self.builder.build_item(node)
     }
 
@@ -1089,7 +1089,7 @@ impl<F> ItemTraitTypeBuilder<F>
 
     pub fn build_option_ty(self, ty: Option<P<ast::Ty>>) -> F::Result {
         let bounds = P::from_vec(self.bounds);
-        let node = ast::TraitItem_::TypeTraitItem(bounds, ty);
+        let node = ast::TraitItemKind::Type(bounds, ty);
         self.builder.build_item(node)
     }
 
@@ -1173,14 +1173,14 @@ impl<F> ItemImplBuilder<F>
     }
 
     pub fn build_ty(self, ty: P<ast::Ty>) -> F::Result {
-        let ty_ = ast::ItemImpl(
+        let ty_ = ast::ItemKind::Impl(
             self.unsafety,
             self.polarity,
             self.generics,
             self.trait_ref,
             ty,
             self.items);
-        self.builder.build_item_(token::special_idents::invalid, ty_)
+        self.builder.build_item_kind(token::special_idents::invalid, ty_)
     }
 
     pub fn with_items<I>(mut self, items: I) -> Self
@@ -1455,7 +1455,7 @@ impl<F> Invoke<Const> for ItemConstBuilder<F>
     type Result = F::Result;
 
     fn invoke(self, const_: Const) -> F::Result {
-        let ty = ast::ItemConst(const_.ty, const_.expr.expect("an expr is required for a const item"));
-        self.builder.build_item_(self.id, ty)
+        let ty = ast::ItemKind::Const(const_.ty, const_.expr.expect("an expr is required for a const item"));
+        self.builder.build_item_kind(self.id, ty)
     }
 }

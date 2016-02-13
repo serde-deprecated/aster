@@ -13,7 +13,7 @@ fn test_path() {
         ty,
         P(ast::Ty {
             id: ast::DUMMY_NODE_ID,
-            node: ast::TyPath(None, builder.path().id("isize").build()),
+            node: ast::TyKind::Path(None, builder.path().id("isize").build()),
             span: DUMMY_SP,
         })
     );
@@ -31,7 +31,7 @@ fn test_qpath() {
         expr,
         P(ast::Expr {
             id: ast::DUMMY_NODE_ID,
-            node: ast::ExprPath(
+            node: ast::ExprKind::Path(
                 Some(ast::QSelf {
                     ty: builder.ty().slice().infer(),
                     position: 0,
@@ -52,7 +52,7 @@ fn test_qpath() {
         expr,
         P(ast::Expr {
             id: ast::DUMMY_NODE_ID,
-            node: ast::ExprPath(
+            node: ast::ExprKind::Path(
                 Some(ast::QSelf {
                     ty: builder.ty().slice().infer(),
                     position: 1,
@@ -77,7 +77,7 @@ fn test_option() {
         ty,
         P(ast::Ty {
             id: ast::DUMMY_NODE_ID,
-            node: ast::TyPath(
+            node: ast::TyKind::Path(
                 None,
                 builder.path().global()
                     .id("std")
@@ -101,7 +101,7 @@ fn test_result() {
         ty,
         P(ast::Ty {
             id: ast::DUMMY_NODE_ID,
-            node: ast::TyPath(
+            node: ast::TyKind::Path(
                 None,
                 builder.path().global()
                     .id("std")
@@ -126,7 +126,7 @@ fn test_unit() {
         ty,
         P(ast::Ty {
             id: ast::DUMMY_NODE_ID,
-            node: ast::TyTup(vec![]),
+            node: ast::TyKind::Tup(vec![]),
             span: DUMMY_SP,
         })
     );
@@ -137,7 +137,7 @@ fn test_unit() {
         ty,
         P(ast::Ty {
             id: ast::DUMMY_NODE_ID,
-            node: ast::TyTup(vec![]),
+            node: ast::TyKind::Tup(vec![]),
             span: DUMMY_SP,
         })
     );
@@ -159,11 +159,11 @@ fn test_tuple() {
         ty,
         P(ast::Ty {
             id: ast::DUMMY_NODE_ID,
-            node: ast::TyTup(vec![
+            node: ast::TyKind::Tup(vec![
                 builder.ty().isize(),
                 P(ast::Ty {
                     id: ast::DUMMY_NODE_ID,
-                    node: ast::TyTup(vec![
+                    node: ast::TyKind::Tup(vec![
                         builder.ty().unit(),
                         builder.ty().isize(),
                     ]),
@@ -185,7 +185,7 @@ fn test_slice() {
         ty,
         P(ast::Ty {
             id: ast::DUMMY_NODE_ID,
-            node: ast::TyVec(builder.ty().isize()),
+            node: ast::TyKind::Vec(builder.ty().isize()),
             span: DUMMY_SP,
         })
     );

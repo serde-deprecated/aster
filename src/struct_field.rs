@@ -38,7 +38,7 @@ impl<F> StructFieldBuilder<F>
         StructFieldBuilder {
             callback: callback,
             span: DUMMY_SP,
-            kind: ast::StructFieldKind::NamedField(id, ast::Inherited),
+            kind: ast::StructFieldKind::NamedField(id, ast::Visibility::Inherited),
             attrs: vec![],
         }
     }
@@ -47,7 +47,7 @@ impl<F> StructFieldBuilder<F>
         StructFieldBuilder {
             callback: callback,
             span: DUMMY_SP,
-            kind: ast::StructFieldKind::UnnamedField(ast::Inherited),
+            kind: ast::StructFieldKind::UnnamedField(ast::Visibility::Inherited),
             attrs: vec![],
         }
     }
@@ -59,8 +59,8 @@ impl<F> StructFieldBuilder<F>
 
     pub fn pub_(mut self) -> Self {
         match self.kind {
-            ast::StructFieldKind::NamedField(_, ref mut vis) => { *vis = ast::Public; }
-            ast::StructFieldKind::UnnamedField(ref mut vis) => { *vis = ast::Public; }
+            ast::StructFieldKind::NamedField(_, ref mut vis) => { *vis = ast::Visibility::Public; }
+            ast::StructFieldKind::UnnamedField(ref mut vis) => { *vis = ast::Visibility::Public; }
         }
         self
     }
