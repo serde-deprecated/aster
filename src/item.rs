@@ -589,7 +589,7 @@ pub struct ItemEnumBuilder<F> {
     builder: ItemBuilder<F>,
     id: ast::Ident,
     generics: ast::Generics,
-    variants: Vec<P<ast::Variant>>,
+    variants: Vec<ast::Variant>,
 }
 
 impl<F> ItemEnumBuilder<F>
@@ -600,19 +600,19 @@ impl<F> ItemEnumBuilder<F>
     }
 
     pub fn with_variants<I>(mut self, iter: I) -> Self
-        where I: IntoIterator<Item=P<ast::Variant>>,
+        where I: IntoIterator<Item=ast::Variant>,
     {
         self.variants.extend(iter);
         self
     }
 
-    pub fn with_variant(mut self, variant: P<ast::Variant>) -> Self {
+    pub fn with_variant(mut self, variant: ast::Variant) -> Self {
         self.variants.push(variant);
         self
     }
 
     pub fn with_variant_(self, variant: ast::Variant_) -> Self {
-        let variant = P(respan(self.builder.span, variant));
+        let variant = respan(self.builder.span, variant);
         self.with_variant(variant)
     }
 
@@ -670,12 +670,12 @@ impl<F> Invoke<ast::Generics> for ItemEnumBuilder<F>
     }
 }
 
-impl<F> Invoke<P<ast::Variant>> for ItemEnumBuilder<F>
+impl<F> Invoke<ast::Variant> for ItemEnumBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
     type Result = Self;
 
-    fn invoke(self, variant: P<ast::Variant>) -> Self {
+    fn invoke(self, variant: ast::Variant) -> Self {
         self.with_variant(variant)
     }
 }
@@ -799,7 +799,7 @@ pub struct ItemTraitBuilder<F> {
     unsafety: ast::Unsafety,
     generics: ast::Generics,
     bounds: Vec<ast::TyParamBound>,
-    items: Vec<P<ast::TraitItem>>,
+    items: Vec<ast::TraitItem>,
 }
 
 impl<F> ItemTraitBuilder<F>
@@ -836,13 +836,13 @@ impl<F> ItemTraitBuilder<F>
     }
 
     pub fn with_items<I>(mut self, items: I) -> Self
-        where I: IntoIterator<Item=P<ast::TraitItem>>,
+        where I: IntoIterator<Item=ast::TraitItem>,
     {
         self.items.extend(items);
         self
     }
 
-    pub fn with_item(mut self, item: P<ast::TraitItem>) -> Self {
+    pub fn with_item(mut self, item: ast::TraitItem) -> Self {
         self.items.push(item);
         self
     }
@@ -901,12 +901,12 @@ impl<F> Invoke<ast::TyParamBound> for ItemTraitBuilder<F>
     }
 }
 
-impl<F> Invoke<P<ast::TraitItem>> for ItemTraitBuilder<F>
+impl<F> Invoke<ast::TraitItem> for ItemTraitBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
     type Result = Self;
 
-    fn invoke(self, item: P<ast::TraitItem>) -> Self {
+    fn invoke(self, item: ast::TraitItem) -> Self {
         self.with_item(item)
     }
 }
@@ -929,10 +929,10 @@ impl ItemTraitItemBuilder {
 }
 
 impl<F> ItemTraitItemBuilder<F>
-    where F: Invoke<P<ast::TraitItem>>,
+    where F: Invoke<ast::TraitItem>,
 {
     pub fn with_callback<T>(id: T, callback: F) -> Self
-        where F: Invoke<P<ast::TraitItem>>,
+        where F: Invoke<ast::TraitItem>,
               T: ToIdent,
     {
         ItemTraitItemBuilder {
@@ -987,12 +987,12 @@ impl<F> ItemTraitItemBuilder<F>
             node: node,
             span: self.span,
         };
-        self.callback.invoke(P(item))
+        self.callback.invoke(item)
     }
 }
 
 impl<F> Invoke<ast::Attribute> for ItemTraitItemBuilder<F>
-    where F: Invoke<P<ast::TraitItem>>,
+    where F: Invoke<ast::TraitItem>,
 {
     type Result = Self;
 
@@ -1002,7 +1002,7 @@ impl<F> Invoke<ast::Attribute> for ItemTraitItemBuilder<F>
 }
 
 impl<F> Invoke<Const> for ItemTraitItemBuilder<F>
-    where F: Invoke<P<ast::TraitItem>>,
+    where F: Invoke<ast::TraitItem>,
 {
     type Result = F::Result;
 
@@ -1015,7 +1015,7 @@ impl<F> Invoke<Const> for ItemTraitItemBuilder<F>
 }
 
 impl<F> Invoke<ast::MethodSig> for ItemTraitItemBuilder<F>
-    where F: Invoke<P<ast::TraitItem>>,
+    where F: Invoke<ast::TraitItem>,
 {
     type Result = ItemTraitMethodBuilder<F>;
 
@@ -1035,7 +1035,7 @@ pub struct ItemTraitMethodBuilder<F> {
 }
 
 impl<F> ItemTraitMethodBuilder<F>
-    where F: Invoke<P<ast::TraitItem>>,
+    where F: Invoke<ast::TraitItem>,
 {
     pub fn build_option_block(self, block: Option<P<ast::Block>>) -> F::Result {
         let node = ast::TraitItemKind::Method(self.method, block);
@@ -1052,7 +1052,7 @@ impl<F> ItemTraitMethodBuilder<F>
 }
 
 impl<F> Invoke<P<ast::Block>> for ItemTraitMethodBuilder<F>
-    where F: Invoke<P<ast::TraitItem>>,
+    where F: Invoke<ast::TraitItem>,
 {
     type Result = F::Result;
 
@@ -1069,7 +1069,7 @@ pub struct ItemTraitTypeBuilder<F> {
 }
 
 impl<F> ItemTraitTypeBuilder<F>
-    where F: Invoke<P<ast::TraitItem>>,
+    where F: Invoke<ast::TraitItem>,
 {
     pub fn with_bounds<I>(mut self, iter: I) -> Self
         where I: Iterator<Item=ast::TyParamBound>,
@@ -1107,7 +1107,7 @@ impl<F> ItemTraitTypeBuilder<F>
 }
 
 impl<F> Invoke<ast::TyParamBound> for ItemTraitTypeBuilder<F>
-    where F: Invoke<P<ast::TraitItem>>,
+    where F: Invoke<ast::TraitItem>,
 {
     type Result = ItemTraitTypeBuilder<F>;
 
@@ -1117,7 +1117,7 @@ impl<F> Invoke<ast::TyParamBound> for ItemTraitTypeBuilder<F>
 }
 
 impl<F> Invoke<P<ast::Ty>> for ItemTraitTypeBuilder<F>
-    where F: Invoke<P<ast::TraitItem>>,
+    where F: Invoke<ast::TraitItem>,
 {
     type Result = F::Result;
 
@@ -1134,7 +1134,7 @@ pub struct ItemImplBuilder<F> {
     polarity: ast::ImplPolarity,
     generics: ast::Generics,
     trait_ref: Option<ast::TraitRef>,
-    items: Vec<P<ast::ImplItem>>,
+    items: Vec<ast::ImplItem>,
 }
 
 impl<F> ItemImplBuilder<F>
@@ -1184,13 +1184,13 @@ impl<F> ItemImplBuilder<F>
     }
 
     pub fn with_items<I>(mut self, items: I) -> Self
-        where I: IntoIterator<Item=P<ast::ImplItem>>,
+        where I: IntoIterator<Item=ast::ImplItem>,
     {
         self.items.extend(items);
         self
     }
 
-    pub fn with_item(mut self, item: P<ast::ImplItem>) -> Self {
+    pub fn with_item(mut self, item: ast::ImplItem) -> Self {
         self.items.push(item);
         self
     }
@@ -1243,12 +1243,12 @@ impl<F> Invoke<ast::Path> for ItemImplBuilder<F>
     }
 }
 
-impl<F> Invoke<P<ast::ImplItem>> for ItemImplBuilder<F>
+impl<F> Invoke<ast::ImplItem> for ItemImplBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
     type Result = Self;
 
-    fn invoke(self, item: P<ast::ImplItem>) -> Self {
+    fn invoke(self, item: ast::ImplItem) -> Self {
         self.with_item(item)
     }
 }
@@ -1282,10 +1282,10 @@ impl ItemImplItemBuilder {
 }
 
 impl<F> ItemImplItemBuilder<F>
-    where F: Invoke<P<ast::ImplItem>>,
+    where F: Invoke<ast::ImplItem>,
 {
     pub fn with_callback<T>(id: T, callback: F) -> Self
-        where F: Invoke<P<ast::ImplItem>>,
+        where F: Invoke<ast::ImplItem>,
               T: ToIdent,
     {
         ItemImplItemBuilder {
@@ -1355,12 +1355,12 @@ impl<F> ItemImplItemBuilder<F>
             node: node,
             span: self.span,
         };
-        self.callback.invoke(P(item))
+        self.callback.invoke(item)
     }
 }
 
 impl<F> Invoke<ast::Attribute> for ItemImplItemBuilder<F>
-    where F: Invoke<P<ast::ImplItem>>,
+    where F: Invoke<ast::ImplItem>,
 {
     type Result = Self;
 
@@ -1370,7 +1370,7 @@ impl<F> Invoke<ast::Attribute> for ItemImplItemBuilder<F>
 }
 
 impl<F> Invoke<Const> for ItemImplItemBuilder<F>
-    where F: Invoke<P<ast::ImplItem>>,
+    where F: Invoke<ast::ImplItem>,
 {
     type Result = F::Result;
 
@@ -1381,7 +1381,7 @@ impl<F> Invoke<Const> for ItemImplItemBuilder<F>
 }
 
 impl<F> Invoke<ast::MethodSig> for ItemImplItemBuilder<F>
-    where F: Invoke<P<ast::ImplItem>>,
+    where F: Invoke<ast::ImplItem>,
 {
     type Result = ItemImplMethodBuilder<F>;
 
@@ -1391,7 +1391,7 @@ impl<F> Invoke<ast::MethodSig> for ItemImplItemBuilder<F>
 }
 
 impl<F> Invoke<P<ast::Ty>> for ItemImplItemBuilder<F>
-    where F: Invoke<P<ast::ImplItem>>,
+    where F: Invoke<ast::ImplItem>,
 {
     type Result = F::Result;
 
@@ -1402,7 +1402,7 @@ impl<F> Invoke<P<ast::Ty>> for ItemImplItemBuilder<F>
 }
 
 impl<F> Invoke<ast::Mac> for ItemImplItemBuilder<F>
-    where F: Invoke<P<ast::ImplItem>>,
+    where F: Invoke<ast::ImplItem>,
 {
     type Result = F::Result;
 
@@ -1420,7 +1420,7 @@ pub struct ItemImplMethodBuilder<F> {
 }
 
 impl<F> ItemImplMethodBuilder<F>
-    where F: Invoke<P<ast::ImplItem>>,
+    where F: Invoke<ast::ImplItem>,
 {
     pub fn build_block(self, block: P<ast::Block>) -> F::Result {
         let node = ast::ImplItemKind::Method(self.method, block);
@@ -1433,7 +1433,7 @@ impl<F> ItemImplMethodBuilder<F>
 }
 
 impl<F> Invoke<P<ast::Block>> for ItemImplMethodBuilder<F>
-    where F: Invoke<P<ast::ImplItem>>,
+    where F: Invoke<ast::ImplItem>,
 {
     type Result = F::Result;
 

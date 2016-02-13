@@ -528,7 +528,7 @@ fn test_trait() {
                 P::from_vec(vec![
                 ]),
                 vec![
-                    P(ast::TraitItem {
+                    ast::TraitItem {
                         id: ast::DUMMY_NODE_ID,
                         ident: builder.id("MyFloat"),
                         attrs: vec![],
@@ -537,9 +537,9 @@ fn test_trait() {
                             None,
                         ),
                         span: DUMMY_SP,
-                    }),
+                    },
 
-                    P(ast::TraitItem {
+                    ast::TraitItem {
                         id: ast::DUMMY_NODE_ID,
                         ident: builder.id("PI"),
                         attrs: vec![],
@@ -548,9 +548,9 @@ fn test_trait() {
                             None,
                         ),
                         span: DUMMY_SP,
-                    }),
+                    },
 
-                    P(ast::TraitItem {
+                    ast::TraitItem {
                         id: ast::DUMMY_NODE_ID,
                         ident: builder.id("serialize"),
                         attrs: vec![],
@@ -566,7 +566,7 @@ fn test_trait() {
                             None
                         ),
                         span: DUMMY_SP,
-                    })
+                    }
                 ]
             ),
             vis: ast::Visibility::Inherited,
@@ -614,16 +614,16 @@ fn test_impl() {
                 }),
                 builder.ty().id("MySerializer"),
                 vec![
-                    P(ast::ImplItem {
+                    ast::ImplItem {
                         id: ast::DUMMY_NODE_ID,
                         ident: builder.id("MyFloat"),
                         vis: ast::Visibility::Inherited,
                         attrs: vec![],
                         node: ast::ImplItemKind::Type(builder.ty().f64()),
                         span: DUMMY_SP,
-                    }),
+                    },
 
-                    P(ast::ImplItem {
+                    ast::ImplItem {
                         id: ast::DUMMY_NODE_ID,
                         ident: builder.id("PI"),
                         vis: ast::Visibility::Inherited,
@@ -633,9 +633,9 @@ fn test_impl() {
                             builder.expr().f64("3.14159265358979323846264338327950288"),
                         ),
                         span: DUMMY_SP,
-                    }),
+                    },
 
-                    P(ast::ImplItem {
+                    ast::ImplItem {
                         id: ast::DUMMY_NODE_ID,
                         ident: builder.id("serialize"),
                         vis: ast::Visibility::Inherited,
@@ -652,7 +652,7 @@ fn test_impl() {
                             builder.block().build()
                         ),
                         span: DUMMY_SP,
-                    })
+                    }
                 ]
             ),
             vis: ast::Visibility::Inherited,

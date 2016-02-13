@@ -178,7 +178,7 @@ pub struct PathSegmentBuilder<F=Identity> {
     id: ast::Ident,
     lifetimes: Vec<ast::Lifetime>,
     tys: Vec<P<ast::Ty>>,
-    bindings: Vec<P<ast::TypeBinding>>,
+    bindings: Vec<ast::TypeBinding>,
 }
 
 impl<F> PathSegmentBuilder<F>
@@ -257,7 +257,7 @@ impl<F> PathSegmentBuilder<F>
         TyBuilder::with_callback(self)
     }
 
-    pub fn with_binding(mut self, binding: P<ast::TypeBinding>) -> Self {
+    pub fn with_binding(mut self, binding: ast::TypeBinding) -> Self {
         self.bindings.push(binding);
         self
     }
@@ -313,11 +313,11 @@ impl<F> Invoke<P<ast::Ty>> for TypeBindingBuilder<F>
         let id = self.id;
         let span = self.builder.span;
 
-        self.builder.with_binding(P(ast::TypeBinding {
+        self.builder.with_binding(ast::TypeBinding {
             id: ast::DUMMY_NODE_ID,
             ident: id,
             ty: ty,
             span: span,
-        }))
+        })
     }
 }

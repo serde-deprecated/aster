@@ -11,7 +11,7 @@ fn test_let() {
     assert_eq!(
         builder.stmt()
             .let_().id("x").build(),
-        P(respan(
+        respan(
             DUMMY_SP,
             ast::StmtKind::Decl(
                 P(respan(
@@ -27,13 +27,13 @@ fn test_let() {
                 )),
                 ast::DUMMY_NODE_ID,
             ),
-        ))
+        )
     );
 
     assert_eq!(
         builder.stmt()
             .let_().id("x").ty().i8().build(),
-        P(respan(
+        respan(
             DUMMY_SP,
             ast::StmtKind::Decl(
                 P(respan(
@@ -49,13 +49,13 @@ fn test_let() {
                 )),
                 ast::DUMMY_NODE_ID,
             ),
-        ))
+        )
     );
 
     assert_eq!(
         builder.stmt()
             .let_().id("x").expr().i8(5),
-        P(respan(
+        respan(
             DUMMY_SP,
             ast::StmtKind::Decl(
                 P(respan(
@@ -71,13 +71,13 @@ fn test_let() {
                 )),
                 ast::DUMMY_NODE_ID,
             ),
-        ))
+        )
     );
 
     assert_eq!(
         builder.stmt()
             .let_().id("x").ty().i8().expr().i8(5),
-        P(respan(
+        respan(
             DUMMY_SP,
             ast::StmtKind::Decl(
                 P(respan(
@@ -93,7 +93,7 @@ fn test_let() {
                 )),
                 ast::DUMMY_NODE_ID,
             ),
-        ))
+        )
     );
 
     assert_eq!(
@@ -106,7 +106,7 @@ fn test_let() {
                 .expr().u8(0)
                 .expr().u16(1)
                 .build(),
-        P(respan(
+        respan(
             DUMMY_SP,
             ast::StmtKind::Decl(
                 P(respan(
@@ -130,6 +130,6 @@ fn test_let() {
                 )),
                 ast::DUMMY_NODE_ID,
             ),
-        ))
+        )
     );
 }

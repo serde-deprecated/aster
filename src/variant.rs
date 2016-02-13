@@ -1,6 +1,5 @@
 use syntax::ast;
 use syntax::codemap::{DUMMY_SP, Span, respan};
-use syntax::ptr::P;
 
 use attr::AttrBuilder;
 use ident::ToIdent;
@@ -30,7 +29,7 @@ impl VariantBuilder {
 }
 
 impl<F> VariantBuilder<F>
-    where F: Invoke<P<ast::Variant>>,
+    where F: Invoke<ast::Variant>,
 {
     pub fn with_callback<T>(id: T, callback: F) -> Self
         where T: ToIdent,
@@ -72,22 +71,22 @@ impl<F> VariantBuilder<F>
             data: data,
             disr_expr: None,
         };
-        let variant = P(respan(self.span, variant_));
+        let variant = respan(self.span, variant_);
         self.callback.invoke(variant)
     }
 
     pub fn build_variant_(self, variant: ast::Variant_) -> F::Result {
-        let variant = P(respan(self.span, variant));
+        let variant = respan(self.span, variant);
         self.build(variant)
     }
 
-    pub fn build(self, variant: P<ast::Variant>) -> F::Result {
+    pub fn build(self, variant: ast::Variant) -> F::Result {
         self.callback.invoke(variant)
     }
 }
 
 impl<F> Invoke<ast::Attribute> for VariantBuilder<F>
-    where F: Invoke<P<ast::Variant>>,
+    where F: Invoke<ast::Variant>,
 {
     type Result = Self;
 
@@ -98,7 +97,7 @@ impl<F> Invoke<ast::Attribute> for VariantBuilder<F>
 }
 
 impl<F> Invoke<ast::VariantData> for VariantBuilder<F>
-    where F: Invoke<P<ast::Variant>>,
+    where F: Invoke<ast::Variant>,
 {
     type Result = F::Result;
 

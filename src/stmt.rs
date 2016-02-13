@@ -26,7 +26,7 @@ impl StmtBuilder {
 }
 
 impl<F> StmtBuilder<F>
-    where F: Invoke<P<ast::Stmt>>,
+    where F: Invoke<ast::Stmt>,
 {
     pub fn with_callback(callback: F) -> Self {
         StmtBuilder {
@@ -36,7 +36,7 @@ impl<F> StmtBuilder<F>
         }
     }
 
-    pub fn build(self, stmt: P<ast::Stmt>) -> F::Result {
+    pub fn build(self, stmt: ast::Stmt) -> F::Result {
         self.callback.invoke(stmt)
     }
 
@@ -46,7 +46,7 @@ impl<F> StmtBuilder<F>
     }
 
     pub fn build_stmt_kind(self, stmt_: ast::StmtKind) -> F::Result {
-        let stmt = P(respan(self.span, stmt_));
+        let stmt = respan(self.span, stmt_);
         self.build(stmt)
     }
 
@@ -105,7 +105,7 @@ impl<F> StmtBuilder<F>
 }
 
 impl<F> Invoke<P<ast::Pat>> for StmtBuilder<F>
-    where F: Invoke<P<ast::Stmt>>,
+    where F: Invoke<ast::Stmt>,
 {
     type Result = StmtLetBuilder<F>;
 
@@ -122,7 +122,7 @@ impl<F> Invoke<P<ast::Pat>> for StmtBuilder<F>
 pub struct StmtLetIdBuilder<F>(StmtBuilder<F>, ast::Ident);
 
 impl<F> Invoke<P<ast::Expr>> for StmtLetIdBuilder<F>
-    where F: Invoke<P<ast::Stmt>>,
+    where F: Invoke<ast::Stmt>,
 {
     type Result = F::Result;
 
@@ -136,7 +136,7 @@ impl<F> Invoke<P<ast::Expr>> for StmtLetIdBuilder<F>
 pub struct StmtExprBuilder<F>(StmtBuilder<F>);
 
 impl<F> Invoke<P<ast::Expr>> for StmtExprBuilder<F>
-    where F: Invoke<P<ast::Stmt>>,
+    where F: Invoke<ast::Stmt>,
 {
     type Result = F::Result;
 
@@ -150,7 +150,7 @@ impl<F> Invoke<P<ast::Expr>> for StmtExprBuilder<F>
 pub struct StmtSemiBuilder<F>(StmtBuilder<F>);
 
 impl<F> Invoke<P<ast::Expr>> for StmtSemiBuilder<F>
-    where F: Invoke<P<ast::Stmt>>,
+    where F: Invoke<ast::Stmt>,
 {
     type Result = F::Result;
 
@@ -167,7 +167,7 @@ pub struct StmtLetBuilder<F> {
 }
 
 impl<F> StmtLetBuilder<F>
-    where F: Invoke<P<ast::Stmt>>,
+    where F: Invoke<ast::Stmt>,
 {
     fn build_ty(self, ty: P<ast::Ty>) -> StmtLetTyBuilder<F> {
         StmtLetTyBuilder {
@@ -195,7 +195,7 @@ impl<F> StmtLetBuilder<F>
 }
 
 impl<F> Invoke<P<ast::Ty>> for StmtLetBuilder<F>
-    where F: Invoke<P<ast::Stmt>>,
+    where F: Invoke<ast::Stmt>,
 {
     type Result = StmtLetTyBuilder<F>;
 
@@ -205,7 +205,7 @@ impl<F> Invoke<P<ast::Ty>> for StmtLetBuilder<F>
 }
 
 impl<F> Invoke<P<ast::Expr>> for StmtLetBuilder<F>
-    where F: Invoke<P<ast::Stmt>>,
+    where F: Invoke<ast::Stmt>,
 {
     type Result = F::Result;
 
@@ -223,7 +223,7 @@ pub struct StmtLetTyBuilder<F> {
 }
 
 impl<F> StmtLetTyBuilder<F>
-    where F: Invoke<P<ast::Stmt>>,
+    where F: Invoke<ast::Stmt>,
 {
     pub fn expr(self) -> ExprBuilder<Self> {
         ExprBuilder::with_callback(self)
@@ -235,7 +235,7 @@ impl<F> StmtLetTyBuilder<F>
 }
 
 impl<F> Invoke<P<ast::Expr>> for StmtLetTyBuilder<F>
-    where F: Invoke<P<ast::Stmt>>,
+    where F: Invoke<ast::Stmt>,
 {
     type Result = F::Result;
 
@@ -249,7 +249,7 @@ impl<F> Invoke<P<ast::Expr>> for StmtLetTyBuilder<F>
 pub struct StmtItemBuilder<F>(StmtBuilder<F>);
 
 impl<F> Invoke<P<ast::Item>> for StmtItemBuilder<F>
-    where F: Invoke<P<ast::Stmt>>,
+    where F: Invoke<ast::Stmt>,
 {
     type Result = F::Result;
 

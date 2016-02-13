@@ -1,6 +1,5 @@
 use syntax::ast;
 use syntax::codemap::{DUMMY_SP, Spanned};
-use syntax::ptr::P;
 
 use aster::AstBuilder;
 
@@ -11,7 +10,7 @@ fn test_unit_variant() {
 
     assert_eq!(
         variant,
-        P(Spanned {
+        Spanned {
             span: DUMMY_SP,
             node: ast::Variant_ {
                 name: builder.id("A"),
@@ -19,7 +18,7 @@ fn test_unit_variant() {
                 data: builder.variant_data().unit(),
                 disr_expr: None,
             },
-        })
+        }
     )
 }
 
@@ -33,7 +32,7 @@ fn test_tuple_variant() {
 
     assert_eq!(
         variant,
-        P(Spanned {
+        Spanned {
             span: DUMMY_SP,
             node: ast::Variant_ {
                 name: builder.id("A"),
@@ -44,7 +43,7 @@ fn test_tuple_variant() {
                     .build(),
                 disr_expr: None,
             },
-        })
+        }
     )
 }
 
@@ -58,7 +57,7 @@ fn test_struct_variant() {
 
     assert_eq!(
         variant,
-        P(Spanned {
+        Spanned {
             span: DUMMY_SP,
             node: ast::Variant_ {
                 name: builder.id("A"),
@@ -69,6 +68,6 @@ fn test_struct_variant() {
                     .build(),
                 disr_expr: None,
             },
-        })
+        }
     )
 }

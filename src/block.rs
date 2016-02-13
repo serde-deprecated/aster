@@ -13,7 +13,7 @@ use stmt::StmtBuilder;
 pub struct BlockBuilder<F=Identity> {
     callback: F,
     span: Span,
-    stmts: Vec<P<ast::Stmt>>,
+    stmts: Vec<ast::Stmt>,
     block_check_mode: ast::BlockCheckMode,
 }
 
@@ -47,13 +47,13 @@ impl<F> BlockBuilder<F>
     }
 
     pub fn with_stmts<I>(mut self, iter: I) -> Self
-        where I: IntoIterator<Item=P<ast::Stmt>>
+        where I: IntoIterator<Item=ast::Stmt>
     {
         self.stmts.extend(iter);
         self
     }
 
-    pub fn with_stmt(mut self, stmt: P<ast::Stmt>) -> Self {
+    pub fn with_stmt(mut self, stmt: ast::Stmt) -> Self {
         self.stmts.push(stmt);
         self
     }
@@ -85,12 +85,12 @@ impl<F> BlockBuilder<F>
     }
 }
 
-impl<F> Invoke<P<ast::Stmt>> for BlockBuilder<F>
+impl<F> Invoke<ast::Stmt> for BlockBuilder<F>
     where F: Invoke<P<ast::Block>>,
 {
     type Result = Self;
 
-    fn invoke(self, stmt: P<ast::Stmt>) -> Self {
+    fn invoke(self, stmt: ast::Stmt) -> Self {
         self.with_stmt(stmt)
     }
 }
