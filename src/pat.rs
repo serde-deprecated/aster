@@ -43,7 +43,7 @@ impl<F> PatBuilder<F>
         self.callback.invoke(pat)
     }
 
-    pub fn build_pat_(self, pat_: ast::Pat_) -> F::Result {
+    pub fn build_pat_(self, pat_: ast::PatKind) -> F::Result {
         let span = self.span;
         self.build(P(ast::Pat {
             id: ast::DUMMY_NODE_ID,
@@ -53,7 +53,7 @@ impl<F> PatBuilder<F>
     }
 
     pub fn wild(self) -> F::Result {
-        self.build_pat_(ast::Pat_::PatWild)
+        self.build_pat_(ast::PatKind::Wild)
     }
 
     pub fn build_id<I>(self, mode: ast::BindingMode, id: I, sub: Option<P<ast::Pat>>) -> F::Result
@@ -61,7 +61,7 @@ impl<F> PatBuilder<F>
     {
         let id = respan(self.span, id.to_ident());
 
-        self.build_pat_(ast::Pat_::PatIdent(mode, id, sub))
+        self.build_pat_(ast::PatKind::Ident(mode, id, sub))
     }
 
     pub fn id<I>(self, id: I) -> F::Result
@@ -167,7 +167,7 @@ impl<F> PatEnumPathBuilder<F>
     }
 
     pub fn build(self) -> F::Result {
-        self.builder.build_pat_(ast::Pat_::PatEnum(self.path, Some(self.pats)))
+        self.builder.build_pat_(ast::PatKind::TupleStruct(self.path, Some(self.pats)))
     }
 }
 
@@ -272,11 +272,11 @@ impl<F> PatStructPathBuilder<F>
     }
 
     pub fn etc(self) -> F::Result {
-        self.builder.build_pat_(ast::Pat_::PatStruct(self.path, self.pats, true))
+        self.builder.build_pat_(ast::PatKind::Struct(self.path, self.pats, true))
     }
 
     pub fn build(self) -> F::Result {
-        self.builder.build_pat_(ast::Pat_::PatStruct(self.path, self.pats, false))
+        self.builder.build_pat_(ast::PatKind::Struct(self.path, self.pats, false))
     }
 }
 
@@ -311,7 +311,7 @@ impl<F> Invoke<P<ast::Expr>> for PatExprBuilder<F>
     type Result = F::Result;
 
     fn invoke(self, expr: P<ast::Expr>) -> F::Result {
-        self.0.build_pat_(ast::Pat_::PatLit(expr))
+        self.0.build_pat_(ast::PatKind::Lit(expr))
     }
 }
 
@@ -342,7 +342,7 @@ impl<F: Invoke<P<ast::Pat>>> PatTupleBuilder<F>
     }
 
     pub fn build(self) -> F::Result {
-        self.builder.build_pat_(ast::PatTup(self.pats))
+        self.builder.build_pat_(ast::PatKind::Tup(self.pats))
     }
 }
 
