@@ -9,6 +9,7 @@ use invoke::{Invoke, Identity};
 use expr::ExprBuilder;
 use ident::ToIdent;
 use path::PathBuilder;
+use qpath::QPathBuilder;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -22,7 +23,6 @@ impl PatBuilder {
         PatBuilder::with_callback(Identity)
     }
 }
-
 
 impl<F> PatBuilder<F>
     where F: Invoke<P<ast::Pat>>,
@@ -104,11 +104,89 @@ impl<F> PatBuilder<F>
         ExprBuilder::with_callback(PatExprBuilder(self))
     }
 
+    pub fn build_path(self, path: ast::Path) -> F::Result {
+        self.build_pat_kind(ast::PatKind::Path(path))
+    }
+
+    pub fn build_qpath(self, qself: ast::QSelf, path: ast::Path) -> F::Result {
+        self.build_pat_kind(ast::PatKind::QPath(qself, path))
+    }
+
+    pub fn path(self) -> PathBuilder<Self> {
+        PathBuilder::with_callback(self)
+    }
+
+    pub fn qpath(self) -> QPathBuilder<Self> {
+        QPathBuilder::with_callback(self)
+    }
+
+    pub fn build_range(self, lhs: P<ast::Expr>, rhs: P<ast::Expr>) -> F::Result {
+        self.build_pat_kind(ast::PatKind::Range(lhs, rhs))
+    }
+
+    pub fn range(self) -> ExprBuilder<PatRangeBuilder<F>> {
+        ExprBuilder::with_callback(PatRangeBuilder(self))
+    }
+
     pub fn tuple(self) -> PatTupleBuilder<F> {
         PatTupleBuilder {
             builder: self,
             pats: Vec::new(),
         }
+    }
+}
+
+impl<F> Invoke<ast::Path> for PatBuilder<F>
+    where F: Invoke<P<ast::Pat>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, path: ast::Path) -> F::Result {
+        self.build_path(path)
+    }
+}
+
+impl<F> Invoke<(ast::QSelf, ast::Path)> for PatBuilder<F>
+    where F: Invoke<P<ast::Pat>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, (qself, path): (ast::QSelf, ast::Path)) -> F::Result {
+        self.build_qpath(qself, path)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct PatRangeBuilder<F>(PatBuilder<F>);
+
+impl<F> Invoke<P<ast::Expr>> for PatRangeBuilder<F>
+    where F: Invoke<P<ast::Pat>>
+{
+    type Result = ExprBuilder<PatRangeExprBuilder<F>>;
+
+    fn invoke(self, lhs: P<ast::Expr>) -> Self::Result {
+        ExprBuilder::with_callback(PatRangeExprBuilder {
+            builder: self.0,
+            lhs: lhs,
+        })
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct PatRangeExprBuilder<F> {
+    builder: PatBuilder<F>,
+    lhs: P<ast::Expr>,
+}
+
+impl<F> Invoke<P<ast::Expr>> for PatRangeExprBuilder<F>
+    where F: Invoke<P<ast::Pat>>
+{
+    type Result = F::Result;
+
+    fn invoke(self, rhs: P<ast::Expr>) -> Self::Result {
+        self.builder.build_range(self.lhs, rhs)
     }
 }
 
