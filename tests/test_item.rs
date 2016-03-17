@@ -618,6 +618,7 @@ fn test_impl() {
                         id: ast::DUMMY_NODE_ID,
                         ident: builder.id("MyFloat"),
                         vis: ast::Visibility::Inherited,
+                        defaultness: ast::Defaultness::Final,
                         attrs: vec![],
                         node: ast::ImplItemKind::Type(builder.ty().f64()),
                         span: DUMMY_SP,
@@ -627,6 +628,7 @@ fn test_impl() {
                         id: ast::DUMMY_NODE_ID,
                         ident: builder.id("PI"),
                         vis: ast::Visibility::Inherited,
+                        defaultness: ast::Defaultness::Final,
                         attrs: vec![],
                         node: ast::ImplItemKind::Const(
                             builder.ty().f64(),
@@ -639,6 +641,7 @@ fn test_impl() {
                         id: ast::DUMMY_NODE_ID,
                         ident: builder.id("serialize"),
                         vis: ast::Visibility::Inherited,
+                        defaultness: ast::Defaultness::Final,
                         attrs: vec![],
                         node: ast::ImplItemKind::Method(
                             ast::MethodSig {

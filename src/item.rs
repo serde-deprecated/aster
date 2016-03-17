@@ -1269,6 +1269,7 @@ pub struct ItemImplItemBuilder<F=Identity> {
     callback: F,
     id: ast::Ident,
     vis: ast::Visibility,
+    defaultness: ast::Defaultness,
     attrs: Vec<ast::Attribute>,
     span: Span,
 }
@@ -1292,6 +1293,7 @@ impl<F> ItemImplItemBuilder<F>
             callback: callback,
             id: id.to_ident(),
             vis: ast::Visibility::Inherited,
+            defaultness: ast::Defaultness::Final,
             attrs: vec![],
             span: DUMMY_SP,
         }
@@ -1323,6 +1325,11 @@ impl<F> ItemImplItemBuilder<F>
         self
     }
 
+    pub fn default(mut self) -> Self {
+        self.defaultness = ast::Defaultness::Default;
+        self
+    }
+
     pub fn const_(self) -> ConstBuilder<Self> {
         ConstBuilder::with_callback(self)
     }
@@ -1351,6 +1358,7 @@ impl<F> ItemImplItemBuilder<F>
             id: ast::DUMMY_NODE_ID,
             ident: self.id,
             vis: self.vis,
+            defaultness: self.defaultness,
             attrs: self.attrs,
             node: node,
             span: self.span,
