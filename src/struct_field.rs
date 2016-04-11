@@ -1,5 +1,5 @@
 use syntax::ast;
-use syntax::codemap::{DUMMY_SP, Span, respan};
+use syntax::codemap::{DUMMY_SP, Span};
 use syntax::ptr::P;
 
 use attr::AttrBuilder;
@@ -12,7 +12,8 @@ use ty::TyBuilder;
 pub struct StructFieldBuilder<F=Identity> {
     callback: F,
     span: Span,
-    kind: ast::StructFieldKind,
+    ident: Option<ast::Ident>,
+    vis: ast::Visibility,
     attrs: Vec<ast::Attribute>,
 }
 
@@ -38,7 +39,8 @@ impl<F> StructFieldBuilder<F>
         StructFieldBuilder {
             callback: callback,
             span: DUMMY_SP,
-            kind: ast::StructFieldKind::NamedField(id, ast::Visibility::Inherited),
+            ident: Some(id),
+            vis: ast::Visibility::Inherited,
             attrs: vec![],
         }
     }
@@ -47,7 +49,8 @@ impl<F> StructFieldBuilder<F>
         StructFieldBuilder {
             callback: callback,
             span: DUMMY_SP,
-            kind: ast::StructFieldKind::UnnamedField(ast::Visibility::Inherited),
+            ident: None,
+            vis: ast::Visibility::Inherited,
             attrs: vec![],
         }
     }
@@ -58,12 +61,7 @@ impl<F> StructFieldBuilder<F>
     }
 
     pub fn pub_(mut self) -> Self {
-        match self.kind {
-            ast::StructFieldKind::NamedField(_, ref mut vis)
-            | ast::StructFieldKind::UnnamedField(ref mut vis) => {
-                *vis = ast::Visibility::Public;
-            }
-        }
+        self.vis = ast::Visibility::Public;
         self
     }
 
@@ -80,13 +78,15 @@ impl<F> StructFieldBuilder<F>
     }
 
     pub fn build_ty(self, ty: P<ast::Ty>) -> F::Result {
-        let field = ast::StructField_ {
-            kind: self.kind,
+        let field = ast::StructField {
             id: ast::DUMMY_NODE_ID,
+            span: self.span,
+            ident: self.ident,
+            vis: self.vis,
             ty: ty,
             attrs: self.attrs,
         };
-        self.callback.invoke(respan(self.span, field))
+        self.callback.invoke(field)
     }
 
     pub fn ty(self) -> TyBuilder<Self> {
