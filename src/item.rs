@@ -5,7 +5,7 @@ use std::iter::IntoIterator;
 use syntax::abi::Abi;
 use syntax::ast;
 use syntax::codemap::{DUMMY_SP, Span, respan};
-use syntax::parse::token;
+use syntax::parse::token::keywords;
 use syntax::ptr::P;
 
 use attr::AttrBuilder;
@@ -111,7 +111,7 @@ impl<F> ItemBuilder<F>
 
     pub fn build_use(self, view_path: ast::ViewPath_) -> F::Result {
         let item = ast::ItemKind::Use(P(respan(self.span, view_path)));
-        self.build_item_kind(token::special_idents::invalid, item)
+        self.build_item_kind(keywords::Invalid.ident(), item)
     }
 
     pub fn use_(self) -> PathBuilder<ItemUseBuilder<F>> {
@@ -1180,7 +1180,7 @@ impl<F> ItemImplBuilder<F>
             self.trait_ref,
             ty,
             self.items);
-        self.builder.build_item_kind(token::special_idents::invalid, ty_)
+        self.builder.build_item_kind(keywords::Invalid.ident(), ty_)
     }
 
     pub fn with_items<I>(mut self, items: I) -> Self

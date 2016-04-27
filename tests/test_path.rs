@@ -110,7 +110,7 @@ fn test_option() {
                         types: P::from_vec(vec![
                             builder.ty().isize(),
                         ]),
-                        bindings: P::empty(),
+                        bindings: P::new(),
                     }),
                 },
             ]
@@ -139,8 +139,8 @@ fn test_lifetimes() {
                         lifetimes: vec![
                             builder.lifetime("'a"),
                         ],
-                        types: P::empty(),
-                        bindings: P::empty(),
+                        types: P::new(),
+                        bindings: P::new(),
                     }),
                 },
             ]

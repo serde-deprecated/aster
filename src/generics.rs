@@ -57,7 +57,7 @@ impl<F> GenericsBuilder<F>
 
     pub fn with(self, generics: ast::Generics) -> Self {
         self.with_lifetimes(generics.lifetimes.into_iter())
-            .with_ty_params(generics.ty_params.move_iter())
+            .with_ty_params(generics.ty_params.into_iter())
             .with_predicates(generics.where_clause.predicates.into_iter())
     }
 
@@ -200,7 +200,7 @@ impl<F> GenericsBuilder<F>
 
     pub fn strip_ty_params(mut self) -> Self {
         for ty_param in &mut self.ty_params {
-            ty_param.bounds = P::empty();
+            ty_param.bounds = P::new();
         }
         self
     }
