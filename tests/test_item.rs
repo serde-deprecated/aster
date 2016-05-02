@@ -268,7 +268,7 @@ fn test_use() {
         assert_eq!(
             item,
             P(ast::Item {
-                ident: token::special_idents::invalid,
+                ident: token::keywords::Invalid.ident(),
                 attrs: vec![],
                 id: ast::DUMMY_NODE_ID,
                 node: ast::ItemKind::Use(
