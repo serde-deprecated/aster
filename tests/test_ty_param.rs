@@ -16,7 +16,7 @@ fn test_ty_param_empty() {
         ast::TyParam {
             ident: builder.id("T"),
             id: ast::DUMMY_NODE_ID,
-            bounds: P::empty(),
+            bounds: P::new(),
             default: None,
             span: DUMMY_SP,
         }
@@ -36,7 +36,7 @@ fn test_ty_param_default() {
         ast::TyParam {
             ident: builder.id("T"),
             id: ast::DUMMY_NODE_ID,
-            bounds: P::empty(),
+            bounds: P::new(),
             default: Some(builder.ty().usize()),
             span: DUMMY_SP,
         }

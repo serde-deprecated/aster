@@ -1,7 +1,7 @@
 use syntax::abi::Abi;
 use syntax::ast;
 use syntax::codemap::{DUMMY_SP, respan};
-use syntax::parse::token;
+use syntax::parse::token::keywords;
 use syntax::print::pprust;
 use syntax::ptr::P;
 
@@ -268,7 +268,7 @@ fn test_use() {
         assert_eq!(
             item,
             P(ast::Item {
-                ident: token::special_idents::invalid,
+                ident: keywords::Invalid.ident(),
                 attrs: vec![],
                 id: ast::DUMMY_NODE_ID,
                 node: ast::ItemKind::Use(
