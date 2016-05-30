@@ -561,7 +561,6 @@ fn test_trait() {
                                 abi: Abi::Rust,
                                 decl: builder.fn_decl().default_return(),
                                 generics: builder.generics().build(),
-                                explicit_self: respan(DUMMY_SP, ast::SelfKind::Static),
                             },
                             None
                         ),
@@ -650,7 +649,6 @@ fn test_impl() {
                                 abi: Abi::Rust,
                                 decl: builder.fn_decl().default_return(),
                                 generics: builder.generics().build(),
-                                explicit_self: respan(DUMMY_SP, ast::SelfKind::Static),
                             },
                             builder.block().build()
                         ),

@@ -648,8 +648,11 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn loop_(self) -> ExprLoopBuilder<F> {
+        let span = self.span;
+
         ExprLoopBuilder {
             builder: self,
+            span: span,
             label: None,
         }
     }
@@ -1360,16 +1363,22 @@ impl<F> Invoke<P<ast::Expr>> for ExprRepeatLhsBuilder<F>
 
 pub struct ExprLoopBuilder<F> {
     builder: ExprBuilder<F>,
-    label: Option<ast::Ident>,
+    span: Span,
+    label: Option<Spanned<ast::Ident>>,
 }
 
 impl<F> ExprLoopBuilder<F>
     where F: Invoke<P<ast::Expr>>,
 {
+    pub fn span(mut self, span: Span) -> Self {
+        self.span = span;
+        self
+    }
+
     pub fn label<I>(mut self, id: I) -> Self
         where I: ToIdent,
     {
-        self.label = Some(id.to_ident());
+        self.label = Some(respan(self.span, id.to_ident()));
         self
     }
 

@@ -1,10 +1,11 @@
 use syntax::ast;
-use syntax::codemap::{DUMMY_SP, Span};
+use syntax::codemap::{DUMMY_SP, Span, respan};
 use syntax::ptr::P;
 
 use ident::ToIdent;
 use invoke::{Invoke, Identity};
 use pat::PatBuilder;
+use self_::SelfBuilder;
 use ty::TyBuilder;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -42,6 +43,15 @@ impl<F> FnDeclBuilder<F>
     pub fn variadic(mut self) -> Self {
         self.variadic = true;
         self
+    }
+
+    pub fn with_self(self, explicit_self: ast::ExplicitSelf) -> Self {
+        let self_ident = respan(self.span, "self".to_ident());
+        self.with_arg(ast::Arg::from_self(explicit_self, self_ident))
+    }
+
+    pub fn self_(self) -> SelfBuilder<Self> {
+        SelfBuilder::with_callback(self)
     }
 
     pub fn with_arg(mut self, arg: ast::Arg) -> Self {
@@ -128,6 +138,16 @@ impl<F> Invoke<P<ast::Ty>> for FnDeclBuilder<F>
 
     fn invoke(self, ty: P<ast::Ty>) -> F::Result {
         self.build_return(ty)
+    }
+}
+
+impl<F> Invoke<ast::ExplicitSelf> for FnDeclBuilder<F>
+    where F: Invoke<P<ast::FnDecl>>,
+{
+    type Result = Self;
+
+    fn invoke(self, explicit_self: ast::ExplicitSelf) -> Self {
+        self.with_self(explicit_self)
     }
 }
 

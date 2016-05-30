@@ -132,6 +132,7 @@ impl<F> PatBuilder<F>
         PatTupleBuilder {
             builder: self,
             pats: Vec::new(),
+            wild: None,
         }
     }
 }
@@ -202,6 +203,7 @@ impl<F> Invoke<ast::Path> for PatEnumBuilder<F> {
             builder: self.0,
             path: path,
             pats: Vec::new(),
+            wild: None,
         }
     }
 }
@@ -212,6 +214,7 @@ pub struct PatEnumPathBuilder<F> {
     builder: PatBuilder<F>,
     path: ast::Path,
     pats: Vec<P<ast::Pat>>,
+    wild: Option<usize>,
 }
 
 impl<F> PatEnumPathBuilder<F>
@@ -244,8 +247,13 @@ impl<F> PatEnumPathBuilder<F>
         self.pat().id(id)
     }
 
+    pub fn wild(mut self) -> Self {
+        self.wild = Some(self.pats.len());
+        self
+    }
+
     pub fn build(self) -> F::Result {
-        self.builder.build_pat_kind(ast::PatKind::TupleStruct(self.path, Some(self.pats)))
+        self.builder.build_pat_kind(ast::PatKind::TupleStruct(self.path, self.pats, self.wild))
     }
 }
 
@@ -398,6 +406,7 @@ impl<F> Invoke<P<ast::Expr>> for PatExprBuilder<F>
 pub struct PatTupleBuilder<F> {
     builder: PatBuilder<F>,
     pats: Vec<P<ast::Pat>>,
+    wild: Option<usize>,
 }
 
 impl<F: Invoke<P<ast::Pat>>> PatTupleBuilder<F>
@@ -419,8 +428,13 @@ impl<F: Invoke<P<ast::Pat>>> PatTupleBuilder<F>
         PatBuilder::with_callback(self)
     }
 
+    pub fn wild(mut self) -> Self {
+        self.wild = Some(self.pats.len());
+        self
+    }
+
     pub fn build(self) -> F::Result {
-        self.builder.build_pat_kind(ast::PatKind::Tup(self.pats))
+        self.builder.build_pat_kind(ast::PatKind::Tuple(self.pats, self.wild))
     }
 }
 
