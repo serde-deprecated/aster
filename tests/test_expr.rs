@@ -329,7 +329,7 @@ fn test_loop() {
         builder.expr().build_expr_kind(
             ast::ExprKind::Loop(
                 builder.block().build(),
-                Some(builder.id("'a")),
+                Some(respan(DUMMY_SP, builder.id("'a"))),
             )
         )
     );

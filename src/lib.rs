@@ -31,6 +31,7 @@ pub mod name;
 pub mod pat;
 pub mod path;
 pub mod qpath;
+pub mod self_;
 pub mod stmt;
 pub mod str;
 pub mod struct_field;
@@ -163,8 +164,8 @@ impl AstBuilder {
         method::MethodSigBuilder::new().span(self.span)
     }
 
-    pub fn self_(&self) -> method::SelfBuilder {
-        method::SelfBuilder::new().span(self.span)
+    pub fn self_(&self) -> self_::SelfBuilder {
+        self_::SelfBuilder::new().span(self.span)
     }
 
     pub fn arg(&self) -> fn_decl::ArgBuilder {
@@ -209,5 +210,11 @@ impl AstBuilder {
 
     pub fn const_(&self) -> constant::ConstBuilder {
         constant::ConstBuilder::new().span(self.span)
+    }
+}
+
+impl Default for AstBuilder {
+    fn default() -> Self {
+        AstBuilder::new()
     }
 }

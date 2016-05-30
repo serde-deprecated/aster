@@ -109,7 +109,7 @@ fn make_ext_ctxt<'a>(sess: &'a ParseSess,
     let cfg = vec![];
     let ecfg = expand::ExpansionConfig::default(String::new());
 
-    let mut cx = ExtCtxt::new(&sess, cfg, ecfg, feature_gated_cfgs);
+    let mut cx = ExtCtxt::new(sess, cfg, ecfg, feature_gated_cfgs);
     cx.bt_push(info);
 
     cx
