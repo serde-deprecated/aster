@@ -5,6 +5,7 @@ use syntax::ext::expand;
 use syntax::ext::quote::rt::ToTokens;
 use syntax::parse::ParseSess;
 use syntax::ptr::P;
+use syntax::tokenstream::TokenTree;
 
 use expr::ExprBuilder;
 use invoke::{Invoke, Identity};
@@ -19,7 +20,7 @@ use name::ToName;
 pub struct MacBuilder<F=Identity> {
     callback: F,
     span: Span,
-    tokens: Vec<ast::TokenTree>,
+    tokens: Vec<TokenTree>,
     path: Option<ast::Path>,
 }
 
@@ -55,7 +56,6 @@ impl<F> MacBuilder<F>
         let mac = ast::Mac_ {
             path: self.path.expect("No path set for macro"),
             tts: self.tokens,
-            ctxt: ast::EMPTY_CTXT,
         };
         self.callback.invoke(respan(self.span, mac))
     }

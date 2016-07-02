@@ -1,6 +1,5 @@
 use syntax::ast;
-use syntax::attr::AttributesExt;
-use syntax::codemap::{DUMMY_SP, Span, respan};
+use syntax::codemap::{DUMMY_SP, Span};
 use syntax::ptr::P;
 
 use invoke::{Invoke, Identity};
@@ -46,7 +45,11 @@ impl<F> StmtBuilder<F>
     }
 
     pub fn build_stmt_kind(self, stmt_: ast::StmtKind) -> F::Result {
-        let stmt = respan(self.span, stmt_);
+        let stmt = ast::Stmt {
+            id: ast::DUMMY_NODE_ID,
+            node: stmt_,
+            span: self.span,
+        };
         self.build(stmt)
     }
 
@@ -60,12 +63,10 @@ impl<F> StmtBuilder<F>
             init: init,
             id: ast::DUMMY_NODE_ID,
             span: self.span,
-            attrs: self.attrs.clone().into_thin_attrs(),
+            attrs: self.attrs.clone().into(),
         };
 
-        let decl = respan(self.span, ast::DeclKind::Local(P(local)));
-
-        self.build_stmt_kind(ast::StmtKind::Decl(P(decl), ast::DUMMY_NODE_ID))
+        self.build_stmt_kind(ast::StmtKind::Local(P(local)))
     }
 
     pub fn let_(self) -> PatBuilder<Self> {
@@ -80,7 +81,7 @@ impl<F> StmtBuilder<F>
     }
 
     pub fn build_expr(self, expr: P<ast::Expr>) -> F::Result {
-        self.build_stmt_kind(ast::StmtKind::Expr(expr, ast::DUMMY_NODE_ID))
+        self.build_stmt_kind(ast::StmtKind::Expr(expr))
     }
 
     pub fn expr(self) -> ExprBuilder<StmtExprBuilder<F>> {
@@ -94,8 +95,7 @@ impl<F> StmtBuilder<F>
     }
 
     pub fn build_item(self, item: P<ast::Item>) -> F::Result {
-        let decl = respan(self.span, ast::DeclKind::Item(item));
-        self.build_stmt_kind(ast::StmtKind::Decl(P(decl), ast::DUMMY_NODE_ID))
+        self.build_stmt_kind(ast::StmtKind::Item(item))
     }
 
     pub fn item(self) -> ItemBuilder<StmtItemBuilder<F>> {
@@ -155,7 +155,7 @@ impl<F> Invoke<P<ast::Expr>> for StmtSemiBuilder<F>
     type Result = F::Result;
 
     fn invoke(self, expr: P<ast::Expr>) -> F::Result {
-        self.0.build_stmt_kind(ast::StmtKind::Semi(expr, ast::DUMMY_NODE_ID))
+        self.0.build_stmt_kind(ast::StmtKind::Semi(expr))
     }
 }
 

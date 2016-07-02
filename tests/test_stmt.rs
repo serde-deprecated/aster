@@ -1,6 +1,7 @@
-use syntax::ast;
-use syntax::codemap::{DUMMY_SP, respan};
+use syntax::ast::{self, DUMMY_NODE_ID};
+use syntax::codemap::DUMMY_SP;
 use syntax::ptr::P;
+use syntax::util::ThinVec;
 
 use aster::AstBuilder;
 
@@ -11,89 +12,77 @@ fn test_let() {
     assert_eq!(
         builder.stmt()
             .let_().id("x").build(),
-        respan(
-            DUMMY_SP,
-            ast::StmtKind::Decl(
-                P(respan(
-                    DUMMY_SP,
-                    ast::DeclKind::Local(P(ast::Local {
-                        pat: builder.pat().id("x"),
-                        ty: None,
-                        init: None,
-                        id: ast::DUMMY_NODE_ID,
-                        span: DUMMY_SP,
-                        attrs: None,
-                    })),
-                )),
-                ast::DUMMY_NODE_ID,
+        ast::Stmt {
+            id: DUMMY_NODE_ID,
+            node: ast::StmtKind::Local(
+                P(ast::Local {
+                    pat: builder.pat().id("x"),
+                    ty: None,
+                    init: None,
+                    id: DUMMY_NODE_ID,
+                    span: DUMMY_SP,
+                    attrs: ThinVec::new(),
+                }),
             ),
-        )
+            span: DUMMY_SP,
+        }
     );
 
     assert_eq!(
         builder.stmt()
             .let_().id("x").ty().i8().build(),
-        respan(
-            DUMMY_SP,
-            ast::StmtKind::Decl(
-                P(respan(
-                    DUMMY_SP,
-                    ast::DeclKind::Local(P(ast::Local {
-                        pat: builder.pat().id("x"),
-                        ty: Some(builder.ty().i8()),
-                        init: None,
-                        id: ast::DUMMY_NODE_ID,
-                        span: DUMMY_SP,
-                        attrs: None,
-                    })),
-                )),
-                ast::DUMMY_NODE_ID,
+        ast::Stmt {
+            id: DUMMY_NODE_ID,
+            node: ast::StmtKind::Local(
+                P(ast::Local {
+                    pat: builder.pat().id("x"),
+                    ty: Some(builder.ty().i8()),
+                    init: None,
+                    id: DUMMY_NODE_ID,
+                    span: DUMMY_SP,
+                    attrs: ThinVec::new(),
+                }),
             ),
-        )
+            span: DUMMY_SP,
+        }
     );
 
     assert_eq!(
         builder.stmt()
             .let_().id("x").expr().i8(5),
-        respan(
-            DUMMY_SP,
-            ast::StmtKind::Decl(
-                P(respan(
-                    DUMMY_SP,
-                    ast::DeclKind::Local(P(ast::Local {
-                        pat: builder.pat().id("x"),
-                        ty: None,
-                        init: Some(builder.expr().i8(5)),
-                        id: ast::DUMMY_NODE_ID,
-                        span: DUMMY_SP,
-                        attrs: None,
-                    })),
-                )),
-                ast::DUMMY_NODE_ID,
+        ast::Stmt {
+            id: DUMMY_NODE_ID,
+            node: ast::StmtKind::Local(
+                P(ast::Local {
+                    pat: builder.pat().id("x"),
+                    ty: None,
+                    init: Some(builder.expr().i8(5)),
+                    id: DUMMY_NODE_ID,
+                    span: DUMMY_SP,
+                    attrs: ThinVec::new(),
+                }),
             ),
-        )
+            span: DUMMY_SP,
+        }
     );
 
     assert_eq!(
         builder.stmt()
             .let_().id("x").ty().i8().expr().i8(5),
-        respan(
-            DUMMY_SP,
-            ast::StmtKind::Decl(
-                P(respan(
-                    DUMMY_SP,
-                    ast::DeclKind::Local(P(ast::Local {
-                        pat: builder.pat().id("x"),
-                        ty: Some(builder.ty().i8()),
-                        init: Some(builder.expr().i8(5)),
-                        id: ast::DUMMY_NODE_ID,
-                        span: DUMMY_SP,
-                        attrs: None,
-                    })),
-                )),
-                ast::DUMMY_NODE_ID,
+        ast::Stmt {
+            id: DUMMY_NODE_ID,
+            node: ast::StmtKind::Local(
+                P(ast::Local {
+                    pat: builder.pat().id("x"),
+                    ty: Some(builder.ty().i8()),
+                    init: Some(builder.expr().i8(5)),
+                    id: DUMMY_NODE_ID,
+                    span: DUMMY_SP,
+                    attrs: ThinVec::new(),
+                }),
             ),
-        )
+            span: DUMMY_SP,
+        }
     );
 
     assert_eq!(
@@ -106,30 +95,27 @@ fn test_let() {
                 .expr().u8(0)
                 .expr().u16(1)
                 .build(),
-        respan(
-            DUMMY_SP,
-            ast::StmtKind::Decl(
-                P(respan(
-                    DUMMY_SP,
-                    ast::DeclKind::Local(P(ast::Local {
-                        pat: builder.pat().tuple()
-                            .pat().id("x")
-                            .pat().id("y")
-                            .build(),
-                        ty: None,
-                        init: Some(
-                            builder.expr().tuple()
-                                .expr().u8(0)
-                                .expr().u16(1)
-                                .build()
-                        ),
-                        id: ast::DUMMY_NODE_ID,
-                        span: DUMMY_SP,
-                        attrs: None,
-                    })),
-                )),
-                ast::DUMMY_NODE_ID,
+        ast::Stmt {
+            id: DUMMY_NODE_ID,
+            node: ast::StmtKind::Local(
+                P(ast::Local {
+                    pat: builder.pat().tuple()
+                        .pat().id("x")
+                        .pat().id("y")
+                        .build(),
+                    ty: None,
+                    init: Some(
+                        builder.expr().tuple()
+                            .expr().u8(0)
+                            .expr().u16(1)
+                            .build()
+                    ),
+                    id: DUMMY_NODE_ID,
+                    span: DUMMY_SP,
+                    attrs: ThinVec::new(),
+                }),
             ),
-        )
+            span: DUMMY_SP,
+        }
     );
 }
