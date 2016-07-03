@@ -105,11 +105,11 @@ impl<F> PatBuilder<F>
     }
 
     pub fn build_path(self, path: ast::Path) -> F::Result {
-        self.build_pat_kind(ast::PatKind::Path(path))
+        self.build_pat_kind(ast::PatKind::Path(None, path))
     }
 
     pub fn build_qpath(self, qself: ast::QSelf, path: ast::Path) -> F::Result {
-        self.build_pat_kind(ast::PatKind::QPath(qself, path))
+        self.build_pat_kind(ast::PatKind::Path(Some(qself), path))
     }
 
     pub fn path(self) -> PathBuilder<Self> {

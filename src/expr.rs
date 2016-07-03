@@ -3,7 +3,6 @@
 use std::iter::IntoIterator;
 
 use syntax::ast;
-use syntax::attr::AttributesExt;
 use syntax::codemap::{DUMMY_SP, Span, Spanned, respan};
 use syntax::ptr::P;
 
@@ -67,7 +66,7 @@ impl<F> ExprBuilder<F>
             id: ast::DUMMY_NODE_ID,
             node: expr,
             span: self.span,
-            attrs: self.attrs.clone().into_thin_attrs(),
+            attrs: self.attrs.clone().into(),
         });
         self.build(expr)
     }
@@ -424,14 +423,14 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn continue_(self) -> F::Result {
-        self.build_expr_kind(ast::ExprKind::Again(None))
+        self.build_expr_kind(ast::ExprKind::Continue(None))
     }
 
     pub fn continue_to<I>(self, label: I) -> F::Result
         where I: ToIdent,
     {
         let label = respan(self.span, label.to_ident());
-        self.build_expr_kind(ast::ExprKind::Again(Some(label)))
+        self.build_expr_kind(ast::ExprKind::Continue(Some(label)))
     }
 
     pub fn return_(self) -> F::Result {

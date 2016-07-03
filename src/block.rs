@@ -74,10 +74,12 @@ impl<F> BlockBuilder<F>
         self.build_(None)
     }
 
-    fn build_(self, expr: Option<P<ast::Expr>>) -> F::Result {
+    fn build_(mut self, expr: Option<P<ast::Expr>>) -> F::Result {
+        self.stmts.extend(expr.map(|expr| {
+            StmtBuilder::new().build_expr(expr)
+        }));
         self.callback.invoke(P(ast::Block {
             stmts: self.stmts,
-            expr: expr,
             id: ast::DUMMY_NODE_ID,
             rules: self.block_check_mode,
             span: self.span,

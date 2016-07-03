@@ -1,6 +1,7 @@
 use syntax::ast;
 use syntax::codemap::{DUMMY_SP, Spanned, respan};
 use syntax::ptr::P;
+use syntax::util::ThinVec;
 
 use aster::AstBuilder;
 
@@ -15,7 +16,7 @@ fn test_lit() {
                 id: ast::DUMMY_NODE_ID,
                 node: ast::ExprKind::Lit(lit),
                 span: DUMMY_SP,
-                attrs: None,
+                attrs: ThinVec::new(),
             })
         );
     }
@@ -58,7 +59,7 @@ fn test_path() {
                 builder.path().id("x").build(),
             ),
             span: DUMMY_SP,
-            attrs: None,
+            attrs: ThinVec::new(),
         })
     );
 }
@@ -83,7 +84,7 @@ fn test_qpath() {
                 builder.path().id("into_vec").build(),
             ),
             span: DUMMY_SP,
-            attrs: None,
+            attrs: ThinVec::new(),
         })
     );
 
@@ -107,7 +108,7 @@ fn test_qpath() {
                     .build(),
             ),
             span: DUMMY_SP,
-            attrs: None,
+            attrs: ThinVec::new(),
         })
     );
 }
@@ -130,7 +131,7 @@ fn test_bin() {
                 builder.expr().i8(2),
             ),
             span: DUMMY_SP,
-            attrs: None,
+            attrs: ThinVec::new(),
         })
     );
 }
@@ -145,7 +146,7 @@ fn test_unit() {
             id: ast::DUMMY_NODE_ID,
             node: ast::ExprKind::Tup(vec![]),
             span: DUMMY_SP,
-            attrs: None,
+            attrs: ThinVec::new(),
         })
     );
 
@@ -155,7 +156,7 @@ fn test_unit() {
             id: ast::DUMMY_NODE_ID,
             node: ast::ExprKind::Tup(vec![]),
             span: DUMMY_SP,
-            attrs: None,
+            attrs: ThinVec::new(),
         })
     );
 }
@@ -185,11 +186,11 @@ fn test_tuple() {
                         builder.expr().isize(2),
                     ]),
                     span: DUMMY_SP,
-                    attrs: None,
+                    attrs: ThinVec::new(),
                 })
             ]),
             span: DUMMY_SP,
-            attrs: None,
+            attrs: ThinVec::new(),
         })
     );
 }
@@ -214,7 +215,7 @@ fn test_slice() {
                 builder.expr().i8(3),
             ]),
             span: DUMMY_SP,
-            attrs: None,
+            attrs: ThinVec::new(),
         })
     );
 }
@@ -270,7 +271,7 @@ fn test_continue() {
 
     assert_eq!(
         expr,
-        builder.expr().build_expr_kind(ast::ExprKind::Again(None))
+        builder.expr().build_expr_kind(ast::ExprKind::Continue(None))
     );
 
     let expr = builder.expr().continue_to("'a");
@@ -278,7 +279,7 @@ fn test_continue() {
 
     assert_eq!(
         expr,
-        builder.expr().build_expr_kind(ast::ExprKind::Again(Some(id)))
+        builder.expr().build_expr_kind(ast::ExprKind::Continue(Some(id)))
     );
 }
 
