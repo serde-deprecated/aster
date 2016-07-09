@@ -44,7 +44,7 @@ impl<F> MethodSigBuilder<F>
     }
 
     pub fn unsafe_(mut self) -> Self {
-        self.unsafety = ast::Unsafety::Normal;
+        self.unsafety = ast::Unsafety::Unsafe;
         self
     }
 
