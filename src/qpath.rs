@@ -51,7 +51,8 @@ impl<F> QPathBuilder<F>
 
     /// Build a qualified path first by starting with a type builder.
     pub fn ty(self) -> TyBuilder<Self> {
-        TyBuilder::with_callback(self)
+        let span = self.span;
+        TyBuilder::with_callback(self).span(span)
     }
 
     /// Build a qualified path with a concrete type and path.
@@ -82,7 +83,8 @@ impl<F> QPathTyBuilder<F>
 {
     /// Build a qualified path with a path builder.
     pub fn as_(self) -> PathBuilder<Self> {
-        PathBuilder::with_callback(self)
+        let span = self.builder.span;
+        PathBuilder::with_callback(self).span(span)
     }
 
     pub fn id<T>(self, id: T) -> F::Result

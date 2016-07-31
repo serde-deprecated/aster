@@ -59,7 +59,8 @@ impl<F> BlockBuilder<F>
     }
 
     pub fn stmt(self) -> StmtBuilder<Self> {
-        StmtBuilder::with_callback(self)
+        let span = self.span;
+        StmtBuilder::with_callback(self).span(span)
     }
 
     pub fn build_expr(self, expr: P<ast::Expr>) -> F::Result {
@@ -67,7 +68,8 @@ impl<F> BlockBuilder<F>
     }
 
     pub fn expr(self) -> ExprBuilder<Self> {
-        ExprBuilder::with_callback(self)
+        let span = self.span;
+        ExprBuilder::with_callback(self).span(span)
     }
 
     pub fn build(self) -> F::Result {
@@ -76,7 +78,7 @@ impl<F> BlockBuilder<F>
 
     fn build_(mut self, expr: Option<P<ast::Expr>>) -> F::Result {
         self.stmts.extend(expr.map(|expr| {
-            StmtBuilder::new().build_expr(expr)
+            StmtBuilder::new().span(expr.span).build_expr(expr)
         }));
         self.callback.invoke(P(ast::Block {
             stmts: self.stmts,

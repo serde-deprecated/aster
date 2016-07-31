@@ -221,7 +221,8 @@ impl<F> ArmBodyBuilder<F>
     where F: Invoke<ast::Arm>,
 {
     pub fn body(self) -> ExprBuilder<ArmBodyBuilder<F>> {
-        ExprBuilder::with_callback(self)
+        let span = self.builder.span;
+        ExprBuilder::with_callback(self).span(span)
     }
 
     pub fn build(self, body: P<ast::Expr>) -> F::Result {

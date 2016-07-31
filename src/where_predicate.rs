@@ -38,7 +38,8 @@ impl<F> WherePredicateBuilder<F>
     }
 
     pub fn bound(self) -> TyBuilder<Self> {
-        TyBuilder::with_callback(self)
+        let span = self.span;
+        TyBuilder::with_callback(self).span(span)
     }
 
     pub fn lifetime<L>(self, lifetime: L) -> WhereRegionPredicateBuilder<F>
@@ -308,7 +309,8 @@ impl<F> WhereEqPredicateBuilder<F>
     where F: Invoke<ast::WherePredicate>,
 {
     pub fn ty(self) -> TyBuilder<Self> {
-        TyBuilder::with_callback(self)
+        let span = self.span;
+        TyBuilder::with_callback(self).span(span)
     }
 
     pub fn build_ty(self, ty: P<ast::Ty>) -> F::Result {

@@ -162,7 +162,8 @@ impl<F> ItemBuilder<F>
         where T: ToIdent,
     {
         let id = id.to_ident();
-        let generics = GenericsBuilder::new().build();
+        let span = self.span;
+        let generics = GenericsBuilder::new().span(span).build();
 
         ItemEnumBuilder {
             builder: self,
@@ -536,7 +537,8 @@ impl<F> ItemTupleStructBuilder<F>
     }
 
     pub fn ty(self) -> TyBuilder<Self> {
-        TyBuilder::with_callback(self)
+        let span = self.builder.span;
+        TyBuilder::with_callback(self).span(span)
     }
 
     pub fn field(self) -> StructFieldBuilder<Self> {
@@ -596,7 +598,8 @@ impl<F> ItemEnumBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
     pub fn generics(self) -> GenericsBuilder<Self> {
-        GenericsBuilder::with_callback(self)
+        let span = self.builder.span;
+        GenericsBuilder::with_callback(self).span(span)
     }
 
     pub fn with_variants<I>(mut self, iter: I) -> Self
@@ -647,7 +650,8 @@ impl<F> ItemEnumBuilder<F>
     pub fn variant<T>(self, id: T) -> VariantBuilder<Self>
         where T: ToIdent,
     {
-        VariantBuilder::with_callback(id, self)
+        let span = self.builder.span;
+        VariantBuilder::with_callback(id, self).span(span)
     }
 
     pub fn build(self) -> F::Result {
@@ -761,7 +765,8 @@ impl<F> ItemTyBuilder<F>
     }
 
     pub fn ty(self) -> TyBuilder<Self> {
-        TyBuilder::with_callback(self)
+        let span = self.builder.span;
+        TyBuilder::with_callback(self).span(span)
     }
 
     pub fn build_ty(self, ty: P<ast::Ty>) -> F::Result {
@@ -1098,7 +1103,8 @@ impl<F> ItemTraitTypeBuilder<F>
     }
 
     pub fn ty(self) -> TyBuilder<Self> {
-        TyBuilder::with_callback(self)
+        let span = self.builder.span;
+        TyBuilder::with_callback(self).span(span)
     }
 
     pub fn build(self) -> F::Result {
@@ -1169,7 +1175,8 @@ impl<F> ItemImplBuilder<F>
     }
 
     pub fn ty(self) -> TyBuilder<Self> {
-        TyBuilder::with_callback(self)
+        let span = self.builder.span;
+        TyBuilder::with_callback(self).span(span)
     }
 
     pub fn build_ty(self, ty: P<ast::Ty>) -> F::Result {
@@ -1346,7 +1353,8 @@ impl<F> ItemImplItemBuilder<F>
     }
 
     pub fn type_(self) -> TyBuilder<Self> {
-        TyBuilder::with_callback(self)
+        let span = self.span;
+        TyBuilder::with_callback(self).span(span)
     }
 
     pub fn mac(self) -> MacBuilder<Self> {

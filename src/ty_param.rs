@@ -67,7 +67,8 @@ impl<F> TyParamBuilder<F>
     }
 
     pub fn default(self) -> TyBuilder<Self> {
-        TyBuilder::with_callback(self)
+        let span = self.span;
+        TyBuilder::with_callback(self).span(span)
     }
 
     pub fn with_bound(mut self, bound: ast::TyParamBound) -> Self {

@@ -55,7 +55,8 @@ impl<F> ConstBuilder<F>
     }
 
     pub fn ty(self) -> TyBuilder<Self> {
-        TyBuilder::with_callback(self)
+        let span = self.span;
+        TyBuilder::with_callback(self).span(span)
     }
 
     pub fn build(self, ty: P<ast::Ty>) -> F::Result {

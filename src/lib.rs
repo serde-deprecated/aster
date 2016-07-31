@@ -85,19 +85,19 @@ impl AstBuilder {
     }
 
     pub fn arm(&self) -> arm::ArmBuilder {
-        arm::ArmBuilder::new()
+        arm::ArmBuilder::new().span(self.span)
     }
 
     pub fn attr(&self) -> attr::AttrBuilder {
-        attr::AttrBuilder::new()
+        attr::AttrBuilder::new().span(self.span)
     }
 
     pub fn path(&self) -> path::PathBuilder {
-        path::PathBuilder::new()
+        path::PathBuilder::new().span(self.span)
     }
 
     pub fn qpath(&self) -> qpath::QPathBuilder {
-        qpath::QPathBuilder::new()
+        qpath::QPathBuilder::new().span(self.span)
     }
 
     pub fn ty(&self) -> ty::TyBuilder {
