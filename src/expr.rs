@@ -80,11 +80,13 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn path(self) -> PathBuilder<Self> {
-        PathBuilder::with_callback(self)
+        let span = self.span;
+        PathBuilder::with_callback(self).span(span)
     }
 
     pub fn qpath(self) -> QPathBuilder<Self> {
-        QPathBuilder::with_callback(self)
+        let span = self.span;
+        QPathBuilder::with_callback(self).span(span)
     }
 
     pub fn id<I>(self, id: I) -> F::Result
@@ -220,10 +222,11 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn unary(self, unop: ast::UnOp) -> ExprBuilder<ExprUnaryBuilder<F>> {
+        let span = self.span;
         ExprBuilder::with_callback(ExprUnaryBuilder {
             builder: self,
             unop: unop,
-        })
+        }).span(span)
     }
 
     pub fn deref(self) -> ExprBuilder<ExprUnaryBuilder<F>> {
@@ -319,10 +322,11 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn binary(self, binop: ast::BinOpKind) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
+        let span = self.span;
         ExprBuilder::with_callback(ExprBinaryLhsBuilder {
             builder: self,
             binop: binop,
-        })
+        }).span(span)
     }
 
     pub fn add(self) -> ExprBuilder<ExprBinaryLhsBuilder<F>> {
@@ -398,17 +402,19 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn ref_(self) -> ExprBuilder<ExprRefBuilder<F>> {
+        let span = self.span;
         ExprBuilder::with_callback(ExprRefBuilder {
             builder: self,
             mutability: ast::Mutability::Immutable,
-        })
+        }).span(span)
     }
 
     pub fn mut_ref(self) -> ExprBuilder<ExprRefBuilder<F>> {
+        let span = self.span;
         ExprBuilder::with_callback(ExprRefBuilder {
             builder: self,
             mutability: ast::Mutability::Mutable,
-        })
+        }).span(span)
     }
 
     pub fn break_(self) -> F::Result {
@@ -438,9 +444,10 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn return_expr(self) -> ExprBuilder<ExprReturnBuilder<F>> {
+        let span = self.span;
         ExprBuilder::with_callback(ExprReturnBuilder {
             builder: self,
-        })
+        }).span(span)
     }
 
     pub fn unit(self) -> F::Result {
@@ -492,38 +499,44 @@ impl<F> ExprBuilder<F>
 
     pub fn some(self) -> ExprBuilder<ExprPathBuilder<F>> {
         let path = PathBuilder::new()
+            .span(self.span)
             .global()
             .id("std").id("option").id("Option").id("Some")
             .build();
+        let span = self.span;
 
         ExprBuilder::with_callback(ExprPathBuilder {
             builder: self,
             path: path,
-        })
+        }).span(span)
     }
 
     pub fn ok(self) -> ExprBuilder<ExprPathBuilder<F>> {
         let path = PathBuilder::new()
+            .span(self.span)
             .global()
             .id("std").id("result").id("Result").id("Ok")
             .build();
+        let span = self.span;
 
         ExprBuilder::with_callback(ExprPathBuilder {
             builder: self,
             path: path,
-        })
+        }).span(span)
     }
 
     pub fn err(self) -> ExprBuilder<ExprPathBuilder<F>> {
         let path = PathBuilder::new()
+            .span(self.span)
             .global()
             .id("std").id("result").id("Result").id("Err")
             .build();
+        let span = self.span;
 
         ExprBuilder::with_callback(ExprPathBuilder {
             builder: self,
             path: path,
-        })
+        }).span(span)
     }
 
     pub fn phantom_data(self) -> F::Result {
@@ -534,19 +547,23 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn call(self) -> ExprBuilder<ExprCallBuilder<F>> {
+        let span = self.span;
+
         ExprBuilder::with_callback(ExprCallBuilder {
             builder: self,
-        })
+        }).span(span)
     }
 
     pub fn method_call<I>(self, id: I) -> ExprBuilder<ExprMethodCallBuilder<F>>
         where I: ToIdent,
     {
         let id = respan(self.span, id.to_ident());
+        let span = self.span;
+
         ExprBuilder::with_callback(ExprMethodCallBuilder {
             builder: self,
             id: id,
-        })
+        }).span(span)
     }
 
     pub fn build_block(self, block: P<ast::Block>) -> F::Result {
@@ -562,9 +579,11 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn assign(self) -> ExprBuilder<ExprAssignBuilder<F>> {
+        let span = self.span;
+
         ExprBuilder::with_callback(ExprAssignBuilder {
             builder: self,
-        })
+        }).span(span)
     }
 
     pub fn build_assign_op(self,
@@ -576,10 +595,12 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn assign_op(self, binop: ast::BinOpKind) -> ExprBuilder<ExprAssignOpBuilder<F>> {
+        let span = self.span;
+
         ExprBuilder::with_callback(ExprAssignOpBuilder {
             builder: self,
             binop: binop,
-        })
+        }).span(span)
     }
 
     pub fn add_assign(self) -> ExprBuilder<ExprAssignOpBuilder<F>> {
@@ -631,9 +652,11 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn index(self) -> ExprBuilder<ExprIndexBuilder<F>> {
+        let span = self.span;
+
         ExprBuilder::with_callback(ExprIndexBuilder {
             builder: self,
-        })
+        }).span(span)
     }
 
     pub fn build_repeat(self, lhs: P<ast::Expr>, rhs: P<ast::Expr>) -> F::Result {
@@ -641,9 +664,11 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn repeat(self) -> ExprBuilder<ExprRepeatBuilder<F>> {
+        let span = self.span;
+
         ExprBuilder::with_callback(ExprRepeatBuilder {
             builder: self,
-        })
+        }).span(span)
     }
 
     pub fn loop_(self) -> ExprLoopBuilder<F> {
@@ -657,79 +682,95 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn if_(self) -> ExprBuilder<ExprIfBuilder<F>> {
+        let span = self.span;
         ExprBuilder::with_callback(ExprIfBuilder {
             builder: self,
-        })
+        }).span(span)
     }
 
     pub fn match_(self) -> ExprBuilder<ExprMatchBuilder<F>> {
+        let span = self.span;
+
         ExprBuilder::with_callback(ExprMatchBuilder {
             builder: self,
-        })
+        }).span(span)
     }
 
     pub fn paren(self) -> ExprBuilder<ExprParenBuilder<F>> {
+        let span = self.span;
+
         ExprBuilder::with_callback(ExprParenBuilder {
             builder: self,
-        })
+        }).span(span)
     }
 
     pub fn field<I>(self, id: I) -> ExprBuilder<ExprFieldBuilder<F>>
         where I: ToIdent,
     {
         let id = respan(self.span, id.to_ident());
+        let span = self.span;
+
         ExprBuilder::with_callback(ExprFieldBuilder {
             builder: self,
             id: id,
-        })
+        }).span(span)
     }
 
     pub fn tup_field(self, index: usize) -> ExprBuilder<ExprTupFieldBuilder<F>> {
         let index = respan(self.span, index);
+        let span = self.span;
+
         ExprBuilder::with_callback(ExprTupFieldBuilder {
             builder: self,
             index: index,
-        })
+        }).span(span)
     }
 
     pub fn box_(self) -> ExprBuilder<ExprPathBuilder<F>> {
         let path = PathBuilder::new()
+            .span(self.span)
             .global()
             .id("std").id("boxed").id("Box").id("new")
             .build();
+        let span = self.span;
 
         ExprBuilder::with_callback(ExprPathBuilder {
             builder: self,
             path: path,
-        })
+        }).span(span)
     }
 
     pub fn rc(self) -> ExprBuilder<ExprPathBuilder<F>> {
         let path = PathBuilder::new()
+            .span(self.span)
             .global()
             .id("std").id("rc").id("Rc").id("new")
             .build();
+        let span = self.span;
 
         ExprBuilder::with_callback(ExprPathBuilder {
             builder: self,
             path: path,
-        })
+        }).span(span)
     }
 
     pub fn arc(self) -> ExprBuilder<ExprPathBuilder<F>> {
         let path = PathBuilder::new()
+            .span(self.span)
             .global()
             .id("std").id("arc").id("Arc").id("new")
             .build();
+        let span = self.span;
 
         ExprBuilder::with_callback(ExprPathBuilder {
             builder: self,
             path: path,
-        })
+        }).span(span)
     }
 
     pub fn default(self) -> F::Result {
         let path = PathBuilder::new()
+            .span(self.span)
             .global()
             .ids(&["std", "default", "Default", "default"])
             .build();
@@ -972,10 +1013,12 @@ impl<F> ExprStructPathBuilder<F>
     pub fn field<I>(self, id: I) -> ExprBuilder<ExprStructFieldBuilder<I, F>>
         where I: ToIdent,
     {
+        let span = self.span;
+
         ExprBuilder::with_callback(ExprStructFieldBuilder {
             builder: self,
             id: id,
-        })
+        }).span(span)
     }
 
     pub fn build_with(self) -> ExprBuilder<Self> {
@@ -1065,7 +1108,8 @@ impl<F> ExprCallArgsBuilder<F>
     }
 
     pub fn arg(self) -> ExprBuilder<Self> {
-        ExprBuilder::with_callback(self)
+        let span = self.builder.span;
+        ExprBuilder::with_callback(self).span(span)
     }
 
     pub fn build(self) -> F::Result {
@@ -1130,7 +1174,8 @@ impl<F> ExprMethodCallArgsBuilder<F>
     }
 
     pub fn ty(self) -> TyBuilder<Self> {
-        TyBuilder::with_callback(self)
+        let span = self.builder.span;
+        TyBuilder::with_callback(self).span(span)
     }
 
     pub fn with_args<I>(mut self, iter: I) -> Self
@@ -1146,7 +1191,8 @@ impl<F> ExprMethodCallArgsBuilder<F>
     }
 
     pub fn arg(self) -> ExprBuilder<Self> {
-        ExprBuilder::with_callback(self)
+        let span = self.builder.span;
+        ExprBuilder::with_callback(self).span(span)
     }
 
     pub fn build(self) -> F::Result {
@@ -1223,10 +1269,11 @@ impl<F> Invoke<P<ast::Expr>> for ExprAssignBuilder<F>
     type Result = ExprBuilder<ExprAssignLhsBuilder<F>>;
 
     fn invoke(self, lhs: P<ast::Expr>) -> ExprBuilder<ExprAssignLhsBuilder<F>> {
+        let span = self.builder.span;
         ExprBuilder::with_callback(ExprAssignLhsBuilder {
             builder: self.builder,
             lhs: lhs,
-        })
+        }).span(span)
     }
 }
 
@@ -1260,11 +1307,12 @@ impl<F> Invoke<P<ast::Expr>> for ExprAssignOpBuilder<F>
     type Result = ExprBuilder<ExprAssignOpLhsBuilder<F>>;
 
     fn invoke(self, lhs: P<ast::Expr>) -> ExprBuilder<ExprAssignOpLhsBuilder<F>> {
+        let span = self.builder.span;
         ExprBuilder::with_callback(ExprAssignOpLhsBuilder {
             builder: self.builder,
             binop: self.binop,
             lhs: lhs,
-        })
+        }).span(span)
     }
 }
 
@@ -1298,10 +1346,11 @@ impl<F> Invoke<P<ast::Expr>> for ExprIndexBuilder<F>
     type Result = ExprBuilder<ExprIndexLhsBuilder<F>>;
 
     fn invoke(self, lhs: P<ast::Expr>) -> ExprBuilder<ExprIndexLhsBuilder<F>> {
+        let span = self.builder.span;
         ExprBuilder::with_callback(ExprIndexLhsBuilder {
             builder: self.builder,
             lhs: lhs,
-        })
+        }).span(span)
     }
 }
 
@@ -1334,10 +1383,11 @@ impl<F> Invoke<P<ast::Expr>> for ExprRepeatBuilder<F>
     type Result = ExprBuilder<ExprRepeatLhsBuilder<F>>;
 
     fn invoke(self, lhs: P<ast::Expr>) -> ExprBuilder<ExprRepeatLhsBuilder<F>> {
+        let span = self.builder.span;
         ExprBuilder::with_callback(ExprRepeatLhsBuilder {
             builder: self.builder,
             lhs: lhs,
-        })
+        }).span(span)
     }
 }
 
@@ -1462,9 +1512,10 @@ impl<F> ExprIfThenElseBuilder<F>
     where F: Invoke<P<ast::Expr>>,
 {
     pub fn else_if(self) -> ExprBuilder<ExprElseIfBuilder<F>> {
+        let span = self.builder.span;
         ExprBuilder::with_callback(ExprElseIfBuilder {
             builder: self,
-        })
+        }).span(span)
     }
 
     fn build_else_expr(self, mut else_: P<ast::Expr>) -> F::Result {
@@ -1702,7 +1753,8 @@ impl<F: Invoke<P<ast::Expr>>> ExprSliceBuilder<F>
     }
 
     pub fn expr(self) -> ExprBuilder<Self> {
-        ExprBuilder::with_callback(self)
+        let span = self.builder.span;
+        ExprBuilder::with_callback(self).span(span)
     }
 
     pub fn build(self) -> F::Result {
@@ -1757,6 +1809,7 @@ impl<F> Invoke<P<ast::Expr>> for ExprTryBuilder<F>
 
     fn invoke(self, expr: P<ast::Expr>) -> F::Result {
         let ok_path = PathBuilder::new()
+            .span(self.builder.span)
             .global()
             .ids(&["std", "result", "Result", "Ok"])
             .build();
@@ -1772,6 +1825,7 @@ impl<F> Invoke<P<ast::Expr>> for ExprTryBuilder<F>
                 .id("value");
 
         let err_path = PathBuilder::new()
+            .span(self.builder.span)
             .global()
             .ids(&["std", "result", "Result", "Err"])
             .build();

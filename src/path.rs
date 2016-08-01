@@ -149,7 +149,8 @@ impl<F> PathSegmentsBuilder<F>
     pub fn segment<T>(self, id: T) -> PathSegmentBuilder<Self>
         where T: ToIdent,
     {
-        PathSegmentBuilder::with_callback(id, self)
+        let span = self.span;
+        PathSegmentBuilder::with_callback(id, self).span(span)
     }
 
     pub fn build(self) -> F::Result {
@@ -207,8 +208,10 @@ impl<F> PathSegmentBuilder<F>
         let lifetimes = generics.lifetimes.iter()
             .map(|lifetime_def| lifetime_def.lifetime);
 
+        let span = self.span;
+
         let tys = generics.ty_params.iter()
-            .map(|ty_param| TyBuilder::new().id(ty_param.ident));
+            .map(|ty_param| TyBuilder::new().span(span).id(ty_param.ident));
 
         self.with_lifetimes(lifetimes)
             .with_tys(tys)
@@ -254,7 +257,8 @@ impl<F> PathSegmentBuilder<F>
     }
 
     pub fn ty(self) -> TyBuilder<Self> {
-        TyBuilder::with_callback(self)
+        let span = self.span;
+        TyBuilder::with_callback(self).span(span)
     }
 
     pub fn with_binding(mut self, binding: ast::TypeBinding) -> Self {
@@ -265,10 +269,11 @@ impl<F> PathSegmentBuilder<F>
     pub fn binding<T>(self, id: T) -> TyBuilder<TypeBindingBuilder<F>>
         where T: ToIdent,
     {
+        let span = self.span;
         TyBuilder::with_callback(TypeBindingBuilder {
             id: id.to_ident(),
             builder: self,
-        })
+        }).span(span)
     }
 
     pub fn build(self) -> F::Result {

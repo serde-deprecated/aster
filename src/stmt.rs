@@ -178,7 +178,8 @@ impl<F> StmtLetBuilder<F>
     }
 
     pub fn ty(self) -> TyBuilder<Self> {
-        TyBuilder::with_callback(self)
+        let span = self.builder.span;
+        TyBuilder::with_callback(self).span(span)
     }
 
     pub fn build_expr(self, expr: P<ast::Expr>) -> F::Result {

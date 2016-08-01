@@ -64,7 +64,8 @@ impl<F> SelfBuilder<F>
     }
 
     pub fn ty(self) -> TyBuilder<Self> {
-        TyBuilder::with_callback(self)
+        let span = self.span;
+        TyBuilder::with_callback(self).span(span)
     }
 }
 

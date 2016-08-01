@@ -109,7 +109,8 @@ impl<F> FnDeclBuilder<F>
     }
 
     pub fn return_(self) -> TyBuilder<Self> {
-        TyBuilder::with_callback(self)
+        let span = self.span;
+        TyBuilder::with_callback(self).span(span)
     }
 
     pub fn build(self, output: ast::FunctionRetTy) -> F::Result {

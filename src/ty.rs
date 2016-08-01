@@ -143,7 +143,8 @@ impl<F> TyBuilder<F>
     }
 
     pub fn slice(self) -> TyBuilder<TySliceBuilder<F>> {
-        TyBuilder::with_callback(TySliceBuilder(self))
+        let span = self.span;
+        TyBuilder::with_callback(TySliceBuilder(self)).span(span)
     }
 
     pub fn ref_(self) -> TyRefBuilder<F> {
@@ -159,29 +160,35 @@ impl<F> TyBuilder<F>
     }
 
     pub fn option(self) -> TyBuilder<TyOptionBuilder<F>> {
-        TyBuilder::with_callback(TyOptionBuilder(self))
+        let span = self.span;
+        TyBuilder::with_callback(TyOptionBuilder(self)).span(span)
     }
 
     pub fn result(self) -> TyBuilder<TyResultOkBuilder<F>> {
-        TyBuilder::with_callback(TyResultOkBuilder(self))
+        let span = self.span;
+        TyBuilder::with_callback(TyResultOkBuilder(self)).span(span)
     }
 
     pub fn phantom_data(self) -> TyBuilder<TyPhantomDataBuilder<F>> {
-        TyBuilder::with_callback(TyPhantomDataBuilder(self))
+        let span = self.span;
+        TyBuilder::with_callback(TyPhantomDataBuilder(self)).span(span)
     }
 
     pub fn box_(self) -> TyBuilder<TyBoxBuilder<F>> {
-        TyBuilder::with_callback(TyBoxBuilder(self))
+        let span = self.span;
+        TyBuilder::with_callback(TyBoxBuilder(self)).span(span)
     }
 
     pub fn iterator(self) -> TyBuilder<TyIteratorBuilder<F>> {
-        TyBuilder::with_callback(TyIteratorBuilder(self))
+        let span = self.span;
+        TyBuilder::with_callback(TyIteratorBuilder(self)).span(span)
     }
 
     pub fn object_sum(self) -> TyBuilder<TyObjectSumBuilder<F>> {
+        let span = self.span;
         TyBuilder::with_callback(TyObjectSumBuilder {
             builder: self,
-        })
+        }).span(span)
     }
 }
 
@@ -263,7 +270,8 @@ impl<F> TyRefBuilder<F>
     }
 
     pub fn ty(self) -> TyBuilder<Self> {
-        TyBuilder::with_callback(self)
+        let span = self.builder.span;
+        TyBuilder::with_callback(self).span(span)
     }
 }
 
@@ -288,6 +296,7 @@ impl<F> Invoke<P<ast::Ty>> for TyOptionBuilder<F>
 
     fn invoke(self, ty: P<ast::Ty>) -> F::Result {
         let path = PathBuilder::new()
+            .span(self.0.span)
             .global()
             .id("std")
             .id("option")
@@ -310,7 +319,8 @@ impl<F> Invoke<P<ast::Ty>> for TyResultOkBuilder<F>
     type Result = TyBuilder<TyResultErrBuilder<F>>;
 
     fn invoke(self, ty: P<ast::Ty>) -> TyBuilder<TyResultErrBuilder<F>> {
-        TyBuilder::with_callback(TyResultErrBuilder(self.0, ty))
+        let span = self.0.span;
+        TyBuilder::with_callback(TyResultErrBuilder(self.0, ty)).span(span)
     }
 }
 
@@ -323,6 +333,7 @@ impl<F> Invoke<P<ast::Ty>> for TyResultErrBuilder<F>
 
     fn invoke(self, ty: P<ast::Ty>) -> F::Result {
         let path = PathBuilder::new()
+            .span(self.0.span)
             .global()
             .id("std")
             .id("result")
@@ -347,6 +358,7 @@ impl<F> Invoke<P<ast::Ty>> for TyPhantomDataBuilder<F>
 
     fn invoke(self, ty: P<ast::Ty>) -> F::Result {
         let path = PathBuilder::new()
+            .span(self.0.span)
             .global()
             .id("std")
             .id("marker")
@@ -370,6 +382,7 @@ impl<F> Invoke<P<ast::Ty>> for TyBoxBuilder<F>
 
     fn invoke(self, ty: P<ast::Ty>) -> F::Result {
         let path = PathBuilder::new()
+            .span(self.0.span)
             .global()
             .id("std")
             .id("boxed")
@@ -393,6 +406,7 @@ impl<F> Invoke<P<ast::Ty>> for TyIteratorBuilder<F>
 
     fn invoke(self, ty: P<ast::Ty>) -> F::Result {
         let path = PathBuilder::new()
+            .span(self.0.span)
             .global()
             .id("std")
             .id("iter")
@@ -513,7 +527,8 @@ impl<F> TyTupleBuilder<F>
     }
 
     pub fn ty(self) -> TyBuilder<Self> {
-        TyBuilder::with_callback(self)
+        let span = self.builder.span;
+        TyBuilder::with_callback(self).span(span)
     }
 
     pub fn build(self) -> F::Result {
