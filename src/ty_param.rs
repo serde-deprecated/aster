@@ -6,7 +6,7 @@ use ident::ToIdent;
 use invoke::{Invoke, Identity};
 use lifetime::{IntoLifetime, IntoLifetimeDef, LifetimeDefBuilder};
 use name::ToName;
-use path::IntoPath;
+use path::{IntoPath, PathBuilder};
 use ty::TyBuilder;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -197,6 +197,19 @@ impl<F> TyParamBoundBuilder<F>
         };
 
         PolyTraitRefBuilder::with_callback(path, builder).span(span)
+    }
+
+    pub fn iterator(self, ty: P<ast::Ty>) -> PolyTraitRefBuilder<TraitTyParamBoundBuilder<F>> {
+        let path = PathBuilder::new()
+            .span(self.span)
+            .global()
+            .id("std")
+            .id("iter")
+            .segment("Iterator")
+                .binding("Item").build(ty)
+                .build()
+                .build();
+        self.trait_(path)
     }
 
     pub fn lifetime<L>(self, lifetime: L) -> F::Result
