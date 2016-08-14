@@ -32,13 +32,9 @@ script:
     travis-cargo --only stable doc -- --features with-syntex
 
 after_success:
-- travis-cargo --only stable doc-upload
 - travis-cargo coveralls --no-sudo
 
 env:
   global:
     # override the default `--features unstable` used for the nightly branch (optional)
     - TRAVIS_CARGO_NIGHTLY_FEATURE=""
-
-    # encrypted github token for doc upload (see `GH_TOKEN` link above)
-    - secure: HsctrSe7IW9iLKbRuVbWLiKuEoAOqDd5DoMjxmvNIIE+wvnid5k6egzq/OmcnwkNx/f+PHU6V8Vqcy8lMsP2vMYzvpVTUDEBQdY9z0ms50ZOt/dC2Rmt1qvurrcx4IZTrJDr4u8OZdld0TKYYPhvQk/Yv4xcFrQrFeTaeYPz8bY=
