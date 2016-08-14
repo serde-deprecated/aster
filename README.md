@@ -23,8 +23,8 @@ version = "0.3.0"
 authors = ["Erick Tryzelaar <erick.tryzelaar@gmail.com>"]
 
 [features]
-default = ["aster/default", "syntex_syntax"]
-nightly = ["aster/nightly"]
+default = ["aster/with-syntex", "syntex_syntax"]
+nightly = []
 
 [dependencies]
 aster = { version = "*", default_features = false }
@@ -36,13 +36,13 @@ Here is the actual script:
 ```rust
 #![cfg_attr(feature = "nightly", feature(rustc_private))]
 
-extern crate aster as aster_lib;
+extern crate aster;
 
 #[cfg(feature = "nightly")]
-use aster_lib::syntax as aster;
+extern crate syntax;
 
 #[cfg(not(feature = "nightly"))]
-use aster_lib::syntex as aster;
+extern crate syntex_syntax as syntax;
 
 fn main() {
     let builder = aster::AstBuilder::new();
@@ -51,10 +51,7 @@ fn main() {
         .add().u32(1).u32(2);
 
     // prints `1 + 2`.
-    println!(
-        "{}",
-        // Aster re-exports the syntax library to simplify it's use.
-        aster::syntax::print::pprust::expr_to_string(&expr));
+    println!("{}", syntax::print::pprust::expr_to_string(&expr));
 }
 ```
 
