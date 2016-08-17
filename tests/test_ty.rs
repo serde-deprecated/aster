@@ -191,3 +191,18 @@ fn test_slice() {
         })
     );
 }
+
+#[test]
+fn test_never() {
+    let builder = AstBuilder::new();
+    let ty = builder.ty().never();
+
+    assert_eq!(
+        ty,
+        P(ast::Ty {
+            id: ast::DUMMY_NODE_ID,
+            node: ast::TyKind::Never,
+            span: DUMMY_SP,
+        })
+    );
+}
