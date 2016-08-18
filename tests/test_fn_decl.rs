@@ -57,7 +57,7 @@ fn test_no_return() {
         fn_decl,
         P(ast::FnDecl {
             inputs: vec![],
-            output: ast::FunctionRetTy::None(DUMMY_SP),
+            output: ast::FunctionRetTy::Ty(builder.ty().never()),
             variadic: false,
         })
     );

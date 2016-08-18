@@ -155,6 +155,10 @@ impl<F> TyBuilder<F>
         }
     }
 
+    pub fn never(self) -> F::Result {
+        self.build_ty_kind(ast::TyKind::Never)
+    }
+
     pub fn infer(self) -> F::Result {
         self.build_ty_kind(ast::TyKind::Infer)
     }

@@ -95,8 +95,7 @@ impl<F> FnDeclBuilder<F>
     }
 
     pub fn no_return(self) -> F::Result {
-        let ret_ty = ast::FunctionRetTy::None(self.span);
-        self.build(ret_ty)
+        self.return_().never()
     }
 
     pub fn default_return(self) -> F::Result {
