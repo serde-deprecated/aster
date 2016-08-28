@@ -9,6 +9,7 @@ use syntax::ptr::P;
 use arm::ArmBuilder;
 use attr::AttrBuilder;
 use block::BlockBuilder;
+use fn_decl::FnDeclBuilder;
 use ident::ToIdent;
 use invoke::{Invoke, Identity};
 use lit::LitBuilder;
@@ -800,6 +801,14 @@ impl<F> ExprBuilder<F>
         ExprBuilder::with_callback(ExprTryBuilder {
             builder: self,
         }).span(span)
+    }
+
+    pub fn closure(self) -> ExprClosureBuilder<F> {
+        ExprClosureBuilder {
+            span: self.span,
+            builder: self,
+            capture_by: ast::CaptureBy::Ref,
+        }
     }
 }
 
@@ -1848,5 +1857,86 @@ impl<F> Invoke<P<ast::Expr>> for ExprTryBuilder<F>
             .with_arm(ok_arm)
             .with_arm(err_arm)
             .build()
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprClosureBuilder<F> {
+    builder: ExprBuilder<F>,
+    capture_by: ast::CaptureBy,
+    span: Span,
+}
+
+impl<F> ExprClosureBuilder<F> {
+    pub fn span(mut self, span: Span) -> Self {
+        self.span = span;
+        self
+    }
+
+    pub fn by_value(mut self) -> Self {
+        self.capture_by = ast::CaptureBy::Value;
+        self
+    }
+
+    pub fn by_ref(mut self) -> Self {
+        self.capture_by = ast::CaptureBy::Ref;
+        self
+    }
+
+    pub fn fn_decl(self) -> FnDeclBuilder<Self> {
+        FnDeclBuilder::with_callback(self)
+    }
+
+    pub fn build_fn_decl(self, fn_decl: P<ast::FnDecl>) -> ExprClosureBlockBuilder<F> {
+        ExprClosureBlockBuilder {
+            builder: self.builder,
+            capture_by: self.capture_by,
+            fn_decl: fn_decl,
+            span: self.span,
+        }
+    }
+}
+
+impl<F> Invoke<P<ast::FnDecl>> for ExprClosureBuilder<F> {
+    type Result = ExprClosureBlockBuilder<F>;
+
+    fn invoke(self, fn_decl: P<ast::FnDecl>) -> ExprClosureBlockBuilder<F> {
+        self.build_fn_decl(fn_decl)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprClosureBlockBuilder<F> {
+    builder: ExprBuilder<F>,
+    capture_by: ast::CaptureBy,
+    fn_decl: P<ast::FnDecl>,
+    span: Span,
+}
+
+impl<F> ExprClosureBlockBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    pub fn expr(self) -> ExprBuilder<BlockBuilder<Self>> {
+        self.block().expr()
+    }
+
+    pub fn block(self) -> BlockBuilder<Self> {
+        BlockBuilder::with_callback(self)
+    }
+
+    pub fn build_block(self, block: P<ast::Block>) -> F::Result {
+        self.builder.build_expr_kind(ast::ExprKind::Closure(self.capture_by, self.fn_decl, block, self.span))
+    }
+}
+
+impl<F> Invoke<P<ast::Block>> for ExprClosureBlockBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, block: P<ast::Block>) -> F::Result {
+        self.build_block(block)
     }
 }

@@ -494,3 +494,69 @@ fn test_repeat() {
         )
     );
 }
+
+#[test]
+fn test_trivial_closure() {
+    let builder = AstBuilder::new();
+
+    let expr = builder.expr().closure()
+        .by_value()
+        .fn_decl().default_return()
+        .expr().usize(1);
+
+    assert_eq!(
+        expr,
+        builder.expr().build_expr_kind(
+            ast::ExprKind::Closure(
+                ast::CaptureBy::Value,
+                builder.fn_decl().default_return(),
+                builder.block().expr().usize(1),
+                DUMMY_SP,
+            )
+        )
+    );
+}
+
+#[test]
+fn test_closure_by_ref() {
+    let builder = AstBuilder::new();
+
+    let expr = builder.expr().closure()
+        .by_ref()
+        .fn_decl().default_return()
+        .expr().usize(2);
+
+    assert_eq!(
+        expr,
+        builder.expr().build_expr_kind(
+            ast::ExprKind::Closure(
+                ast::CaptureBy::Ref,
+                builder.fn_decl().default_return(),
+                builder.block().expr().usize(2),
+                DUMMY_SP,
+            )
+        )
+    );
+}
+
+#[test]
+fn test_closure_block() {
+    let builder = AstBuilder::new();
+
+    let expr = builder.expr().closure()
+        .by_ref()
+        .fn_decl().default_return()
+        .block().expr().usize(3);
+
+    assert_eq!(
+        expr,
+        builder.expr().build_expr_kind(
+            ast::ExprKind::Closure(
+                ast::CaptureBy::Ref,
+                builder.fn_decl().default_return(),
+                builder.block().expr().usize(3),
+                DUMMY_SP,
+            )
+        )
+    );
+}
