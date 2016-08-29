@@ -634,3 +634,20 @@ fn test_while_let_loop_label() {
         )
     );
 }
+
+#[test]
+fn test_type_ascription() {
+    let builder = AstBuilder::new();
+
+    let expr = builder.expr().type_().u8(1).u8();
+
+    assert_eq!(
+        expr,
+        builder.expr().build_expr_kind(
+            ast::ExprKind::Type(
+                builder.expr().u8(1),
+                builder.ty().u8(),
+            )
+        )
+    );
+}

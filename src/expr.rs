@@ -816,6 +816,12 @@ impl<F> ExprBuilder<F>
             builder: self,
         })
     }
+
+    pub fn type_(self) -> ExprBuilder<ExprTypeBuilder<F>> {
+        ExprBuilder::with_callback(ExprTypeBuilder {
+            builder: self,
+        })
+    }
 }
 
 impl<F> Invoke<ast::Attribute> for ExprBuilder<F>
@@ -2034,5 +2040,41 @@ impl<F> Invoke<P<ast::Block>> for ExprWhileBlockBuilder<F>
 
     fn invoke(self, block: P<ast::Block>) -> F::Result {
         self.build_block(block)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprTypeBuilder<F> {
+    builder: ExprBuilder<F>,
+}
+
+impl<F> Invoke<P<ast::Expr>> for ExprTypeBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = TyBuilder<ExprTypeTyBuilder<F>>;
+
+    fn invoke(self, expr: P<ast::Expr>) -> TyBuilder<ExprTypeTyBuilder<F>> {
+        TyBuilder::with_callback(ExprTypeTyBuilder {
+            builder: self.builder,
+            expr: expr,
+        })
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprTypeTyBuilder<F> {
+    builder: ExprBuilder<F>,
+    expr: P<ast::Expr>,
+}
+
+impl<F> Invoke<P<ast::Ty>> for ExprTypeTyBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, ty: P<ast::Ty>) -> F::Result {
+        self.builder.build_expr_kind(ast::ExprKind::Type(self.expr, ty))
     }
 }
