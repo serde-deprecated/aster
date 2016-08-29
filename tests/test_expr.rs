@@ -560,3 +560,77 @@ fn test_closure_block() {
         )
     );
 }
+
+#[test]
+fn test_while_loop() {
+    let builder = AstBuilder::new();
+
+    let expr = builder.expr().while_().true_().block().expr().unit();
+
+    assert_eq!(
+        expr,
+        builder.expr().build_expr_kind(
+            ast::ExprKind::While(
+                builder.expr().true_(),
+                builder.block().expr().unit(),
+                None,
+            )
+        )
+    );
+}
+
+#[test]
+fn test_while_loop_label() {
+    let builder = AstBuilder::new();
+
+    let expr = builder.expr().while_().true_().label("'lab").block().expr().unit();
+
+    assert_eq!(
+        expr,
+        builder.expr().build_expr_kind(
+            ast::ExprKind::While(
+                builder.expr().true_(),
+                builder.block().expr().unit(),
+                Some(respan(DUMMY_SP, builder.id("'lab"))),
+            )
+        )
+    );
+}
+
+#[test]
+fn test_while_let_loop() {
+    let builder = AstBuilder::new();
+
+    let expr = builder.expr().while_().unit().pat().expr().unit().block().expr().unit();
+
+    assert_eq!(
+        expr,
+        builder.expr().build_expr_kind(
+            ast::ExprKind::WhileLet(
+                builder.pat().expr().unit(),
+                builder.expr().unit(),
+                builder.block().expr().unit(),
+                None,
+            )
+        )
+    );
+}
+
+#[test]
+fn test_while_let_loop_label() {
+    let builder = AstBuilder::new();
+
+    let expr = builder.expr().while_().unit().label("'lab").pat().expr().unit().block().expr().unit();
+
+    assert_eq!(
+        expr,
+        builder.expr().build_expr_kind(
+            ast::ExprKind::WhileLet(
+                builder.pat().expr().unit(),
+                builder.expr().unit(),
+                builder.block().expr().unit(),
+                Some(respan(DUMMY_SP, builder.id("'lab"))),
+            )
+        )
+    );
+}

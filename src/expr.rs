@@ -810,6 +810,12 @@ impl<F> ExprBuilder<F>
             capture_by: ast::CaptureBy::Ref,
         }
     }
+
+    pub fn while_(self) -> ExprBuilder<ExprWhileBuilder<F>> {
+        ExprBuilder::with_callback(ExprWhileBuilder {
+            builder: self,
+        })
+    }
 }
 
 impl<F> Invoke<ast::Attribute> for ExprBuilder<F>
@@ -1932,6 +1938,96 @@ impl<F> ExprClosureBlockBuilder<F>
 }
 
 impl<F> Invoke<P<ast::Block>> for ExprClosureBlockBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, block: P<ast::Block>) -> F::Result {
+        self.build_block(block)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprWhileBuilder<F> {
+    builder: ExprBuilder<F>,
+}
+
+impl<F> Invoke<P<ast::Expr>> for ExprWhileBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = ExprWhileBlockBuilder<F>;
+
+    fn invoke(self, condition: P<ast::Expr>) -> ExprWhileBlockBuilder<F> {
+        ExprWhileBlockBuilder {
+            span: self.builder.span,
+            builder: self.builder,
+            condition: condition,
+            pat: None,
+            label: None,
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprWhileBlockBuilder<F> {
+    builder: ExprBuilder<F>,
+    condition: P<ast::Expr>,
+    pat: Option<P<ast::Pat>>,
+    span: Span,
+    label: Option<ast::SpannedIdent>,
+}
+
+impl<F> ExprWhileBlockBuilder<F> {
+    pub fn pat(self) -> PatBuilder<Self> {
+        PatBuilder::with_callback(self)
+    }
+
+    pub fn span(mut self, span: Span) -> Self {
+        self.span = span;
+        self
+    }
+
+    pub fn label<I>(mut self, id: I) -> Self
+        where I: ToIdent,
+    {
+        self.label = Some(respan(self.span, id.to_ident()));
+        self
+    }
+
+    pub fn build_pat(mut self, pat: P<ast::Pat>) -> Self {
+        self.pat = Some(pat);
+        self
+    }
+}
+
+impl<F> ExprWhileBlockBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    pub fn block(self) -> BlockBuilder<Self> {
+        BlockBuilder::with_callback(self)
+    }
+
+    pub fn build_block(self, block: P<ast::Block>) -> F::Result {
+        match self.pat {
+            Some(p) => self.builder.build_expr_kind(ast::ExprKind::WhileLet(
+                p, self.condition, block, self.label)),
+            None => self.builder.build_expr_kind(ast::ExprKind::While(
+                self.condition, block, self.label)),
+        }
+    }
+}
+
+impl<F> Invoke<P<ast::Pat>> for ExprWhileBlockBuilder<F> {
+    type Result = Self;
+
+    fn invoke(self, pat: P<ast::Pat>) -> Self {
+        self.build_pat(pat)
+    }
+}
+
+impl<F> Invoke<P<ast::Block>> for ExprWhileBlockBuilder<F>
     where F: Invoke<P<ast::Expr>>,
 {
     type Result = F::Result;
