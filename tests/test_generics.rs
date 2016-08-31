@@ -1,5 +1,6 @@
 use syntax::ast;
 use syntax::ptr::P;
+use syntax::codemap::DUMMY_SP;
 
 use aster::AstBuilder;
 
@@ -17,6 +18,7 @@ fn test_empty() {
                 id: ast::DUMMY_NODE_ID,
                 predicates: vec![],
             },
+            span: DUMMY_SP,
         }
     );
 }
@@ -44,6 +46,7 @@ fn test_with_ty_params_and_lifetimes() {
                 id: ast::DUMMY_NODE_ID,
                 predicates: vec![],
             },
+            span: DUMMY_SP,
         }
     );
 }

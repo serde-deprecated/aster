@@ -31,7 +31,7 @@ fn test_fn() {
             node: ast::ItemKind::Fn(
                 builder.fn_decl().return_().isize(),
                 ast::Unsafety::Normal,
-                ast::Constness::NotConst,
+                respan(DUMMY_SP, ast::Constness::NotConst),
                 Abi::Rust,
                 builder.generics().build(),
                 block
@@ -69,7 +69,7 @@ fn test_generic_fn() {
             node: ast::ItemKind::Fn(
                 builder.fn_decl().return_().isize(),
                 ast::Unsafety::Normal,
-                ast::Constness::NotConst,
+                respan(DUMMY_SP, ast::Constness::NotConst),
                 Abi::Rust,
                 builder.generics()
                     .lifetime("'a").build()
@@ -343,16 +343,17 @@ fn test_use() {
         ast::ViewPathList(
             builder.path().ids(&["std", "vec"]).build(),
             vec![
-                respan(DUMMY_SP, ast::PathListItemKind::Mod {
+                respan(DUMMY_SP, ast::PathListItem_ {
+                    name: keywords::SelfValue.ident(),
                     id: ast::DUMMY_NODE_ID,
                     rename: None
                 }),
-                respan(DUMMY_SP, ast::PathListItemKind::Ident {
+                respan(DUMMY_SP, ast::PathListItem_ {
                     name: "Vec".to_ident(),
                     id: ast::DUMMY_NODE_ID,
                     rename: None
                 }),
-                respan(DUMMY_SP, ast::PathListItemKind::Ident {
+                respan(DUMMY_SP, ast::PathListItem_ {
                     name: "IntoIter".to_ident(),
                     id: ast::DUMMY_NODE_ID,
                     rename: None
@@ -557,7 +558,7 @@ fn test_trait() {
                         node: ast::TraitItemKind::Method(
                             ast::MethodSig {
                                 unsafety: ast::Unsafety::Normal,
-                                constness: ast::Constness::NotConst,
+                                constness: respan(DUMMY_SP, ast::Constness::NotConst),
                                 abi: Abi::Rust,
                                 decl: builder.fn_decl().default_return(),
                                 generics: builder.generics().build(),
@@ -645,7 +646,7 @@ fn test_impl() {
                         node: ast::ImplItemKind::Method(
                             ast::MethodSig {
                                 unsafety: ast::Unsafety::Normal,
-                                constness: ast::Constness::NotConst,
+                                constness: respan(DUMMY_SP, ast::Constness::NotConst),
                                 abi: Abi::Rust,
                                 decl: builder.fn_decl().default_return(),
                                 generics: builder.generics().build(),
