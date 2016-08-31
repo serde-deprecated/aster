@@ -1,6 +1,6 @@
 use syntax::abi::Abi;
 use syntax::ast;
-use syntax::codemap::{DUMMY_SP, Span};
+use syntax::codemap::{DUMMY_SP, respan, Span};
 use syntax::ptr::P;
 
 use fn_decl::FnDeclBuilder;
@@ -70,7 +70,7 @@ impl<F> MethodSigBuilder<F>
     pub fn build_fn_decl(self, fn_decl: P<ast::FnDecl>) -> F::Result {
         self.callback.invoke(ast::MethodSig {
             unsafety: self.unsafety,
-            constness: self.constness,
+            constness: respan(self.span, self.constness),
             abi: self.abi,
             decl: fn_decl,
             generics: self.generics,

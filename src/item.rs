@@ -103,8 +103,10 @@ impl<F> ItemBuilder<F>
         where T: ToIdent,
     {
         let id = id.to_ident();
+        let span = self.span;
         FnDeclBuilder::with_callback(ItemFnDeclBuilder {
             builder: self,
+            span: span,
             id: id,
         })
     }
@@ -253,6 +255,7 @@ impl<F> Invoke<ast::Attribute> for ItemBuilder<F>
 
 pub struct ItemFnDeclBuilder<F> {
     builder: ItemBuilder<F>,
+    span: Span,
     id: ast::Ident,
 }
 
@@ -266,6 +269,7 @@ impl<F> Invoke<P<ast::FnDecl>> for ItemFnDeclBuilder<F>
 
         ItemFnBuilder {
             builder: self.builder,
+            span: self.span,
             id: self.id,
             fn_decl: fn_decl,
             unsafety: ast::Unsafety::Normal,
@@ -280,6 +284,7 @@ impl<F> Invoke<P<ast::FnDecl>> for ItemFnDeclBuilder<F>
 
 pub struct ItemFnBuilder<F> {
     builder: ItemBuilder<F>,
+    span: Span,
     id: ast::Ident,
     fn_decl: P<ast::FnDecl>,
     unsafety: ast::Unsafety,
@@ -314,7 +319,7 @@ impl<F> ItemFnBuilder<F>
         self.builder.build_item_kind(self.id, ast::ItemKind::Fn(
             self.fn_decl,
             self.unsafety,
-            self.constness,
+            respan(self.span, self.constness),
             self.abi,
             self.generics,
             block,
@@ -423,9 +428,10 @@ impl<F> ItemUsePathListBuilder<F>
     }
 
     pub fn self_(mut self) -> Self {
-        self.idents.push(respan(self.span, ast::PathListItemKind::Mod {
-            id: ast::DUMMY_NODE_ID,
+        self.idents.push(respan(self.span, ast::PathListItem_ {
+            name: keywords::SelfValue.ident(),
             rename: None,
+            id: ast::DUMMY_NODE_ID,
         }));
         self
     }
@@ -433,7 +439,7 @@ impl<F> ItemUsePathListBuilder<F>
     pub fn id<T>(mut self, id: T) -> Self
         where T: ToIdent,
     {
-        self.idents.push(respan(self.span, ast::PathListItemKind::Ident {
+        self.idents.push(respan(self.span, ast::PathListItem_ {
             name: id.to_ident(),
             rename: None,
             id: ast::DUMMY_NODE_ID,

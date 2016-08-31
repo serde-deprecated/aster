@@ -169,7 +169,7 @@ pub struct AttrListBuilder<F> {
     callback: F,
     span: Span,
     name: token::InternedString,
-    items: Vec<P<ast::MetaItem>>,
+    items: Vec<ast::NestedMetaItem>,
 }
 
 impl<F> AttrListBuilder<F>
@@ -194,7 +194,10 @@ impl<F> AttrListBuilder<F>
     pub fn with_meta_items<I>(mut self, iter: I) -> Self
         where I: IntoIterator<Item=P<ast::MetaItem>>,
     {
-        self.items.extend(iter);
+        let span = self.span;
+        self.items.extend(iter.into_iter().map(|meta_item| {
+            respan(span, ast::NestedMetaItemKind::MetaItem(meta_item))
+        }));
         self
     }
 
@@ -207,7 +210,7 @@ impl<F> AttrListBuilder<F>
     }
 
     pub fn with_meta_item(mut self, item: P<ast::MetaItem>) -> Self {
-        self.items.push(item);
+        self.items.push(respan(self.span, ast::NestedMetaItemKind::MetaItem(item)));
         self
     }
 

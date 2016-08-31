@@ -218,6 +218,7 @@ impl<F> GenericsBuilder<F>
                 id: ast::DUMMY_NODE_ID,
                 predicates: self.predicates,
             },
+            span: self.span,
         })
     }
 }
