@@ -18,6 +18,7 @@ mod test_fn_decl;
 mod test_generics;
 mod test_item;
 mod test_lit;
+mod test_pat;
 mod test_path;
 mod test_stmt;
 mod test_struct_field;

@@ -9,6 +9,7 @@ use syntax::ptr::P;
 use arm::ArmBuilder;
 use attr::AttrBuilder;
 use block::BlockBuilder;
+use fn_decl::FnDeclBuilder;
 use ident::ToIdent;
 use invoke::{Invoke, Identity};
 use lit::LitBuilder;
@@ -800,6 +801,26 @@ impl<F> ExprBuilder<F>
         ExprBuilder::with_callback(ExprTryBuilder {
             builder: self,
         }).span(span)
+    }
+
+    pub fn closure(self) -> ExprClosureBuilder<F> {
+        ExprClosureBuilder {
+            span: self.span,
+            builder: self,
+            capture_by: ast::CaptureBy::Ref,
+        }
+    }
+
+    pub fn while_(self) -> ExprBuilder<ExprWhileBuilder<F>> {
+        ExprBuilder::with_callback(ExprWhileBuilder {
+            builder: self,
+        })
+    }
+
+    pub fn type_(self) -> ExprBuilder<ExprTypeBuilder<F>> {
+        ExprBuilder::with_callback(ExprTypeBuilder {
+            builder: self,
+        })
     }
 }
 
@@ -1848,5 +1869,212 @@ impl<F> Invoke<P<ast::Expr>> for ExprTryBuilder<F>
             .with_arm(ok_arm)
             .with_arm(err_arm)
             .build()
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprClosureBuilder<F> {
+    builder: ExprBuilder<F>,
+    capture_by: ast::CaptureBy,
+    span: Span,
+}
+
+impl<F> ExprClosureBuilder<F> {
+    pub fn span(mut self, span: Span) -> Self {
+        self.span = span;
+        self
+    }
+
+    pub fn by_value(mut self) -> Self {
+        self.capture_by = ast::CaptureBy::Value;
+        self
+    }
+
+    pub fn by_ref(mut self) -> Self {
+        self.capture_by = ast::CaptureBy::Ref;
+        self
+    }
+
+    pub fn fn_decl(self) -> FnDeclBuilder<Self> {
+        FnDeclBuilder::with_callback(self)
+    }
+
+    pub fn build_fn_decl(self, fn_decl: P<ast::FnDecl>) -> ExprClosureBlockBuilder<F> {
+        ExprClosureBlockBuilder {
+            builder: self.builder,
+            capture_by: self.capture_by,
+            fn_decl: fn_decl,
+            span: self.span,
+        }
+    }
+}
+
+impl<F> Invoke<P<ast::FnDecl>> for ExprClosureBuilder<F> {
+    type Result = ExprClosureBlockBuilder<F>;
+
+    fn invoke(self, fn_decl: P<ast::FnDecl>) -> ExprClosureBlockBuilder<F> {
+        self.build_fn_decl(fn_decl)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprClosureBlockBuilder<F> {
+    builder: ExprBuilder<F>,
+    capture_by: ast::CaptureBy,
+    fn_decl: P<ast::FnDecl>,
+    span: Span,
+}
+
+impl<F> ExprClosureBlockBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    pub fn expr(self) -> ExprBuilder<BlockBuilder<Self>> {
+        self.block().expr()
+    }
+
+    pub fn block(self) -> BlockBuilder<Self> {
+        BlockBuilder::with_callback(self)
+    }
+
+    pub fn build_block(self, block: P<ast::Block>) -> F::Result {
+        self.builder.build_expr_kind(ast::ExprKind::Closure(self.capture_by, self.fn_decl, block, self.span))
+    }
+}
+
+impl<F> Invoke<P<ast::Block>> for ExprClosureBlockBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, block: P<ast::Block>) -> F::Result {
+        self.build_block(block)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprWhileBuilder<F> {
+    builder: ExprBuilder<F>,
+}
+
+impl<F> Invoke<P<ast::Expr>> for ExprWhileBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = ExprWhileBlockBuilder<F>;
+
+    fn invoke(self, condition: P<ast::Expr>) -> ExprWhileBlockBuilder<F> {
+        ExprWhileBlockBuilder {
+            span: self.builder.span,
+            builder: self.builder,
+            condition: condition,
+            pat: None,
+            label: None,
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprWhileBlockBuilder<F> {
+    builder: ExprBuilder<F>,
+    condition: P<ast::Expr>,
+    pat: Option<P<ast::Pat>>,
+    span: Span,
+    label: Option<ast::SpannedIdent>,
+}
+
+impl<F> ExprWhileBlockBuilder<F> {
+    pub fn pat(self) -> PatBuilder<Self> {
+        PatBuilder::with_callback(self)
+    }
+
+    pub fn span(mut self, span: Span) -> Self {
+        self.span = span;
+        self
+    }
+
+    pub fn label<I>(mut self, id: I) -> Self
+        where I: ToIdent,
+    {
+        self.label = Some(respan(self.span, id.to_ident()));
+        self
+    }
+
+    pub fn build_pat(mut self, pat: P<ast::Pat>) -> Self {
+        self.pat = Some(pat);
+        self
+    }
+}
+
+impl<F> ExprWhileBlockBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    pub fn block(self) -> BlockBuilder<Self> {
+        BlockBuilder::with_callback(self)
+    }
+
+    pub fn build_block(self, block: P<ast::Block>) -> F::Result {
+        match self.pat {
+            Some(p) => self.builder.build_expr_kind(ast::ExprKind::WhileLet(
+                p, self.condition, block, self.label)),
+            None => self.builder.build_expr_kind(ast::ExprKind::While(
+                self.condition, block, self.label)),
+        }
+    }
+}
+
+impl<F> Invoke<P<ast::Pat>> for ExprWhileBlockBuilder<F> {
+    type Result = Self;
+
+    fn invoke(self, pat: P<ast::Pat>) -> Self {
+        self.build_pat(pat)
+    }
+}
+
+impl<F> Invoke<P<ast::Block>> for ExprWhileBlockBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, block: P<ast::Block>) -> F::Result {
+        self.build_block(block)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprTypeBuilder<F> {
+    builder: ExprBuilder<F>,
+}
+
+impl<F> Invoke<P<ast::Expr>> for ExprTypeBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = TyBuilder<ExprTypeTyBuilder<F>>;
+
+    fn invoke(self, expr: P<ast::Expr>) -> TyBuilder<ExprTypeTyBuilder<F>> {
+        TyBuilder::with_callback(ExprTypeTyBuilder {
+            builder: self.builder,
+            expr: expr,
+        })
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprTypeTyBuilder<F> {
+    builder: ExprBuilder<F>,
+    expr: P<ast::Expr>,
+}
+
+impl<F> Invoke<P<ast::Ty>> for ExprTypeTyBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, ty: P<ast::Ty>) -> F::Result {
+        self.builder.build_expr_kind(ast::ExprKind::Type(self.expr, ty))
     }
 }

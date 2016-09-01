@@ -494,3 +494,160 @@ fn test_repeat() {
         )
     );
 }
+
+#[test]
+fn test_trivial_closure() {
+    let builder = AstBuilder::new();
+
+    let expr = builder.expr().closure()
+        .by_value()
+        .fn_decl().default_return()
+        .expr().usize(1);
+
+    assert_eq!(
+        expr,
+        builder.expr().build_expr_kind(
+            ast::ExprKind::Closure(
+                ast::CaptureBy::Value,
+                builder.fn_decl().default_return(),
+                builder.block().expr().usize(1),
+                DUMMY_SP,
+            )
+        )
+    );
+}
+
+#[test]
+fn test_closure_by_ref() {
+    let builder = AstBuilder::new();
+
+    let expr = builder.expr().closure()
+        .by_ref()
+        .fn_decl().default_return()
+        .expr().usize(2);
+
+    assert_eq!(
+        expr,
+        builder.expr().build_expr_kind(
+            ast::ExprKind::Closure(
+                ast::CaptureBy::Ref,
+                builder.fn_decl().default_return(),
+                builder.block().expr().usize(2),
+                DUMMY_SP,
+            )
+        )
+    );
+}
+
+#[test]
+fn test_closure_block() {
+    let builder = AstBuilder::new();
+
+    let expr = builder.expr().closure()
+        .by_ref()
+        .fn_decl().default_return()
+        .block().expr().usize(3);
+
+    assert_eq!(
+        expr,
+        builder.expr().build_expr_kind(
+            ast::ExprKind::Closure(
+                ast::CaptureBy::Ref,
+                builder.fn_decl().default_return(),
+                builder.block().expr().usize(3),
+                DUMMY_SP,
+            )
+        )
+    );
+}
+
+#[test]
+fn test_while_loop() {
+    let builder = AstBuilder::new();
+
+    let expr = builder.expr().while_().true_().block().expr().unit();
+
+    assert_eq!(
+        expr,
+        builder.expr().build_expr_kind(
+            ast::ExprKind::While(
+                builder.expr().true_(),
+                builder.block().expr().unit(),
+                None,
+            )
+        )
+    );
+}
+
+#[test]
+fn test_while_loop_label() {
+    let builder = AstBuilder::new();
+
+    let expr = builder.expr().while_().true_().label("'lab").block().expr().unit();
+
+    assert_eq!(
+        expr,
+        builder.expr().build_expr_kind(
+            ast::ExprKind::While(
+                builder.expr().true_(),
+                builder.block().expr().unit(),
+                Some(respan(DUMMY_SP, builder.id("'lab"))),
+            )
+        )
+    );
+}
+
+#[test]
+fn test_while_let_loop() {
+    let builder = AstBuilder::new();
+
+    let expr = builder.expr().while_().unit().pat().expr().unit().block().expr().unit();
+
+    assert_eq!(
+        expr,
+        builder.expr().build_expr_kind(
+            ast::ExprKind::WhileLet(
+                builder.pat().expr().unit(),
+                builder.expr().unit(),
+                builder.block().expr().unit(),
+                None,
+            )
+        )
+    );
+}
+
+#[test]
+fn test_while_let_loop_label() {
+    let builder = AstBuilder::new();
+
+    let expr = builder.expr().while_().unit().label("'lab").pat().expr().unit().block().expr().unit();
+
+    assert_eq!(
+        expr,
+        builder.expr().build_expr_kind(
+            ast::ExprKind::WhileLet(
+                builder.pat().expr().unit(),
+                builder.expr().unit(),
+                builder.block().expr().unit(),
+                Some(respan(DUMMY_SP, builder.id("'lab"))),
+            )
+        )
+    );
+}
+
+#[test]
+fn test_type_ascription() {
+    let builder = AstBuilder::new();
+
+    let expr = builder.expr().type_().u8(1).u8();
+
+    assert_eq!(
+        expr,
+        builder.expr().build_expr_kind(
+            ast::ExprKind::Type(
+                builder.expr().u8(1),
+                builder.ty().u8(),
+            )
+        )
+    );
+}

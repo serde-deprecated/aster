@@ -135,6 +135,20 @@ impl<F> PatBuilder<F>
             wild: None,
         }
     }
+
+    pub fn ref_(self) -> PatBuilder<PatRefBuilder<F>> {
+        PatBuilder::with_callback(PatRefBuilder {
+            builder: self,
+            mutability: ast::Mutability::Immutable,
+        })
+    }
+
+    pub fn ref_mut(self) -> PatBuilder<PatRefBuilder<F>> {
+        PatBuilder::with_callback(PatRefBuilder {
+            builder: self,
+            mutability: ast::Mutability::Mutable,
+        })
+    }
 }
 
 impl<F> Invoke<ast::Path> for PatBuilder<F>
@@ -445,5 +459,22 @@ impl<F> Invoke<P<ast::Pat>> for PatTupleBuilder<F>
 
     fn invoke(self, pat: P<ast::Pat>) -> Self {
         self.with_pat(pat)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct PatRefBuilder<F> {
+    builder: PatBuilder<F>,
+    mutability: ast::Mutability,
+}
+
+impl<F> Invoke<P<ast::Pat>> for PatRefBuilder<F>
+    where F: Invoke<P<ast::Pat>>
+{
+    type Result = F::Result;
+
+    fn invoke(self, pat: P<ast::Pat>) -> F::Result {
+        self.builder.build_pat_kind(ast::PatKind::Ref(pat, self.mutability))
     }
 }

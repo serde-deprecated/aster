@@ -276,6 +276,29 @@ impl<F> PathSegmentBuilder<F>
         }).span(span)
     }
 
+    pub fn no_return(self) -> F::Result {
+        self.build_return(None)
+    }
+
+    pub fn return_(self) -> TyBuilder<PathSegmentReturnBuilder<F>> {
+        TyBuilder::with_callback(PathSegmentReturnBuilder(self))
+    }
+
+    pub fn build_return(self, output: Option<P<ast::Ty>>) -> F::Result {
+        let data = ast::ParenthesizedParameterData {
+            span: self.span,
+            inputs: self.tys,
+            output: output,
+        };
+
+        let parameters = ast::PathParameters::Parenthesized(data);
+
+        self.callback.invoke(ast::PathSegment {
+            identifier: self.id,
+            parameters: parameters,
+        })
+    }
+
     pub fn build(self) -> F::Result {
         let data = ast::AngleBracketedParameterData {
             lifetimes: self.lifetimes,
@@ -324,5 +347,19 @@ impl<F> Invoke<P<ast::Ty>> for TypeBindingBuilder<F>
             ty: ty,
             span: span,
         })
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct PathSegmentReturnBuilder<F>(PathSegmentBuilder<F>);
+
+impl<F> Invoke<P<ast::Ty>> for PathSegmentReturnBuilder<F>
+    where F: Invoke<ast::PathSegment>
+{
+    type Result = F::Result;
+
+    fn invoke(self, ty: P<ast::Ty>) -> Self::Result {
+        self.0.build_return(Some(ty))
     }
 }
