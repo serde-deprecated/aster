@@ -1,6 +1,6 @@
 use syntax::ast;
 use syntax::codemap::{self, DUMMY_SP, Span, respan};
-use syntax::ext::base::{DummyMacroLoader, ExtCtxt};
+use syntax::ext::base::{DummyResolver, ExtCtxt};
 use syntax::ext::expand;
 use syntax::ext::quote::rt::ToTokens;
 use syntax::parse::ParseSess;
@@ -70,7 +70,7 @@ impl<F> MacBuilder<F>
         where T: ToTokens
     {
         let parse_sess = ParseSess::new();
-        let mut macro_loader = DummyMacroLoader;
+        let mut macro_loader = DummyResolver;
         let cx = make_ext_ctxt(&parse_sess, &mut macro_loader);
         let tokens = expr.to_tokens(&cx);
         assert!(tokens.len() == 1);
@@ -95,7 +95,7 @@ impl<F> Invoke<P<ast::Expr>> for MacBuilder<F>
 }
 
 fn make_ext_ctxt<'a>(sess: &'a ParseSess,
-                     macro_loader: &'a mut DummyMacroLoader) -> ExtCtxt<'a> {
+                     macro_loader: &'a mut DummyResolver) -> ExtCtxt<'a> {
     let info = codemap::ExpnInfo {
         call_site: codemap::DUMMY_SP,
         callee: codemap::NameAndSpan {
