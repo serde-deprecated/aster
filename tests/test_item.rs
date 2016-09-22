@@ -133,6 +133,33 @@ fn test_struct() {
 }
 
 #[test]
+fn test_union() {
+    let builder = AstBuilder::new();
+    let struct_ = builder.item().union_("Union")
+        .field("x").ty().isize()
+        .field("y").ty().isize()
+        .build();
+
+    assert_eq!(
+        struct_,
+        P(ast::Item {
+            ident: builder.id("Union"),
+            attrs: vec![],
+            id: ast::DUMMY_NODE_ID,
+            node: ast::ItemKind::Union(
+                builder.variant_data().struct_()
+                    .field("x").ty().isize()
+                    .field("y").ty().isize()
+                    .build(),
+                builder.generics().build(),
+            ),
+            vis: ast::Visibility::Inherited,
+            span: DUMMY_SP,
+        })
+    );
+}
+
+#[test]
 fn test_struct_with_fields() {
     let builder = AstBuilder::new();
     let struct_ = builder.item().struct_("Struct")
