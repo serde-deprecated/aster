@@ -70,6 +70,24 @@ fn test_qpath() {
 }
 
 #[test]
+fn test_array() {
+    let builder = AstBuilder::new();
+    let ty = builder.ty().array(3).usize();
+
+    assert_eq!(
+        ty,
+        P(ast::Ty {
+            id: ast::DUMMY_NODE_ID,
+            node: ast::TyKind::FixedLengthVec(AstBuilder::new().ty().usize(),
+                AstBuilder::new().expr().usize(3)
+            ),
+            span: DUMMY_SP,
+        })
+    );
+
+}
+
+#[test]
 fn test_option() {
     let builder = AstBuilder::new();
     let ty = builder.ty().option().isize();
