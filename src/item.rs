@@ -129,6 +129,21 @@ impl<F> ItemBuilder<F>
         let generics = GenericsBuilder::new().build();
 
         ItemStructBuilder {
+            is_union: false,
+            builder: self,
+            id: id,
+            generics: generics,
+        }
+    }
+
+    pub fn union_<T>(self, id: T) -> ItemStructBuilder<F>
+        where T: ToIdent,
+    {
+        let id = id.to_ident();
+        let generics = GenericsBuilder::new().build();
+
+        ItemStructBuilder {
+            is_union: true,
             builder: self,
             id: id,
             generics: generics,
@@ -455,6 +470,7 @@ impl<F> ItemUsePathListBuilder<F>
 //////////////////////////////////////////////////////////////////////////////
 
 pub struct ItemStructBuilder<F> {
+    is_union: bool,
     builder: ItemBuilder<F>,
     id: ast::Ident,
     generics: ast::Generics,
@@ -512,8 +528,13 @@ impl<F> Invoke<ast::VariantData> for ItemStructBuilder<F>
     type Result = F::Result;
 
     fn invoke(self, data: ast::VariantData) -> F::Result {
-        let struct_ = ast::ItemKind::Struct(data, self.generics);
-        self.builder.build_item_kind(self.id, struct_)
+        let kind = if self.is_union {
+            ast::ItemKind::Union(data, self.generics)
+        } else {
+            ast::ItemKind::Struct(data, self.generics)
+        };
+
+        self.builder.build_item_kind(self.id, kind)
     }
 }
 

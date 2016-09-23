@@ -4,6 +4,7 @@ use syntax::ast;
 use syntax::codemap::{DUMMY_SP, Span};
 use syntax::ptr::P;
 
+use expr::ExprBuilder;
 use ident::ToIdent;
 use invoke::{Invoke, Identity};
 use lifetime::IntoLifetime;
@@ -138,8 +139,18 @@ impl<F> TyBuilder<F>
         }
     }
 
+    pub fn array(self, len: usize) -> TyBuilder<TyArrayBuilder<F>> {
+        let span = self.span;
+        TyBuilder::with_callback(TyArrayBuilder(self, len)).span(span)
+    }
+
     pub fn build_slice(self, ty: P<ast::Ty>) -> F::Result {
         self.build_ty_kind(ast::TyKind::Vec(ty))
+    }
+
+    pub fn build_array(self, ty: P<ast::Ty>, len: usize) -> F::Result {
+        let len_expr = ExprBuilder::new().usize(len);
+        self.build_ty_kind(ast::TyKind::FixedLengthVec(ty, len_expr))
     }
 
     pub fn slice(self) -> TyBuilder<TySliceBuilder<F>> {
@@ -239,6 +250,20 @@ impl<F> Invoke<P<ast::Ty>> for TySliceBuilder<F>
 
     fn invoke(self, ty: P<ast::Ty>) -> F::Result {
         self.0.build_slice(ty)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct TyArrayBuilder<F>(TyBuilder<F>, usize);
+
+impl<F> Invoke<P<ast::Ty>> for TyArrayBuilder<F>
+    where F: Invoke<P<ast::Ty>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, ty: P<ast::Ty>) -> F::Result {
+        self.0.build_array(ty, self.1)
     }
 }
 
