@@ -1,11 +1,6 @@
 use syntax::ast;
 use syntax::parse::token;
 
-pub use expr::ExprBuilder;
-pub use ident::ToIdent;
-pub use name::ToName;
-pub use path::PathBuilder;
-
 //////////////////////////////////////////////////////////////////////////////
 
 pub trait ToInternedString {
