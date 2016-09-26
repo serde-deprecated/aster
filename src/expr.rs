@@ -541,6 +541,21 @@ impl<F> ExprBuilder<F>
         }).span(span)
     }
 
+    /// Implement a call for `::std::convert::From::from(value)`
+    pub fn from(self) -> ExprBuilder<ExprPathBuilder<F>> {
+        let path = PathBuilder::new()
+            .span(self.span)
+            .global()
+            .ids(&["std", "convert", "From", "from"])
+            .build();
+        let span = self.span;
+
+        ExprBuilder::with_callback(ExprPathBuilder {
+            builder: self,
+            path: path,
+        }).span(span)
+    }
+
     pub fn phantom_data(self) -> F::Result {
         self.path()
             .global()
