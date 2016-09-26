@@ -201,10 +201,18 @@ impl<F> ItemBuilder<F>
         }
     }
 
-    pub fn mac(self) -> ItemMacBuilder<F> {
-        ItemMacBuilder {
+    pub fn mac(self) -> MacBuilder<ItemMacBuilder<F>> {
+        self.mac_id(keywords::Invalid.ident())
+    }
+
+    pub fn mac_id<T>(self, id: T) -> MacBuilder<ItemMacBuilder<F>>
+        where T: ToIdent,
+    {
+        let span = self.span;
+        MacBuilder::with_callback(ItemMacBuilder {
             builder: self,
-        }
+            id: id.to_ident(),
+        }).span(span)
     }
 
     pub fn type_<T>(self, id: T) -> ItemTyBuilder<F>
@@ -741,29 +749,7 @@ impl<F> ItemExternCrateBuilder<F>
 /// add expressions to the macro invocation.
 pub struct ItemMacBuilder<F> {
     builder: ItemBuilder<F>,
-}
-
-impl<F> ItemMacBuilder<F>
-    where F: Invoke<P<ast::Item>>,
-{
-    pub fn path(self) -> PathBuilder<Self> {
-        PathBuilder::with_callback(self)
-    }
-
-    pub fn build(self, mac: ast::Mac) -> F::Result {
-        let item_mac = ast::ItemKind::Mac(mac);
-        self.builder.build_item_kind(ast::Name(0).to_ident(), item_mac)
-    }
-}
-
-impl<F> Invoke<ast::Path> for ItemMacBuilder<F>
-    where F: Invoke<P<ast::Item>>,
-{
-    type Result = MacBuilder<ItemMacBuilder<F>>;
-
-    fn invoke(self, path: ast::Path) -> MacBuilder<Self> {
-        MacBuilder::with_callback(self).path(path)
-    }
+    id: ast::Ident,
 }
 
 impl<F> Invoke<ast::Mac> for ItemMacBuilder<F>
@@ -772,7 +758,7 @@ impl<F> Invoke<ast::Mac> for ItemMacBuilder<F>
     type Result = F::Result;
 
     fn invoke(self, mac: ast::Mac) -> F::Result {
-        self.build(mac)
+        self.builder.build_item_kind(self.id, ast::ItemKind::Mac(mac))
     }
 }
 

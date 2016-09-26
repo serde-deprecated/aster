@@ -1,12 +1,14 @@
 use syntax::ast;
 use syntax::codemap::{DUMMY_SP, Span};
 use syntax::ptr::P;
+use syntax::util::ThinVec;
 
-use invoke::{Invoke, Identity};
-
+use attr::AttrBuilder;
 use expr::ExprBuilder;
 use ident::ToIdent;
+use invoke::{Invoke, Identity};
 use item::ItemBuilder;
+use mac::MacBuilder;
 use pat::PatBuilder;
 use ty::TyBuilder;
 
@@ -102,6 +104,21 @@ impl<F> StmtBuilder<F>
         let span = self.span;
         ItemBuilder::with_callback(StmtItemBuilder(self)).span(span)
     }
+
+    pub fn build_mac(self,
+                     mac: ast::Mac,
+                     style: ast::MacStmtStyle,
+                     attrs: Vec<ast::Attribute>) -> F::Result {
+        let attrs = ThinVec::from(attrs);
+        self.build_stmt_kind(ast::StmtKind::Mac(P((mac, style, attrs))))
+    }
+
+    pub fn mac(self) -> StmtMacBuilder<F> {
+        StmtMacBuilder {
+            builder: self,
+            attrs: vec![],
+        }
+    }
 }
 
 impl<F> Invoke<P<ast::Pat>> for StmtBuilder<F>
@@ -114,6 +131,70 @@ impl<F> Invoke<P<ast::Pat>> for StmtBuilder<F>
             builder: self,
             pat: pat,
         }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct StmtMacBuilder<F> {
+    builder: StmtBuilder<F>,
+    attrs: Vec<ast::Attribute>,
+}
+
+impl<F> StmtMacBuilder<F>
+    where F: Invoke<ast::Stmt>,
+{
+    pub fn with_attrs<I>(mut self, iter: I) -> Self
+        where I: IntoIterator<Item=ast::Attribute>,
+    {
+        self.attrs.extend(iter);
+        self
+    }
+
+    pub fn with_attr(mut self, attr: ast::Attribute) -> Self {
+        self.attrs.push(attr);
+        self
+    }
+
+    pub fn attr(self) -> AttrBuilder<Self> {
+        AttrBuilder::with_callback(self)
+    }
+
+    pub fn style(self, style: ast::MacStmtStyle) -> MacBuilder<StmtMacStyleBuilder<F>> {
+        let span = self.builder.span;
+        MacBuilder::with_callback(StmtMacStyleBuilder {
+            builder: self.builder,
+            style: style,
+            attrs: self.attrs,
+        }).span(span)
+    }
+}
+
+impl<F> Invoke<ast::Attribute> for StmtMacBuilder<F>
+    where F: Invoke<ast::Stmt>,
+{
+    type Result = Self;
+
+    fn invoke(self, attr: ast::Attribute) -> Self {
+        self.with_attr(attr)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct StmtMacStyleBuilder<F> {
+    builder: StmtBuilder<F>,
+    style: ast::MacStmtStyle,
+    attrs: Vec<ast::Attribute>,
+}
+
+impl<F> Invoke<ast::Mac> for StmtMacStyleBuilder<F>
+    where F: Invoke<ast::Stmt>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, mac: ast::Mac) -> F::Result {
+        self.builder.build_mac(mac, self.style, self.attrs)
     }
 }
 

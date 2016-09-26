@@ -10,6 +10,7 @@ use syntax::tokenstream::TokenTree;
 use expr::ExprBuilder;
 use invoke::{Invoke, Identity};
 use name::ToName;
+use path::PathBuilder;
 
 /// A Builder for macro invocations.
 ///
@@ -20,8 +21,6 @@ use name::ToName;
 pub struct MacBuilder<F=Identity> {
     callback: F,
     span: Span,
-    tokens: Vec<TokenTree>,
-    path: Option<ast::Path>,
 }
 
 impl MacBuilder {
@@ -37,8 +36,6 @@ impl<F> MacBuilder<F>
         MacBuilder {
             callback: callback,
             span: DUMMY_SP,
-            tokens: vec![],
-            path: None,
         }
     }
 
@@ -47,19 +44,43 @@ impl<F> MacBuilder<F>
         self
     }
 
-    pub fn path(mut self, path: ast::Path) -> Self {
-        self.path = Some(path);
-        self
+    pub fn build_path(self, path: ast::Path) -> MacPathBuilder<F> {
+        MacPathBuilder {
+            callback: self.callback,
+            span: self.span,
+            path: path,
+            tokens: vec![],
+        }
     }
 
-    pub fn build(self) -> F::Result {
-        let mac = ast::Mac_ {
-            path: self.path.expect("No path set for macro"),
-            tts: self.tokens,
-        };
-        self.callback.invoke(respan(self.span, mac))
+    pub fn path(self) -> PathBuilder<Self> {
+        let span = self.span;
+        PathBuilder::with_callback(self).span(span)
     }
+}
 
+impl<F> Invoke<ast::Path> for MacBuilder<F>
+    where F: Invoke<ast::Mac>,
+{
+    type Result = MacPathBuilder<F>;
+
+    fn invoke(self, path: ast::Path) -> Self::Result {
+        self.build_path(path)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct MacPathBuilder<F> {
+    callback: F,
+    span: Span,
+    path: ast::Path,
+    tokens: Vec<TokenTree>,
+}
+
+impl<F> MacPathBuilder<F>
+    where F: Invoke<ast::Mac>,
+{
     pub fn with_args<I, T>(self, iter: I) -> Self
         where I: IntoIterator<Item=T>, T: ToTokens
     {
@@ -79,12 +100,20 @@ impl<F> MacBuilder<F>
     }
 
     pub fn expr(self) -> ExprBuilder<Self> {
-        ExprBuilder::with_callback(self)
+        let span = self.span;
+        ExprBuilder::with_callback(self).span(span)
     }
 
+    pub fn build(self) -> F::Result {
+        let mac = ast::Mac_ {
+            path: self.path,
+            tts: self.tokens,
+        };
+        self.callback.invoke(respan(self.span, mac))
+    }
 }
 
-impl<F> Invoke<P<ast::Expr>> for MacBuilder<F>
+impl<F> Invoke<P<ast::Expr>> for MacPathBuilder<F>
     where F: Invoke<ast::Mac>,
 {
     type Result = Self;
@@ -93,6 +122,8 @@ impl<F> Invoke<P<ast::Expr>> for MacBuilder<F>
         self.with_arg(expr)
     }
 }
+
+//////////////////////////////////////////////////////////////////////////////
 
 fn make_ext_ctxt<'a>(sess: &'a ParseSess,
                      macro_loader: &'a mut DummyResolver) -> ExtCtxt<'a> {

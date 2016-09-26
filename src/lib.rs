@@ -92,6 +92,10 @@ impl AstBuilder {
         attr::AttrBuilder::new().span(self.span)
     }
 
+    pub fn mac(&self) -> mac::MacBuilder {
+        mac::MacBuilder::new().span(self.span)
+    }
+
     pub fn path(&self) -> path::PathBuilder {
         path::PathBuilder::new().span(self.span)
     }

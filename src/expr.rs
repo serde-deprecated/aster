@@ -13,6 +13,7 @@ use fn_decl::FnDeclBuilder;
 use ident::ToIdent;
 use invoke::{Invoke, Identity};
 use lit::LitBuilder;
+use mac::MacBuilder;
 use pat::PatBuilder;
 use path::{IntoPath, PathBuilder};
 use qpath::QPathBuilder;
@@ -822,6 +823,15 @@ impl<F> ExprBuilder<F>
             builder: self,
         })
     }
+
+    pub fn build_mac(self, mac: ast::Mac) -> F::Result {
+        self.build_expr_kind(ast::ExprKind::Mac(mac))
+    }
+
+    pub fn mac(self) -> MacBuilder<Self> {
+        let span = self.span;
+        MacBuilder::with_callback(self).span(span)
+    }
 }
 
 impl<F> Invoke<ast::Attribute> for ExprBuilder<F>
@@ -871,6 +881,16 @@ impl<F> Invoke<P<ast::Block>> for ExprBuilder<F>
 
     fn invoke(self, block: P<ast::Block>) -> F::Result {
         self.build_block(block)
+    }
+}
+
+impl<F> Invoke<ast::Mac> for ExprBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, mac: ast::Mac) -> F::Result {
+        self.build_mac(mac)
     }
 }
 
