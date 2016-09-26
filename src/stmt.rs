@@ -17,7 +17,6 @@ use ty::TyBuilder;
 pub struct StmtBuilder<F=Identity> {
     callback: F,
     span: Span,
-    attrs: Vec<ast::Attribute>,
 }
 
 impl StmtBuilder {
@@ -33,7 +32,6 @@ impl<F> StmtBuilder<F>
         StmtBuilder {
             callback: callback,
             span: DUMMY_SP,
-            attrs: vec![],
         }
     }
 
@@ -58,28 +56,29 @@ impl<F> StmtBuilder<F>
     pub fn build_let(self,
                      pat: P<ast::Pat>,
                      ty: Option<P<ast::Ty>>,
-                     init: Option<P<ast::Expr>>) -> F::Result {
+                     init: Option<P<ast::Expr>>,
+                     attrs: Vec<ast::Attribute>) -> F::Result {
         let local = ast::Local {
             pat: pat,
             ty: ty,
             init: init,
             id: ast::DUMMY_NODE_ID,
             span: self.span,
-            attrs: self.attrs.clone().into(),
+            attrs: ThinVec::from(attrs),
         };
 
         self.build_stmt_kind(ast::StmtKind::Local(P(local)))
     }
 
     pub fn let_(self) -> PatBuilder<Self> {
-        PatBuilder::with_callback(self)
+        let span = self.span;
+        PatBuilder::with_callback(self).span(span)
     }
 
-    pub fn let_id<I>(self, id: I) -> ExprBuilder<StmtLetIdBuilder<F>>
+    pub fn let_id<I>(self, id: I) -> StmtLetBuilder<F>
         where I: ToIdent,
     {
-        let span = self.span;
-        ExprBuilder::with_callback(StmtLetIdBuilder(self, id.to_ident())).span(span)
+        self.let_().id(id)
     }
 
     pub fn build_expr(self, expr: P<ast::Expr>) -> F::Result {
@@ -129,6 +128,7 @@ impl<F> Invoke<P<ast::Pat>> for StmtBuilder<F>
     fn invoke(self, pat: P<ast::Pat>) -> StmtLetBuilder<F> {
         StmtLetBuilder {
             builder: self,
+            attrs: vec![],
             pat: pat,
         }
     }
@@ -200,20 +200,6 @@ impl<F> Invoke<ast::Mac> for StmtMacStyleBuilder<F>
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct StmtLetIdBuilder<F>(StmtBuilder<F>, ast::Ident);
-
-impl<F> Invoke<P<ast::Expr>> for StmtLetIdBuilder<F>
-    where F: Invoke<ast::Stmt>,
-{
-    type Result = F::Result;
-
-    fn invoke(self, expr: P<ast::Expr>) -> F::Result {
-        self.0.let_().id(self.1).build_expr(expr)
-    }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 pub struct StmtExprBuilder<F>(StmtBuilder<F>);
 
 impl<F> Invoke<P<ast::Expr>> for StmtExprBuilder<F>
@@ -244,15 +230,33 @@ impl<F> Invoke<P<ast::Expr>> for StmtSemiBuilder<F>
 
 pub struct StmtLetBuilder<F> {
     builder: StmtBuilder<F>,
+    attrs: Vec<ast::Attribute>,
     pat: P<ast::Pat>,
 }
 
 impl<F> StmtLetBuilder<F>
     where F: Invoke<ast::Stmt>,
 {
+    pub fn with_attrs<I>(mut self, iter: I) -> Self
+        where I: IntoIterator<Item=ast::Attribute>,
+    {
+        self.attrs.extend(iter);
+        self
+    }
+
+    pub fn with_attr(mut self, attr: ast::Attribute) -> Self {
+        self.attrs.push(attr);
+        self
+    }
+
+    pub fn attr(self) -> AttrBuilder<Self> {
+        AttrBuilder::with_callback(self)
+    }
+
     fn build_ty(self, ty: P<ast::Ty>) -> StmtLetTyBuilder<F> {
         StmtLetTyBuilder {
             builder: self.builder,
+            attrs: self.attrs,
             pat: self.pat,
             ty: ty,
         }
@@ -263,8 +267,8 @@ impl<F> StmtLetBuilder<F>
         TyBuilder::with_callback(self).span(span)
     }
 
-    pub fn build_expr(self, expr: P<ast::Expr>) -> F::Result {
-        self.builder.build_let(self.pat, None, Some(expr))
+    pub fn build_expr(self, init: P<ast::Expr>) -> F::Result {
+        self.builder.build_let(self.pat, None, Some(init), self.attrs)
     }
 
     pub fn expr(self) -> ExprBuilder<Self> {
@@ -272,7 +276,17 @@ impl<F> StmtLetBuilder<F>
     }
 
     pub fn build(self) -> F::Result {
-        self.builder.build_let(self.pat, None, None)
+        self.builder.build_let(self.pat, None, None, self.attrs)
+    }
+}
+
+impl<F> Invoke<ast::Attribute> for StmtLetBuilder<F>
+    where F: Invoke<ast::Stmt>,
+{
+    type Result = Self;
+
+    fn invoke(self, attr: ast::Attribute) -> Self {
+        self.with_attr(attr)
     }
 }
 
@@ -300,6 +314,7 @@ impl<F> Invoke<P<ast::Expr>> for StmtLetBuilder<F>
 
 pub struct StmtLetTyBuilder<F> {
     builder: StmtBuilder<F>,
+    attrs: Vec<ast::Attribute>,
     pat: P<ast::Pat>,
     ty: P<ast::Ty>,
 }
@@ -312,7 +327,7 @@ impl<F> StmtLetTyBuilder<F>
     }
 
     pub fn build(self) -> F::Result {
-        self.builder.build_let(self.pat, Some(self.ty), None)
+        self.builder.build_let(self.pat, Some(self.ty), None, self.attrs)
     }
 }
 
@@ -321,8 +336,8 @@ impl<F> Invoke<P<ast::Expr>> for StmtLetTyBuilder<F>
 {
     type Result = F::Result;
 
-    fn invoke(self, expr: P<ast::Expr>) -> F::Result {
-        self.builder.build_let(self.pat, Some(self.ty), Some(expr))
+    fn invoke(self, init: P<ast::Expr>) -> F::Result {
+        self.builder.build_let(self.pat, Some(self.ty), Some(init), self.attrs)
     }
 }
 

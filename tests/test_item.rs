@@ -14,8 +14,8 @@ fn test_fn() {
     let builder = AstBuilder::new();
 
     let block = builder.block()
-        .stmt().let_id("x").isize(1)
-        .stmt().let_id("y").isize(2)
+        .stmt().let_id("x").expr().isize(1)
+        .stmt().let_id("y").expr().isize(2)
         .expr().add().id("x").id("y");
 
     let fn_ = builder.item().fn_("foo")
@@ -47,8 +47,8 @@ fn test_generic_fn() {
     let builder = AstBuilder::new();
 
     let block = builder.block()
-        .stmt().let_id("x").isize(1)
-        .stmt().let_id("y").isize(2)
+        .stmt().let_id("x").expr().isize(1)
+        .stmt().let_id("y").expr().isize(2)
         .expr().add().id("x").id("y");
 
     let fn_ = builder.item().fn_("foo")

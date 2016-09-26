@@ -10,8 +10,7 @@ fn test_let() {
     let builder = AstBuilder::new();
 
     assert_eq!(
-        builder.stmt()
-            .let_().id("x").build(),
+        builder.stmt().let_id("x").build(),
         ast::Stmt {
             id: DUMMY_NODE_ID,
             node: ast::StmtKind::Local(
@@ -29,8 +28,7 @@ fn test_let() {
     );
 
     assert_eq!(
-        builder.stmt()
-            .let_().id("x").ty().i8().build(),
+        builder.stmt().let_id("x").ty().i8().build(),
         ast::Stmt {
             id: DUMMY_NODE_ID,
             node: ast::StmtKind::Local(
@@ -48,8 +46,7 @@ fn test_let() {
     );
 
     assert_eq!(
-        builder.stmt()
-            .let_().id("x").expr().i8(5),
+        builder.stmt().let_id("x").expr().i8(5),
         ast::Stmt {
             id: DUMMY_NODE_ID,
             node: ast::StmtKind::Local(
@@ -67,8 +64,7 @@ fn test_let() {
     );
 
     assert_eq!(
-        builder.stmt()
-            .let_().id("x").ty().i8().expr().i8(5),
+        builder.stmt().let_id("x").ty().i8().expr().i8(5),
         ast::Stmt {
             id: DUMMY_NODE_ID,
             node: ast::StmtKind::Local(
