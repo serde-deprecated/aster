@@ -810,7 +810,14 @@ impl<F> ExprBuilder<F>
         }).slice()
     }
 
-    /// Represents an equivalent to `try!(...)`.
+    /// Represents an equivalent to `try!(...)`. Generates:
+    ///
+    /// match $expr {
+    ///     ::std::result::Result::Ok(expr) => expr,
+    ///     ::std::result::Result::Err(err) => {
+    ///         return ::std::result::Result::Err(::std::convert::From::from(err))
+    ///     }
+    /// }
     pub fn try(self) -> ExprBuilder<ExprTryBuilder<F>> {
         let span = self.span;
 
@@ -1864,43 +1871,22 @@ impl<F> Invoke<P<ast::Expr>> for ExprTryBuilder<F>
     type Result = F::Result;
 
     fn invoke(self, expr: P<ast::Expr>) -> F::Result {
-        let ok_path = PathBuilder::new()
-            .span(self.builder.span)
-            .global()
-            .ids(&["std", "result", "Result", "Ok"])
-            .build();
+        // ::std::result::Result::Ok(value) => value,
+        let ok_arm = ArmBuilder::new().span(self.builder.span)
+            .pat().ok().id("value")
+            .body().id("value");
 
-        let ok_pat = PatBuilder::new()
-            .enum_().build(ok_path)
-            .id("value")
-            .build();
+        // ::std::result::Result::Err(err) =>
+        //     return ::std::convert::From::from(err),
+        let err_arm = ArmBuilder::new().span(self.builder.span)
+            .pat().err().id("err")
+            .body().return_expr().err().from().id("err");
 
-        let ok_arm = ArmBuilder::new()
-            .pat().build(ok_pat)
-            .body()
-                .id("value");
-
-        let err_path = PathBuilder::new()
-            .span(self.builder.span)
-            .global()
-            .ids(&["std", "result", "Result", "Err"])
-            .build();
-
-        let err_pat = PatBuilder::new()
-            .enum_().build(err_path.clone())
-            .id("value")
-            .build();
-
-        let err_arm = ArmBuilder::new()
-            .pat().build(err_pat)
-            .body()
-                .return_expr()
-                .call()
-                    .build_path(err_path)
-                    .arg().id("value")
-                    .build();
-
-        self.builder.match_().build(expr)
+        // match $expr {
+        //     $ok_arm,
+        //     $err_arm,
+        // }
+        self.builder.match_().build(expr.clone())
             .with_arm(ok_arm)
             .with_arm(err_arm)
             .build()
