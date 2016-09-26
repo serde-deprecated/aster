@@ -149,6 +149,56 @@ impl<F> PatBuilder<F>
             mutability: ast::Mutability::Mutable,
         })
     }
+
+    pub fn some(self) -> PatBuilder<PatEnumPathPatBuilder<F>> {
+        let path = PathBuilder::new().span(self.span)
+            .global()
+            .ids(&["std", "option", "Option", "Some"])
+            .build();
+
+        let span = self.span;
+        PatBuilder::with_callback(PatEnumPathPatBuilder {
+            builder: self,
+            path: path,
+        }).span(span)
+    }
+
+    pub fn none(self) -> F::Result {
+        let path = PathBuilder::new().span(self.span)
+            .global()
+            .ids(&["std", "option", "Option", "None"])
+            .build();
+
+        self.enum_()
+            .build(path)
+            .build()
+    }
+
+    pub fn ok(self) -> PatBuilder<PatEnumPathPatBuilder<F>> {
+        let path = PathBuilder::new().span(self.span)
+            .global()
+            .ids(&["std", "result", "Result", "Ok"])
+            .build();
+
+        let span = self.span;
+        PatBuilder::with_callback(PatEnumPathPatBuilder {
+            builder: self,
+            path: path,
+        }).span(span)
+    }
+
+    pub fn err(self) -> PatBuilder<PatEnumPathPatBuilder<F>> {
+        let path = PathBuilder::new().span(self.span)
+            .global()
+            .ids(&["std", "result", "Result", "Err"])
+            .build();
+
+        let span = self.span;
+        PatBuilder::with_callback(PatEnumPathPatBuilder {
+            builder: self,
+            path: path,
+        }).span(span)
+    }
 }
 
 impl<F> Invoke<ast::Path> for PatBuilder<F>
@@ -241,6 +291,11 @@ impl<F> PatEnumPathBuilder<F>
         self
     }
 
+    pub fn with_pat(mut self, pat: P<ast::Pat>) -> Self {
+        self.pats.push(pat);
+        self
+    }
+
     pub fn pat(self) -> PatBuilder<Self> {
         PatBuilder::with_callback(self)
     }
@@ -267,7 +322,10 @@ impl<F> PatEnumPathBuilder<F>
     }
 
     pub fn build(self) -> F::Result {
-        self.builder.build_pat_kind(ast::PatKind::TupleStruct(self.path, self.pats, self.wild))
+        self.builder.build_pat_kind(ast::PatKind::TupleStruct(
+            self.path,
+            self.pats,
+            self.wild))
     }
 }
 
@@ -279,6 +337,26 @@ impl<F> Invoke<P<ast::Pat>> for PatEnumPathBuilder<F>
     fn invoke(mut self, pat: P<ast::Pat>) -> Self {
         self.pats.push(pat);
         self
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct PatEnumPathPatBuilder<F> {
+    builder: PatBuilder<F>,
+    path: ast::Path,
+}
+
+impl<F> Invoke<P<ast::Pat>> for PatEnumPathPatBuilder<F>
+    where F: Invoke<P<ast::Pat>>
+{
+    type Result = F::Result;
+
+    fn invoke(self, pat: P<ast::Pat>) -> F::Result {
+        self.builder.enum_()
+            .build(self.path)
+            .with_pat(pat)
+            .build()
     }
 }
 
