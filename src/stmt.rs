@@ -253,7 +253,7 @@ impl<F> StmtLetBuilder<F>
         AttrBuilder::with_callback(self)
     }
 
-    fn build_ty(self, ty: P<ast::Ty>) -> StmtLetTyBuilder<F> {
+    pub fn build_option_ty(self, ty: Option<P<ast::Ty>>) -> StmtLetTyBuilder<F> {
         StmtLetTyBuilder {
             builder: self.builder,
             attrs: self.attrs,
@@ -296,7 +296,7 @@ impl<F> Invoke<P<ast::Ty>> for StmtLetBuilder<F>
     type Result = StmtLetTyBuilder<F>;
 
     fn invoke(self, ty: P<ast::Ty>) -> StmtLetTyBuilder<F> {
-        self.build_ty(ty)
+        self.build_option_ty(Some(ty))
     }
 }
 
@@ -316,7 +316,7 @@ pub struct StmtLetTyBuilder<F> {
     builder: StmtBuilder<F>,
     attrs: Vec<ast::Attribute>,
     pat: P<ast::Pat>,
-    ty: P<ast::Ty>,
+    ty: Option<P<ast::Ty>>,
 }
 
 impl<F> StmtLetTyBuilder<F>
@@ -326,8 +326,12 @@ impl<F> StmtLetTyBuilder<F>
         ExprBuilder::with_callback(self)
     }
 
+    pub fn build_option_expr(self, expr: Option<P<ast::Expr>>) -> F::Result {
+        self.builder.build_let(self.pat, self.ty, expr, self.attrs)
+    }
+
     pub fn build(self) -> F::Result {
-        self.builder.build_let(self.pat, Some(self.ty), None, self.attrs)
+        self.build_option_expr(None)
     }
 }
 
@@ -337,7 +341,7 @@ impl<F> Invoke<P<ast::Expr>> for StmtLetTyBuilder<F>
     type Result = F::Result;
 
     fn invoke(self, init: P<ast::Expr>) -> F::Result {
-        self.builder.build_let(self.pat, Some(self.ty), Some(init), self.attrs)
+        self.build_option_expr(Some(init))
     }
 }
 
