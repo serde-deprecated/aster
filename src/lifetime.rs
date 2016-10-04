@@ -41,6 +41,7 @@ impl IntoLifetimeDef for ast::LifetimeDef {
 impl IntoLifetimeDef for ast::Lifetime {
     fn into_lifetime_def(self) -> ast::LifetimeDef {
         ast::LifetimeDef {
+            attrs: ast::ThinVec::new(),
             lifetime: self,
             bounds: vec![],
         }
@@ -109,6 +110,7 @@ impl<F> LifetimeDefBuilder<F>
 
     pub fn build(self) -> F::Result {
         self.callback.invoke(ast::LifetimeDef {
+            attrs: ast::ThinVec::new(),
             lifetime: self.lifetime,
             bounds: self.bounds,
         })
