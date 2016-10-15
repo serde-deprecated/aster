@@ -78,7 +78,7 @@ fn test_array() {
         ty,
         P(ast::Ty {
             id: ast::DUMMY_NODE_ID,
-            node: ast::TyKind::FixedLengthVec(AstBuilder::new().ty().usize(),
+            node: ast::TyKind::Array(AstBuilder::new().ty().usize(),
                 AstBuilder::new().expr().usize(3)
             ),
             span: DUMMY_SP,
@@ -204,7 +204,7 @@ fn test_slice() {
         ty,
         P(ast::Ty {
             id: ast::DUMMY_NODE_ID,
-            node: ast::TyKind::Vec(builder.ty().isize()),
+            node: ast::TyKind::Slice(builder.ty().isize()),
             span: DUMMY_SP,
         })
     );

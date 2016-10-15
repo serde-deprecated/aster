@@ -101,6 +101,7 @@ impl<F> TyParamBuilder<F>
 
     pub fn build(self) -> F::Result {
         self.callback.invoke(ast::TyParam {
+            attrs: ast::ThinVec::new(),
             ident: self.id,
             id: ast::DUMMY_NODE_ID,
             bounds: P::from_vec(self.bounds),

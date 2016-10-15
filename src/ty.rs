@@ -145,12 +145,12 @@ impl<F> TyBuilder<F>
     }
 
     pub fn build_slice(self, ty: P<ast::Ty>) -> F::Result {
-        self.build_ty_kind(ast::TyKind::Vec(ty))
+        self.build_ty_kind(ast::TyKind::Slice(ty))
     }
 
     pub fn build_array(self, ty: P<ast::Ty>, len: usize) -> F::Result {
         let len_expr = ExprBuilder::new().usize(len);
-        self.build_ty_kind(ast::TyKind::FixedLengthVec(ty, len_expr))
+        self.build_ty_kind(ast::TyKind::Array(ty, len_expr))
     }
 
     pub fn slice(self) -> TyBuilder<TySliceBuilder<F>> {

@@ -14,6 +14,7 @@ fn test_ty_param_empty() {
     assert_eq!(
         ty_param,
         ast::TyParam {
+            attrs: ast::ThinVec::new(),
             ident: builder.id("T"),
             id: ast::DUMMY_NODE_ID,
             bounds: P::new(),
@@ -34,6 +35,7 @@ fn test_ty_param_default() {
     assert_eq!(
         ty_param,
         ast::TyParam {
+            attrs: ast::ThinVec::new(),
             ident: builder.id("T"),
             id: ast::DUMMY_NODE_ID,
             bounds: P::new(),
@@ -57,6 +59,7 @@ fn test_ty_param_bounds() {
     assert_eq!(
         ty_param,
         ast::TyParam {
+            attrs: ast::ThinVec::new(),
             ident: builder.id("T"),
             id: ast::DUMMY_NODE_ID,
             bounds: P::from_vec(vec![
