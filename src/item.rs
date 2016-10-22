@@ -658,7 +658,7 @@ impl<F> ItemEnumBuilder<F>
         where I: IntoIterator<Item=T>,
               T: ToIdent,
     {
-        for id in ids.into_iter() {
+        for id in ids {
             self = self.id(id);
         }
         self
