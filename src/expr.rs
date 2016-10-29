@@ -1121,6 +1121,7 @@ impl<I, F> Invoke<P<ast::Expr>> for ExprStructFieldBuilder<I, F>
             ident: respan(self.builder.span, self.id.to_ident()),
             expr: expr,
             span: self.builder.span,
+            is_shorthand: false,
         };
         self.builder.fields.push(field);
         self.builder
