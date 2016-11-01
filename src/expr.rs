@@ -676,6 +676,12 @@ impl<F> ExprBuilder<F>
         }).span(span)
     }
 
+    pub fn range(self) -> ExprRangeBuilder<F> {
+        ExprRangeBuilder {
+            builder: self,
+        }
+    }
+
     pub fn build_repeat(self, lhs: P<ast::Expr>, rhs: P<ast::Expr>) -> F::Result {
         self.build_expr_kind(ast::ExprKind::Repeat(lhs, rhs))
     }
@@ -1432,6 +1438,100 @@ impl<F> Invoke<P<ast::Expr>> for ExprIndexLhsBuilder<F>
 
     fn invoke(self, rhs: P<ast::Expr>) -> F::Result {
         self.builder.build_index(self.lhs, rhs)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprRangeBuilder<F> {
+    builder: ExprBuilder<F>,
+}
+
+impl<F> ExprRangeBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    pub fn from(self) -> ExprBuilder<Self> {
+        ExprBuilder::with_callback(self)
+    }
+
+    pub fn to(self) -> ExprBuilder<ExprRangeToBuilder<F>> {
+        self.from_opt(None).to()
+    }
+
+    pub fn to_inclusive(self) -> ExprBuilder<ExprRangeToBuilder<F>> {
+        self.from_opt(None).to_inclusive()
+    }
+
+    pub fn from_opt(self, from: Option<P<ast::Expr>>) -> ExprRangeFromBuilder<F> {
+        ExprRangeFromBuilder {
+            builder: self.builder,
+            from: from,
+        }
+    }
+
+    pub fn build(self) -> F::Result {
+        self.from_opt(None).build()
+    }
+}
+
+impl<F> Invoke<P<ast::Expr>> for ExprRangeBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = ExprRangeFromBuilder<F>;
+
+    fn invoke(self, from: P<ast::Expr>) -> ExprRangeFromBuilder<F> {
+        self.from_opt(Some(from))
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprRangeFromBuilder<F> {
+    builder: ExprBuilder<F>,
+    from: Option<P<ast::Expr>>,
+}
+
+impl<F> ExprRangeFromBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    pub fn to(self) -> ExprBuilder<ExprRangeToBuilder<F>> {
+        ExprBuilder::with_callback(ExprRangeToBuilder {
+            builder: self,
+            limit: ast::RangeLimits::HalfOpen,
+        })
+    }
+
+    pub fn to_inclusive(self) -> ExprBuilder<ExprRangeToBuilder<F>> {
+        ExprBuilder::with_callback(ExprRangeToBuilder {
+            builder: self,
+            limit: ast::RangeLimits::Closed,
+        })
+    }
+
+    pub fn build(self) -> F::Result {
+        self.to_opt(None, ast::RangeLimits::HalfOpen)
+    }
+
+    pub fn to_opt(self, to: Option<P<ast::Expr>>, limit: ast::RangeLimits) -> F::Result {
+        let kind = ast::ExprKind::Range(self.from, to, limit);
+        self.builder.build_expr_kind(kind)
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprRangeToBuilder<F> {
+    builder: ExprRangeFromBuilder<F>,
+    limit: ast::RangeLimits,
+}
+
+impl<F> Invoke<P<ast::Expr>> for ExprRangeToBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, expr: P<ast::Expr>) -> F::Result {
+        self.builder.to_opt(Some(expr), self.limit)
     }
 }
 
