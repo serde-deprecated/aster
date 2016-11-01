@@ -477,6 +477,68 @@ fn test_index() {
 }
 
 #[test]
+fn test_range() {
+    let builder = AstBuilder::new();
+
+    assert_eq!(
+        builder.expr().range().build(),
+        builder.expr().build_expr_kind(
+            ast::ExprKind::Range(
+                None,
+                None,
+                ast::RangeLimits::HalfOpen)
+        )
+    );
+
+    assert_eq!(
+        builder.expr().range().from()
+            .usize(0)
+            .build(),
+        builder.expr().build_expr_kind(
+            ast::ExprKind::Range(
+                Some(builder.expr().usize(0)),
+                None,
+                ast::RangeLimits::HalfOpen)
+        )
+    );
+
+    assert_eq!(
+        builder.expr().range()
+            .to().usize(10),
+        builder.expr().build_expr_kind(
+            ast::ExprKind::Range(
+                None,
+                Some(builder.expr().usize(10)),
+                ast::RangeLimits::HalfOpen)
+        )
+    );
+
+    assert_eq!(
+        builder.expr().range()
+            .from().usize(0)
+            .to().usize(10),
+        builder.expr().build_expr_kind(
+            ast::ExprKind::Range(
+                Some(builder.expr().usize(0)),
+                Some(builder.expr().usize(10)),
+                ast::RangeLimits::HalfOpen)
+        )
+    );
+
+    assert_eq!(
+        builder.expr().range()
+            .from().usize(0)
+            .to_inclusive().usize(10),
+        builder.expr().build_expr_kind(
+            ast::ExprKind::Range(
+                Some(builder.expr().usize(0)),
+                Some(builder.expr().usize(10)),
+                ast::RangeLimits::Closed)
+        )
+    );
+}
+
+#[test]
 fn test_repeat() {
     let builder = AstBuilder::new();
 
