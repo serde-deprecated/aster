@@ -136,9 +136,8 @@ fn make_ext_ctxt<'a>(sess: &'a ParseSess,
         }
     };
 
-    let cfg = vec![];
     let ecfg = expand::ExpansionConfig::default(String::new());
-    let mut cx = ExtCtxt::new(sess, cfg, ecfg, macro_loader);
+    let mut cx = ExtCtxt::new(sess, ecfg, macro_loader);
     cx.bt_push(info);
 
     cx
