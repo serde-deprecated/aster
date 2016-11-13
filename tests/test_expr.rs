@@ -39,6 +39,9 @@ fn test_lit() {
     check(builder.expr().u64(5), builder.lit().u64(5));
     check(builder.expr().usize(5), builder.lit().usize(5));
 
+    // Doesn't crash.
+    assert_eq!(builder.expr().i64(::std::i64::MIN),
+               builder.expr().neg().lit().i64(1 << 63));
     check(builder.expr().str("string"), builder.lit().str("string"));
 }
 

@@ -34,6 +34,20 @@ impl ExprBuilder {
     }
 }
 
+macro_rules! signed_int_method {
+    ($ty:ident, $unsigned:ident) => {
+        pub fn $ty(self, val: $ty) -> F::Result {
+            if val == ::std::$ty::MIN {
+                self.neg().lit().$ty(val as $unsigned)
+            } else if val < 0 {
+                self.neg().lit().$ty(-val as $unsigned)
+            } else {
+                self.lit().$ty(val as $unsigned)
+            }
+        }
+    };
+}
+
 impl<F> ExprBuilder<F>
     where F: Invoke<P<ast::Expr>>,
 {
@@ -118,10 +132,12 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn int(self, value: i64) -> F::Result {
-        if value < 0 {
-            self.neg().lit().int(-value)
+        if value == ::std::i64::MIN {
+            self.neg().lit().int(value as u64)
+        } else if value < 0 {
+            self.neg().lit().int(-value as u64)
         } else {
-            self.lit().int(value)
+            self.lit().int(value as u64)
         }
     }
 
@@ -129,45 +145,11 @@ impl<F> ExprBuilder<F>
         self.lit().uint(value as u64)
     }
 
-    pub fn isize(self, value: isize) -> F::Result {
-        if value < 0 {
-            self.neg().lit().isize(-value)
-        } else {
-            self.lit().isize(value)
-        }
-    }
-
-    pub fn i8(self, value: i8) -> F::Result {
-        if value < 0 {
-            self.neg().lit().i8(-value)
-        } else {
-            self.lit().i8(value)
-        }
-    }
-
-    pub fn i16(self, value: i16) -> F::Result {
-        if value < 0 {
-            self.neg().lit().i16(-value)
-        } else {
-            self.lit().i16(value)
-        }
-    }
-
-    pub fn i32(self, value: i32) -> F::Result {
-        if value < 0 {
-            self.neg().lit().i32(-value)
-        } else {
-            self.lit().i32(value)
-        }
-    }
-
-    pub fn i64(self, value: i64) -> F::Result {
-        if value < 0 {
-            self.neg().lit().i64(-value)
-        } else {
-            self.lit().i64(value)
-        }
-    }
+    signed_int_method!(i8, u8);
+    signed_int_method!(i16, u16);
+    signed_int_method!(i32, u32);
+    signed_int_method!(i64, u64);
+    signed_int_method!(isize, usize);
 
     pub fn usize(self, value: usize) -> F::Result {
         self.lit().usize(value)
