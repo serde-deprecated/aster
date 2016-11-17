@@ -56,38 +56,32 @@ impl<F> LitBuilder<F>
         self.bool(false)
     }
 
-    pub fn int(self, value: i64) -> F::Result {
-        assert!(value >= 0);
-        self.build_lit(ast::LitKind::Int(value as u64, ast::LitIntType::Unsuffixed))
+    pub fn int(self, value: u64) -> F::Result {
+        self.build_lit(ast::LitKind::Int(value, ast::LitIntType::Unsuffixed))
     }
 
-    fn build_int(self, value: i64, ty: ast::IntTy) -> F::Result {
-        assert!(value >= 0);
-        self.build_lit(ast::LitKind::Int(value as u64, ast::LitIntType::Signed(ty)))
+    fn build_int(self, value: u64, ty: ast::IntTy) -> F::Result {
+        self.build_lit(ast::LitKind::Int(value, ast::LitIntType::Signed(ty)))
     }
 
-    pub fn isize(self, value: isize) -> F::Result {
-        self.build_int(value as i64, ast::IntTy::Is)
+    pub fn isize(self, value: usize) -> F::Result {
+        self.build_int(value as u64, ast::IntTy::Is)
     }
 
-    pub fn i8(self, value: i8) -> F::Result {
-        assert!(value >= 0);
-        self.build_int(value as i64, ast::IntTy::I8)
+    pub fn i8(self, value: u8) -> F::Result {
+        self.build_int(value as u64, ast::IntTy::I8)
     }
 
-    pub fn i16(self, value: i16) -> F::Result {
-        assert!(value >= 0);
-        self.build_int(value as i64, ast::IntTy::I16)
+    pub fn i16(self, value: u16) -> F::Result {
+        self.build_int(value as u64, ast::IntTy::I16)
     }
 
-    pub fn i32(self, value: i32) -> F::Result {
-        assert!(value >= 0);
-        self.build_int(value as i64, ast::IntTy::I32)
+    pub fn i32(self, value: u32) -> F::Result {
+        self.build_int(value as u64, ast::IntTy::I32)
     }
 
-    pub fn i64(self, value: i64) -> F::Result {
-        assert!(value >= 0);
-        self.build_int(value, ast::IntTy::I64)
+    pub fn i64(self, value: u64) -> F::Result {
+        self.build_int(value as u64, ast::IntTy::I64)
     }
 
     pub fn uint(self, value: u64) -> F::Result {
