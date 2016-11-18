@@ -575,7 +575,7 @@ fn test_trivial_closure() {
             ast::ExprKind::Closure(
                 ast::CaptureBy::Value,
                 builder.fn_decl().default_return(),
-                builder.block().expr().usize(1),
+                builder.expr().usize(1),
                 DUMMY_SP,
             )
         )
@@ -597,7 +597,7 @@ fn test_closure_by_ref() {
             ast::ExprKind::Closure(
                 ast::CaptureBy::Ref,
                 builder.fn_decl().default_return(),
-                builder.block().expr().usize(2),
+                builder.expr().usize(2),
                 DUMMY_SP,
             )
         )
@@ -611,7 +611,7 @@ fn test_closure_block() {
     let expr = builder.expr().closure()
         .by_ref()
         .fn_decl().default_return()
-        .block().expr().usize(3);
+        .expr().usize(3);
 
     assert_eq!(
         expr,
@@ -619,7 +619,7 @@ fn test_closure_block() {
             ast::ExprKind::Closure(
                 ast::CaptureBy::Ref,
                 builder.fn_decl().default_return(),
-                builder.block().expr().usize(3),
+                builder.expr().usize(3),
                 DUMMY_SP,
             )
         )
