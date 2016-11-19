@@ -2004,8 +2004,8 @@ impl<F> ExprClosureBuilder<F> {
         FnDeclBuilder::with_callback(self)
     }
 
-    pub fn build_fn_decl(self, fn_decl: P<ast::FnDecl>) -> ExprClosureBlockBuilder<F> {
-        ExprClosureBlockBuilder {
+    pub fn build_fn_decl(self, fn_decl: P<ast::FnDecl>) -> ExprClosureExprBuilder<F> {
+        ExprClosureExprBuilder {
             builder: self.builder,
             capture_by: self.capture_by,
             fn_decl: fn_decl,
@@ -2015,45 +2015,42 @@ impl<F> ExprClosureBuilder<F> {
 }
 
 impl<F> Invoke<P<ast::FnDecl>> for ExprClosureBuilder<F> {
-    type Result = ExprClosureBlockBuilder<F>;
+    type Result = ExprClosureExprBuilder<F>;
 
-    fn invoke(self, fn_decl: P<ast::FnDecl>) -> ExprClosureBlockBuilder<F> {
+    fn invoke(self, fn_decl: P<ast::FnDecl>) -> ExprClosureExprBuilder<F> {
         self.build_fn_decl(fn_decl)
     }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-pub struct ExprClosureBlockBuilder<F> {
+pub struct ExprClosureExprBuilder<F> {
     builder: ExprBuilder<F>,
     capture_by: ast::CaptureBy,
     fn_decl: P<ast::FnDecl>,
     span: Span,
 }
 
-impl<F> ExprClosureBlockBuilder<F>
+impl<F> ExprClosureExprBuilder<F>
     where F: Invoke<P<ast::Expr>>,
 {
-    pub fn expr(self) -> ExprBuilder<BlockBuilder<Self>> {
-        self.block().expr()
+    pub fn expr(self) -> ExprBuilder<Self> {
+        let span = self.span;
+        ExprBuilder::with_callback(self).span(span)
     }
 
-    pub fn block(self) -> BlockBuilder<Self> {
-        BlockBuilder::with_callback(self)
-    }
-
-    pub fn build_block(self, block: P<ast::Block>) -> F::Result {
-        self.builder.build_expr_kind(ast::ExprKind::Closure(self.capture_by, self.fn_decl, block, self.span))
+    pub fn build_expr(self, expr: P<ast::Expr>) -> F::Result {
+        self.builder.build_expr_kind(ast::ExprKind::Closure(self.capture_by, self.fn_decl, expr, self.span))
     }
 }
 
-impl<F> Invoke<P<ast::Block>> for ExprClosureBlockBuilder<F>
+impl<F> Invoke<P<ast::Expr>> for ExprClosureExprBuilder<F>
     where F: Invoke<P<ast::Expr>>,
 {
     type Result = F::Result;
 
-    fn invoke(self, block: P<ast::Block>) -> F::Result {
-        self.build_block(block)
+    fn invoke(self, expr: P<ast::Expr>) -> F::Result {
+        self.build_expr(expr)
     }
 }
 
