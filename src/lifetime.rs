@@ -2,7 +2,7 @@ use syntax::ast;
 use syntax::codemap::{DUMMY_SP};
 
 use invoke::{Invoke, Identity};
-use name::ToName;
+use symbol::ToSymbol;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -21,7 +21,7 @@ impl<'a> IntoLifetime for &'a str {
         ast::Lifetime {
             id: ast::DUMMY_NODE_ID,
             span: DUMMY_SP,
-            name: self.to_name(),
+            name: self.to_symbol(),
         }
     }
 }
@@ -70,7 +70,7 @@ pub struct LifetimeDefBuilder<F=Identity> {
 
 impl LifetimeDefBuilder {
     pub fn new<N>(name: N) -> Self
-        where N: ToName,
+        where N: ToSymbol,
     {
         LifetimeDefBuilder::with_callback(name, Identity)
     }
@@ -80,12 +80,12 @@ impl<F> LifetimeDefBuilder<F>
     where F: Invoke<ast::LifetimeDef>,
 {
     pub fn with_callback<N>(name: N, callback: F) -> Self
-        where N: ToName,
+        where N: ToSymbol,
     {
         let lifetime = ast::Lifetime {
             id: ast::DUMMY_NODE_ID,
             span: DUMMY_SP,
-            name: name.to_name(),
+            name: name.to_symbol(),
         };
 
         LifetimeDefBuilder {
@@ -96,12 +96,12 @@ impl<F> LifetimeDefBuilder<F>
     }
 
     pub fn bound<N>(mut self, name: N) -> Self
-        where N: ToName,
+        where N: ToSymbol,
     {
         let lifetime = ast::Lifetime {
             id: ast::DUMMY_NODE_ID,
             span: DUMMY_SP,
-            name: name.to_name(),
+            name: name.to_symbol(),
         };
 
         self.bounds.push(lifetime);

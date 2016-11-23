@@ -7,8 +7,8 @@ use syntax::ptr::P;
 use ident::ToIdent;
 use invoke::{Invoke, Identity};
 use lifetime::{IntoLifetime, IntoLifetimeDef, LifetimeDefBuilder};
-use name::ToName;
 use path::IntoPath;
+use symbol::ToSymbol;
 use ty_param::TyParamBuilder;
 use where_predicate::WherePredicateBuilder;
 
@@ -77,7 +77,7 @@ impl<F> GenericsBuilder<F>
 
     pub fn with_lifetime_names<I, N>(mut self, iter: I) -> Self
         where I: IntoIterator<Item=N>,
-              N: ToName,
+              N: ToSymbol,
     {
         for name in iter {
             self = self.lifetime_name(name);
@@ -91,13 +91,13 @@ impl<F> GenericsBuilder<F>
     }
 
     pub fn lifetime_name<N>(self, name: N) -> Self
-        where N: ToName,
+        where N: ToSymbol,
     {
         self.lifetime(name).build()
     }
 
     pub fn lifetime<N>(self, name: N) -> LifetimeDefBuilder<Self>
-        where N: ToName,
+        where N: ToSymbol,
     {
         LifetimeDefBuilder::with_callback(name, self)
     }

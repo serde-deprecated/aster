@@ -94,7 +94,7 @@ fn test_str() {
         P(Spanned {
             span: DUMMY_SP,
             node: ast::LitKind::Str(
-                builder.interned_string("string"),
+                builder.symbol("string"),
                 ast::StrStyle::Cooked,
             ),
         })

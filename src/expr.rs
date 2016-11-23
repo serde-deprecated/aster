@@ -17,7 +17,7 @@ use mac::MacBuilder;
 use pat::PatBuilder;
 use path::{IntoPath, PathBuilder};
 use qpath::QPathBuilder;
-use str::ToInternedString;
+use symbol::ToSymbol;
 use ty::TyBuilder;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -172,19 +172,19 @@ impl<F> ExprBuilder<F>
     }
 
     pub fn f32<S>(self, value: S) -> F::Result
-        where S: ToInternedString,
+        where S: ToSymbol,
     {
         self.lit().f32(value)
     }
 
     pub fn f64<S>(self, value: S) -> F::Result
-        where S: ToInternedString,
+        where S: ToSymbol,
     {
         self.lit().f64(value)
     }
 
     pub fn str<S>(self, value: S) -> F::Result
-        where S: ToInternedString,
+        where S: ToSymbol,
     {
         self.lit().str(value)
     }

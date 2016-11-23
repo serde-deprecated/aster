@@ -5,8 +5,8 @@ use std::iter::IntoIterator;
 use syntax::abi::Abi;
 use syntax::ast;
 use syntax::codemap::{DUMMY_SP, Span, respan};
-use syntax::parse::token::keywords;
 use syntax::ptr::P;
+use syntax::symbol::keywords;
 
 use attr::AttrBuilder;
 use block::BlockBuilder;
@@ -19,6 +19,7 @@ use mac::MacBuilder;
 use method::MethodSigBuilder;
 use path::PathBuilder;
 use struct_field::StructFieldBuilder;
+use symbol::ToSymbol;
 use ty::TyBuilder;
 use ty_param::TyParamBoundBuilder;
 use variant::VariantBuilder;
@@ -730,8 +731,10 @@ pub struct ItemExternCrateBuilder<F> {
 impl<F> ItemExternCrateBuilder<F>
     where F: Invoke<P<ast::Item>>,
 {
-    pub fn with_name(self, name: ast::Name) -> F::Result {
-        let extern_ = ast::ItemKind::ExternCrate(Some(name));
+    pub fn with_name<N>(self, name: N) -> F::Result
+        where N: ToSymbol
+    {
+        let extern_ = ast::ItemKind::ExternCrate(Some(name.to_symbol()));
         self.builder.build_item_kind(self.id, extern_)
     }
 

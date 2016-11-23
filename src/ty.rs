@@ -8,9 +8,9 @@ use expr::ExprBuilder;
 use ident::ToIdent;
 use invoke::{Invoke, Identity};
 use lifetime::IntoLifetime;
-use name::ToName;
 use path::PathBuilder;
 use qpath::QPathBuilder;
+use symbol::ToSymbol;
 use ty_param::TyParamBoundBuilder;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -284,12 +284,12 @@ impl<F> TyRefBuilder<F>
     }
 
     pub fn lifetime<N>(mut self, name: N) -> Self
-        where N: ToName,
+        where N: ToSymbol,
     {
         self.lifetime = Some(ast::Lifetime {
             id: ast::DUMMY_NODE_ID,
             span: self.builder.span,
-            name: name.to_name(),
+            name: name.to_symbol(),
         });
         self
     }
