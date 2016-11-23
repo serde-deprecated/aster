@@ -1,13 +1,13 @@
 use syntax::abi::Abi;
 use syntax::ast;
 use syntax::codemap::{DUMMY_SP, respan};
-use syntax::parse::token::keywords;
 use syntax::print::pprust;
 use syntax::ptr::P;
+use syntax::symbol::keywords;
 
 use aster::AstBuilder;
 use aster::ident::ToIdent;
-use aster::name::ToName;
+use aster::symbol::ToSymbol;
 
 #[test]
 fn test_fn() {
@@ -405,21 +405,19 @@ fn test_attr() {
         P(ast::Item {
             ident: builder.id("Struct"),
             attrs: vec![
-                respan(
-                    DUMMY_SP,
-                    ast::Attribute_ {
-                        id: ast::AttrId(0),
-                        style: ast::AttrStyle::Outer,
-                        value: P(respan(
-                            DUMMY_SP,
-                            ast::MetaItemKind::NameValue(
-                                builder.interned_string("doc"),
-                                (*builder.lit().str("/// doc string")).clone(),
-                            ),
-                        )),
-                        is_sugared_doc: true,
-                    }
-                ),
+                ast::Attribute {
+                    id: ast::AttrId(0),
+                    style: ast::AttrStyle::Outer,
+                    value: ast::MetaItem {
+                        name: builder.symbol("doc"),
+                        node: ast::MetaItemKind::NameValue(
+                            (*builder.lit().str("/// doc string")).clone(),
+                        ),
+                        span: DUMMY_SP,
+                    },
+                    is_sugared_doc: true,
+                    span: DUMMY_SP,
+                }
             ],
             id: ast::DUMMY_NODE_ID,
             node: ast::ItemKind::Struct(
@@ -456,7 +454,7 @@ fn test_extern_crate() {
 
     let item = builder.item()
         .extern_crate("aster")
-        .with_name("aster1".to_name());
+        .with_name("aster1");
 
     assert_eq!(
         item,
@@ -464,7 +462,7 @@ fn test_extern_crate() {
             ident: builder.id("aster"),
             attrs: vec![],
             id: ast::DUMMY_NODE_ID,
-            node: ast::ItemKind::ExternCrate(Some("aster1".to_name())),
+            node: ast::ItemKind::ExternCrate(Some("aster1".to_symbol())),
             vis: ast::Visibility::Inherited,
             span: DUMMY_SP,
         })

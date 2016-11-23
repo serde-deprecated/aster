@@ -7,7 +7,7 @@ use syntax::ptr::P;
 
 use invoke::{Invoke, Identity};
 
-use str::ToInternedString;
+use symbol::ToSymbol;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -113,19 +113,19 @@ impl<F> LitBuilder<F>
     }
 
     fn build_float<S>(self, value: S, ty: ast::FloatTy) -> F::Result
-        where S: ToInternedString,
+        where S: ToSymbol,
     {
-        self.build_lit(ast::LitKind::Float(value.to_interned_string(), ty))
+        self.build_lit(ast::LitKind::Float(value.to_symbol(), ty))
     }
 
     pub fn f32<S>(self, value: S) -> F::Result
-        where S: ToInternedString,
+        where S: ToSymbol,
     {
         self.build_float(value, ast::FloatTy::F32)
     }
 
     pub fn f64<S>(self, value: S) -> F::Result
-        where S: ToInternedString,
+        where S: ToSymbol,
     {
         self.build_float(value, ast::FloatTy::F64)
     }
@@ -139,9 +139,9 @@ impl<F> LitBuilder<F>
     }
 
     pub fn str<S>(self, value: S) -> F::Result
-        where S: ToInternedString,
+        where S: ToSymbol,
     {
-        let value = value.to_interned_string();
+        let value = value.to_symbol();
         self.build_lit(ast::LitKind::Str(value, ast::StrStyle::Cooked))
     }
 

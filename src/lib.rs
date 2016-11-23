@@ -11,7 +11,6 @@ extern crate syntax;
 
 use syntax::ast;
 use syntax::codemap::{DUMMY_SP, Span};
-use syntax::parse::token;
 
 pub mod arm;
 pub mod attr;
@@ -27,14 +26,13 @@ pub mod lifetime;
 pub mod lit;
 pub mod mac;
 pub mod method;
-pub mod name;
 pub mod pat;
 pub mod path;
 pub mod qpath;
 pub mod self_;
 pub mod stmt;
-pub mod str;
 pub mod struct_field;
+pub mod symbol;
 pub mod ty;
 pub mod ty_param;
 pub mod variant;
@@ -60,10 +58,10 @@ impl AstBuilder {
         self
     }
 
-    pub fn interned_string<S>(&self, s: S) -> token::InternedString
-        where S: str::ToInternedString
+    pub fn interned_string<S>(&self, s: S) -> syntax::symbol::InternedString
+        where S: symbol::ToSymbol
     {
-        s.to_interned_string()
+        s.to_symbol().as_str()
     }
 
     pub fn id<I>(&self, id: I) -> ast::Ident
@@ -72,10 +70,10 @@ impl AstBuilder {
         id.to_ident()
     }
 
-    pub fn name<N>(&self, name: N) -> ast::Name
-        where N: name::ToName
+    pub fn symbol<N>(&self, name: N) -> syntax::symbol::Symbol
+        where N: symbol::ToSymbol
     {
-        name.to_name()
+        name.to_symbol()
     }
 
     pub fn lifetime<L>(&self, lifetime: L) -> ast::Lifetime
@@ -109,7 +107,7 @@ impl AstBuilder {
     }
 
     pub fn lifetime_def<N>(&self, name: N) -> lifetime::LifetimeDefBuilder
-        where N: name::ToName,
+        where N: symbol::ToSymbol,
     {
         lifetime::LifetimeDefBuilder::new(name)
     }

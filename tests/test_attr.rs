@@ -1,6 +1,5 @@
 use syntax::ast;
-use syntax::codemap::{DUMMY_SP, respan};
-use syntax::ptr::P;
+use syntax::codemap::DUMMY_SP;
 
 use aster::AstBuilder;
 
@@ -9,20 +8,18 @@ fn test_doc() {
     let builder = AstBuilder::new();
     assert_eq!(
         builder.attr().doc("/// doc string"),
-        respan(
-            DUMMY_SP,
-            ast::Attribute_ {
-                id: ast::AttrId(0),
-                style: ast::AttrStyle::Outer,
-                value: P(respan(
-                    DUMMY_SP,
-                    ast::MetaItemKind::NameValue(
-                        builder.interned_string("doc"),
-                        (*builder.lit().str("/// doc string")).clone(),
-                    ),
-                )),
-                is_sugared_doc: true,
-            }
-        )
+        ast::Attribute {
+            id: ast::AttrId(0),
+            style: ast::AttrStyle::Outer,
+            value: ast::MetaItem {
+                name: builder.symbol("doc"),
+                node: ast::MetaItemKind::NameValue(
+                    (*builder.lit().str("/// doc string")).clone(),
+                ),
+                span: DUMMY_SP,
+            },
+            is_sugared_doc: true,
+            span: DUMMY_SP,
+        }
     );
 }

@@ -1,6 +1,6 @@
 use syntax::ast;
 
-use name::ToName;
+use symbol::ToSymbol;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -22,7 +22,7 @@ impl ToIdent for ast::Name {
 
 impl<'a> ToIdent for &'a str {
     fn to_ident(&self) -> ast::Ident {
-        self.to_name().to_ident()
+        self.to_symbol().to_ident()
     }
 }
 

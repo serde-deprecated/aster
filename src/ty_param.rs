@@ -5,8 +5,8 @@ use syntax::ptr::P;
 use ident::ToIdent;
 use invoke::{Invoke, Identity};
 use lifetime::{IntoLifetime, IntoLifetimeDef, LifetimeDefBuilder};
-use name::ToName;
 use path::{IntoPath, PathBuilder};
+use symbol::ToSymbol;
 use ty::TyBuilder;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -279,7 +279,7 @@ impl<F> PolyTraitRefBuilder<F>
     }
 
     pub fn lifetime<N>(self, name: N) -> LifetimeDefBuilder<Self>
-        where N: ToName,
+        where N: ToSymbol,
     {
         LifetimeDefBuilder::with_callback(name, self)
     }

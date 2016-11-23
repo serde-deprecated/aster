@@ -7,7 +7,7 @@ use syntax::ptr::P;
 use invoke::{Invoke, Identity};
 
 use ident::ToIdent;
-use name::ToName;
+use symbol::ToSymbol;
 use ty::TyBuilder;
 
 use lifetime::IntoLifetime;
@@ -234,12 +234,12 @@ impl<F> PathSegmentBuilder<F>
     }
 
     pub fn lifetime<N>(self, name: N) -> Self
-        where N: ToName,
+        where N: ToSymbol,
     {
         let lifetime = ast::Lifetime {
             id: ast::DUMMY_NODE_ID,
             span: self.span,
-            name: name.to_name(),
+            name: name.to_symbol(),
         };
         self.with_lifetime(lifetime)
     }

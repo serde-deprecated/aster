@@ -4,8 +4,8 @@ use syntax::ptr::P;
 
 use invoke::{Invoke, Identity};
 use lifetime::{IntoLifetime, IntoLifetimeDef, LifetimeDefBuilder};
-use name::ToName;
 use path::IntoPath;
+use symbol::ToSymbol;
 use ty::TyBuilder;
 use ty_param::{TyParamBoundBuilder, PolyTraitRefBuilder, TraitTyParamBoundBuilder};
 
@@ -121,7 +121,7 @@ impl<F> WhereBoundPredicateTyBuilder<F>
     }
 
     pub fn for_lifetime<N>(self, name: N) -> LifetimeDefBuilder<Self>
-        where N: ToName,
+        where N: ToSymbol,
     {
         LifetimeDefBuilder::with_callback(name, self)
     }
@@ -207,7 +207,7 @@ impl<F> WhereBoundPredicateTyBoundsBuilder<F>
     }
 
     pub fn for_lifetime<N>(self, name: N) -> LifetimeDefBuilder<Self>
-        where N: ToName,
+        where N: ToSymbol,
     {
         LifetimeDefBuilder::with_callback(name, self)
     }
