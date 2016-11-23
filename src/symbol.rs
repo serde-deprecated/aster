@@ -1,5 +1,5 @@
 use syntax::ast;
-use syntax::symbol::Symbol;
+use syntax::symbol::{InternedString, Symbol};
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -22,6 +22,12 @@ impl<'a> ToSymbol for &'a str {
 impl ToSymbol for ast::Ident {
     fn to_symbol(&self) -> Symbol {
         self.name
+    }
+}
+
+impl ToSymbol for InternedString {
+    fn to_symbol(&self) -> Symbol {
+        Symbol::intern(self)
     }
 }
 
