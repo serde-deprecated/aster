@@ -9,7 +9,7 @@ pub trait ToSymbol {
 
 impl ToSymbol for Symbol {
     fn to_symbol(&self) -> Symbol {
-        self.clone()
+        *self
     }
 }
 
