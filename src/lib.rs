@@ -1,7 +1,7 @@
 #![cfg_attr(not(feature = "with-syntex"), feature(rustc_private))]
-#![cfg_attr(feature = "unstable-testing", feature(plugin))]
-#![cfg_attr(feature = "unstable-testing", plugin(clippy))]
-#![cfg_attr(feature = "unstable-testing", allow(wrong_self_convention))]
+#![cfg_attr(feature = "clippy", feature(plugin))]
+#![cfg_attr(feature = "clippy", plugin(clippy))]
+#![cfg_attr(feature = "clippy", allow(wrong_self_convention))]
 
 #[cfg(feature = "with-syntex")]
 extern crate syntex_syntax as syntax;
