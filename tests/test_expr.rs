@@ -254,7 +254,7 @@ fn test_break() {
 
     assert_eq!(
         expr,
-        builder.expr().build_expr_kind(ast::ExprKind::Break(None))
+        builder.expr().build_expr_kind(ast::ExprKind::Break(None, None))
     );
 
     let expr = builder.expr().break_to("'a");
@@ -262,7 +262,7 @@ fn test_break() {
 
     assert_eq!(
         expr,
-        builder.expr().build_expr_kind(ast::ExprKind::Break(Some(id)))
+        builder.expr().build_expr_kind(ast::ExprKind::Break(Some(id), None))
     );
 }
 
