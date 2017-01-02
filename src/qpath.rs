@@ -92,7 +92,6 @@ impl<F> QPathTyBuilder<F>
     {
         let path = ast::Path {
             span: self.builder.span,
-            global: false,
             segments: vec![],
         };
         self.as_().build(path).id(id)
@@ -103,7 +102,6 @@ impl<F> QPathTyBuilder<F>
     {
         let path = ast::Path {
             span: self.builder.span,
-            global: false,
             segments: vec![],
         };
         self.as_().build(path).segment(id)

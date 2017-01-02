@@ -108,11 +108,16 @@ impl<F> PathBuilder<F>
         -> PathSegmentBuilder<PathSegmentsBuilder<F>>
         where I: ToIdent,
     {
+        let mut segments = vec![];
+
+        if self.global {
+            segments.push(ast::PathSegment::crate_root());
+        }
+
         PathSegmentBuilder::with_callback(id, PathSegmentsBuilder {
             callback: self.callback,
             span: self.span,
-            global: self.global,
-            segments: Vec::new(),
+            segments: segments,
         })
     }
 }
@@ -122,7 +127,6 @@ impl<F> PathBuilder<F>
 pub struct PathSegmentsBuilder<F=Identity> {
     callback: F,
     span: Span,
-    global: bool,
     segments: Vec<ast::PathSegment>,
 }
 
@@ -156,7 +160,6 @@ impl<F> PathSegmentsBuilder<F>
     pub fn build(self) -> F::Result {
         self.callback.invoke(ast::Path {
             span: self.span,
-            global: self.global,
             segments: self.segments,
         })
     }
@@ -285,13 +288,17 @@ impl<F> PathSegmentBuilder<F>
     }
 
     pub fn build_return(self, output: Option<P<ast::Ty>>) -> F::Result {
-        let data = ast::ParenthesizedParameterData {
-            span: self.span,
-            inputs: self.tys,
-            output: output,
-        };
+        let parameters = if self.tys.is_empty() {
+            None
+        } else {
+            let data = ast::ParenthesizedParameterData {
+                span: self.span,
+                inputs: self.tys,
+                output: output,
+            };
 
-        let parameters = ast::PathParameters::Parenthesized(data);
+            Some(P(ast::PathParameters::Parenthesized(data)))
+        };
 
         self.callback.invoke(ast::PathSegment {
             identifier: self.id,
@@ -300,13 +307,19 @@ impl<F> PathSegmentBuilder<F>
     }
 
     pub fn build(self) -> F::Result {
-        let data = ast::AngleBracketedParameterData {
-            lifetimes: self.lifetimes,
-            types: P::from_vec(self.tys),
-            bindings: P::from_vec(self.bindings),
-        };
+        let parameters = if self.lifetimes.is_empty() &&
+                            self.tys.is_empty() &&
+                            self.bindings.is_empty() {
+            None
+        } else {
+            let data = ast::AngleBracketedParameterData {
+                lifetimes: self.lifetimes,
+                types: P::from_vec(self.tys),
+                bindings: P::from_vec(self.bindings),
+            };
 
-        let parameters = ast::PathParameters::AngleBracketed(data);
+            Some(P(ast::PathParameters::AngleBracketed(data)))
+        };
 
         self.callback.invoke(ast::PathSegment {
             identifier: self.id,
