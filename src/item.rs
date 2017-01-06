@@ -119,7 +119,7 @@ impl<F> ItemBuilder<F>
             ident: id.to_ident(),
             vis: self.vis.clone(),
             attrs: vec![],
-            span: self.span.clone(),
+            span: self.span,
             items: vec![],
             builder: self,
         }
