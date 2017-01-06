@@ -710,3 +710,50 @@ fn test_const() {
         })
     );
 }
+
+#[test]
+fn test_mod() {
+    let builder = AstBuilder::new();
+    let mod_ = builder.item().mod_("hello")
+        .item().pub_().mod_("world").build()
+        .item().mod_("alex").build()
+        .build();
+
+    assert_eq!(
+        mod_,
+        P(ast::Item {
+            ident: builder.id("hello"),
+            id: ast::DUMMY_NODE_ID,
+            span: DUMMY_SP,
+            vis: ast::Visibility::Inherited,
+            attrs: vec![],
+            node: ast::ItemKind::Mod(ast::Mod {
+                inner: DUMMY_SP,
+                items: vec![
+                    P(ast::Item {
+                        ident: builder.id("world"),
+                        id: ast::DUMMY_NODE_ID,
+                        attrs: vec![],
+                        span: DUMMY_SP,
+                        vis: ast::Visibility::Public,
+                        node: ast::ItemKind::Mod(ast::Mod {
+                            inner: DUMMY_SP,
+                            items: vec![]
+                        })
+                    }),
+                    P(ast::Item {
+                        ident: builder.id("alex"),
+                        id: ast::DUMMY_NODE_ID,
+                        attrs: vec![],
+                        span: DUMMY_SP,
+                        vis: ast::Visibility::Inherited,
+                        node: ast::ItemKind::Mod(ast::Mod {
+                            inner: DUMMY_SP,
+                            items: vec![]
+                        })
+                    })
+                ]
+            })
+        })
+    );
+}
