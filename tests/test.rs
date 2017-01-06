@@ -1,4 +1,4 @@
-#![cfg_attr(not(feature = "with-syntex"), feature(rustc_private))]
+#![cfg_attr(not(feature = "with-syntex"), feature(rustc_private, i128_type))]
 
 extern crate aster;
 

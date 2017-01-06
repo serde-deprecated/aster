@@ -1,4 +1,4 @@
-#![cfg_attr(not(feature = "with-syntex"), feature(rustc_private))]
+#![cfg_attr(not(feature = "with-syntex"), feature(rustc_private, i128_type))]
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]
 #![cfg_attr(feature = "clippy", allow(wrong_self_convention))]

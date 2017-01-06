@@ -6,6 +6,13 @@ use syntax::ptr::P;
 
 use aster::AstBuilder;
 
+#[cfg(feature = "with-syntex")]
+#[allow(non_camel_case_types)]
+type umax = u64;
+#[cfg(not(feature = "with-syntex"))]
+#[allow(non_camel_case_types)]
+type umax = u128;
+
 #[test]
 fn test_int() {
     let builder = AstBuilder::new();
@@ -15,7 +22,7 @@ fn test_int() {
             lit,
             P(Spanned {
                 span: DUMMY_SP,
-                node: ast::LitKind::Int(value, lit_int_ty),
+                node: ast::LitKind::Int(value as umax, lit_int_ty),
             })
         );
     }

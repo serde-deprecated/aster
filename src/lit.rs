@@ -9,6 +9,13 @@ use invoke::{Invoke, Identity};
 
 use symbol::ToSymbol;
 
+#[cfg(feature = "with-syntex")]
+#[allow(non_camel_case_types)]
+type umax = u64;
+#[cfg(not(feature = "with-syntex"))]
+#[allow(non_camel_case_types)]
+type umax = u128;
+
 //////////////////////////////////////////////////////////////////////////////
 
 pub struct LitBuilder<F=Identity> {
@@ -57,11 +64,11 @@ impl<F> LitBuilder<F>
     }
 
     pub fn int(self, value: u64) -> F::Result {
-        self.build_lit(ast::LitKind::Int(value, ast::LitIntType::Unsuffixed))
+        self.build_lit(ast::LitKind::Int(value as umax, ast::LitIntType::Unsuffixed))
     }
 
     fn build_int(self, value: u64, ty: ast::IntTy) -> F::Result {
-        self.build_lit(ast::LitKind::Int(value, ast::LitIntType::Signed(ty)))
+        self.build_lit(ast::LitKind::Int(value as umax, ast::LitIntType::Signed(ty)))
     }
 
     pub fn isize(self, value: usize) -> F::Result {
@@ -85,11 +92,11 @@ impl<F> LitBuilder<F>
     }
 
     pub fn uint(self, value: u64) -> F::Result {
-        self.build_lit(ast::LitKind::Int(value, ast::LitIntType::Unsuffixed))
+        self.build_lit(ast::LitKind::Int(value as umax, ast::LitIntType::Unsuffixed))
     }
 
     fn build_uint(self, value: u64, ty: ast::UintTy) -> F::Result {
-        self.build_lit(ast::LitKind::Int(value, ast::LitIntType::Unsigned(ty)))
+        self.build_lit(ast::LitKind::Int(value as umax, ast::LitIntType::Unsigned(ty)))
     }
 
     pub fn usize(self, value: usize) -> F::Result {
