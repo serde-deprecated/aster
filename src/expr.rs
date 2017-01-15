@@ -1110,6 +1110,7 @@ impl<I, F> Invoke<P<ast::Expr>> for ExprStructFieldBuilder<I, F>
             expr: expr,
             span: self.builder.span,
             is_shorthand: false,
+            attrs: Vec::new().into(),
         };
         self.builder.fields.push(field);
         self.builder
