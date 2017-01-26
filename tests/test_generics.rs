@@ -1,5 +1,4 @@
 use syntax::ast;
-use syntax::ptr::P;
 use syntax::codemap::DUMMY_SP;
 
 use aster::AstBuilder;
@@ -13,7 +12,7 @@ fn test_empty() {
         generics,
         ast::Generics {
             lifetimes: vec![],
-            ty_params: P::new(),
+            ty_params: vec![],
             where_clause: ast::WhereClause {
                 id: ast::DUMMY_NODE_ID,
                 predicates: vec![],
@@ -39,9 +38,9 @@ fn test_with_ty_params_and_lifetimes() {
                 builder.lifetime_def("'a").build(),
                 builder.lifetime_def("'b").bound("'a").build(),
             ],
-            ty_params: P::from_vec(vec![
+            ty_params: vec![
                 builder.ty_param("T").lifetime_bound("'a").build(),
-            ]),
+            ],
             where_clause: ast::WhereClause {
                 id: ast::DUMMY_NODE_ID,
                 predicates: vec![],

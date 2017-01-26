@@ -551,15 +551,14 @@ fn test_trait() {
             node: ast::ItemKind::Trait(
                 ast::Unsafety::Normal,
                 builder.generics().build(),
-                P::from_vec(vec![
-                ]),
+                vec![],
                 vec![
                     ast::TraitItem {
                         id: ast::DUMMY_NODE_ID,
                         ident: builder.id("MyFloat"),
                         attrs: vec![],
                         node: ast::TraitItemKind::Type(
-                            P::from_vec(vec![]),
+                            vec![],
                             None,
                         ),
                         span: DUMMY_SP,

@@ -1,8 +1,8 @@
 use syntax::ast;
 use syntax::codemap::DUMMY_SP;
-use syntax::ptr::P;
 
 use aster::AstBuilder;
+use aster::ty::TyBuilder;
 use aster::lifetime::{IntoLifetime, IntoLifetimeDef};
 use aster::path::IntoPath;
 
@@ -22,11 +22,11 @@ fn test_bound() {
                 "'a".into_lifetime_def(),
             ],
             bounded_ty: builder.ty().id("T"),
-            bounds: P::from_vec(vec![
+            bounds: vec![
                 builder.ty_param_bound()
                     .trait_("Trait")
                     .build(),
-            ]),
+            ],
         })
     );
 }
@@ -62,8 +62,8 @@ fn test_eq() {
         ast::WherePredicate::EqPredicate(ast::WhereEqPredicate {
             id: ast::DUMMY_NODE_ID,
             span: DUMMY_SP,
-            path: "T".into_path(),
-            ty: builder.ty().usize(),
+            lhs_ty: TyBuilder::new().build_path("T".into_path()),
+            rhs_ty: builder.ty().usize(),
         })
     );
 }

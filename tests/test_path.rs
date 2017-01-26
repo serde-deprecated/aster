@@ -105,10 +105,10 @@ fn test_option() {
                     identifier: builder.id("Option"),
                     parameters: Some(P(ast::AngleBracketed(ast::AngleBracketedParameterData {
                         lifetimes: vec![],
-                        types: P::from_vec(vec![
+                        types: vec![
                             builder.ty().isize(),
-                        ]),
-                        bindings: P::new(),
+                        ],
+                        bindings: vec![],
                     }))),
                 },
             ]
@@ -136,8 +136,8 @@ fn test_lifetimes() {
                         lifetimes: vec![
                             builder.lifetime("'a"),
                         ],
-                        types: P::new(),
-                        bindings: P::new(),
+                        types: vec![],
+                        bindings: vec![],
                     }))),
                 },
             ]
