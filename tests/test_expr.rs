@@ -212,7 +212,7 @@ fn test_slice() {
         expr,
         P(ast::Expr {
             id: ast::DUMMY_NODE_ID,
-            node: ast::ExprKind::Vec(vec![
+            node: ast::ExprKind::Array(vec![
                 builder.expr().i8(1),
                 builder.expr().i8(2),
                 builder.expr().i8(3),

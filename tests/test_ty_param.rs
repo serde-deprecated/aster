@@ -1,6 +1,5 @@
 use syntax::ast;
 use syntax::codemap::DUMMY_SP;
-use syntax::ptr::P;
 
 use aster::AstBuilder;
 use aster::path::IntoPath;
@@ -17,7 +16,7 @@ fn test_ty_param_empty() {
             attrs: ast::ThinVec::new(),
             ident: builder.id("T"),
             id: ast::DUMMY_NODE_ID,
-            bounds: P::new(),
+            bounds: vec![],
             default: None,
             span: DUMMY_SP,
         }
@@ -38,7 +37,7 @@ fn test_ty_param_default() {
             attrs: ast::ThinVec::new(),
             ident: builder.id("T"),
             id: ast::DUMMY_NODE_ID,
-            bounds: P::new(),
+            bounds: vec![],
             default: Some(builder.ty().usize()),
             span: DUMMY_SP,
         }
@@ -62,7 +61,7 @@ fn test_ty_param_bounds() {
             attrs: ast::ThinVec::new(),
             ident: builder.id("T"),
             id: ast::DUMMY_NODE_ID,
-            bounds: P::from_vec(vec![
+            bounds: vec![
                 ast::TyParamBound::TraitTyParamBound(
                     ast::PolyTraitRef {
                         bound_lifetimes: vec![
@@ -90,7 +89,7 @@ fn test_ty_param_bounds() {
                 ast::TyParamBound::RegionTyParamBound(
                     "'b".into_lifetime()
                 ),
-            ]),
+            ],
             default: None,
             span: DUMMY_SP,
         }
