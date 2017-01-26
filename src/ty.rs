@@ -551,16 +551,3 @@ impl<F> Invoke<P<ast::Ty>> for TyTupleBuilder<F>
         self.with_ty(ty)
     }
 }
-
-
-//////////////////////////////////////////////////////////////////////////////
-
-/*
-pub trait IntoTy {
-    fn into_ty(&self) -> ast::Ty;
-}
-
-impl<'a> IntoTy for &'a str {
-    TyBuilder
-}
-*/
