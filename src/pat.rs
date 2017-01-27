@@ -121,7 +121,7 @@ impl<F> PatBuilder<F>
     }
 
     pub fn build_range(self, lhs: P<ast::Expr>, rhs: P<ast::Expr>) -> F::Result {
-        self.build_pat_kind(ast::PatKind::Range(lhs, rhs))
+        self.build_pat_kind(ast::PatKind::Range(lhs, rhs, ast::RangeEnd::Included))
     }
 
     pub fn range(self) -> ExprBuilder<PatRangeBuilder<F>> {
