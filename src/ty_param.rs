@@ -99,12 +99,24 @@ impl<F> TyParamBuilder<F>
         self
     }
 
+    #[cfg(not(feature = "with-syntex"))]
     pub fn build(self) -> F::Result {
         self.callback.invoke(ast::TyParam {
             attrs: ast::ThinVec::new(),
             ident: self.id,
             id: ast::DUMMY_NODE_ID,
             bounds: self.bounds,
+            default: self.default,
+            span: self.span,
+        })
+    }
+
+    #[cfg(feature = "with-syntex")]
+    pub fn build(self) -> F::Result {
+        self.callback.invoke(ast::TyParam {
+            ident: self.id,
+            id: ast::DUMMY_NODE_ID,
+            bounds: P::from_vec(self.bounds),
             default: self.default,
             span: self.span,
         })

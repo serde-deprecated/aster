@@ -70,6 +70,7 @@ fn test_qpath() {
 }
 
 #[test]
+#[cfg(not(feature = "with-syntex"))]
 fn test_array() {
     let builder = AstBuilder::new();
     let ty = builder.ty().array(3).usize();
@@ -79,6 +80,25 @@ fn test_array() {
         P(ast::Ty {
             id: ast::DUMMY_NODE_ID,
             node: ast::TyKind::Array(AstBuilder::new().ty().usize(),
+                AstBuilder::new().expr().usize(3)
+            ),
+            span: DUMMY_SP,
+        })
+    );
+
+}
+
+#[test]
+#[cfg(feature = "with-syntex")]
+fn test_array() {
+    let builder = AstBuilder::new();
+    let ty = builder.ty().array(3).usize();
+
+    assert_eq!(
+        ty,
+        P(ast::Ty {
+            id: ast::DUMMY_NODE_ID,
+            node: ast::TyKind::FixedLengthVec(AstBuilder::new().ty().usize(),
                 AstBuilder::new().expr().usize(3)
             ),
             span: DUMMY_SP,
@@ -195,6 +215,7 @@ fn test_tuple() {
 }
 
 #[test]
+#[cfg(not(feature = "with-syntex"))]
 fn test_slice() {
     let builder = AstBuilder::new();
     let ty = builder.ty()
@@ -205,6 +226,23 @@ fn test_slice() {
         P(ast::Ty {
             id: ast::DUMMY_NODE_ID,
             node: ast::TyKind::Slice(builder.ty().isize()),
+            span: DUMMY_SP,
+        })
+    );
+}
+
+#[test]
+#[cfg(feature = "with-syntex")]
+fn test_slice() {
+    let builder = AstBuilder::new();
+    let ty = builder.ty()
+        .slice().isize();
+
+    assert_eq!(
+        ty,
+        P(ast::Ty {
+            id: ast::DUMMY_NODE_ID,
+            node: ast::TyKind::Vec(builder.ty().isize()),
             span: DUMMY_SP,
         })
     );

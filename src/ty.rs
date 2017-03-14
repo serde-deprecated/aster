@@ -144,13 +144,26 @@ impl<F> TyBuilder<F>
         TyBuilder::with_callback(TyArrayBuilder(self, len)).span(span)
     }
 
+    #[cfg(not(feature = "with-syntex"))]
     pub fn build_slice(self, ty: P<ast::Ty>) -> F::Result {
         self.build_ty_kind(ast::TyKind::Slice(ty))
     }
 
+    #[cfg(feature = "with-syntex")]
+    pub fn build_slice(self, ty: P<ast::Ty>) -> F::Result {
+        self.build_ty_kind(ast::TyKind::Vec(ty))
+    }
+
+    #[cfg(not(feature = "with-syntex"))]
     pub fn build_array(self, ty: P<ast::Ty>, len: usize) -> F::Result {
         let len_expr = ExprBuilder::new().usize(len);
         self.build_ty_kind(ast::TyKind::Array(ty, len_expr))
+    }
+
+    #[cfg(feature = "with-syntex")]
+    pub fn build_array(self, ty: P<ast::Ty>, len: usize) -> F::Result {
+        let len_expr = ExprBuilder::new().usize(len);
+        self.build_ty_kind(ast::TyKind::FixedLengthVec(ty, len_expr))
     }
 
     pub fn slice(self) -> TyBuilder<TySliceBuilder<F>> {

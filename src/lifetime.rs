@@ -38,10 +38,21 @@ impl IntoLifetimeDef for ast::LifetimeDef {
     }
 }
 
+#[cfg(not(feature = "with-syntex"))]
 impl IntoLifetimeDef for ast::Lifetime {
     fn into_lifetime_def(self) -> ast::LifetimeDef {
         ast::LifetimeDef {
             attrs: ast::ThinVec::new(),
+            lifetime: self,
+            bounds: vec![],
+        }
+    }
+}
+
+#[cfg(feature = "with-syntex")]
+impl IntoLifetimeDef for ast::Lifetime {
+    fn into_lifetime_def(self) -> ast::LifetimeDef {
+        ast::LifetimeDef {
             lifetime: self,
             bounds: vec![],
         }
@@ -108,9 +119,18 @@ impl<F> LifetimeDefBuilder<F>
         self
     }
 
+    #[cfg(not(feature = "with-syntex"))]
     pub fn build(self) -> F::Result {
         self.callback.invoke(ast::LifetimeDef {
             attrs: ast::ThinVec::new(),
+            lifetime: self.lifetime,
+            bounds: self.bounds,
+        })
+    }
+
+    #[cfg(feature = "with-syntex")]
+    pub fn build(self) -> F::Result {
+        self.callback.invoke(ast::LifetimeDef {
             lifetime: self.lifetime,
             bounds: self.bounds,
         })
