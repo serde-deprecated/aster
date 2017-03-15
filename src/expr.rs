@@ -686,6 +686,12 @@ impl<F> ExprBuilder<F>
         }
     }
 
+    pub fn for_(self) -> PatBuilder<ExprForBuilder<F>> {
+        PatBuilder::with_callback(ExprForBuilder {
+            builder: self,
+        })
+    }
+
     pub fn if_(self) -> ExprBuilder<ExprIfBuilder<F>> {
         let span = self.span;
         ExprBuilder::with_callback(ExprIfBuilder {
@@ -1590,6 +1596,128 @@ impl<F> Invoke<P<ast::Block>> for ExprLoopBuilder<F>
 
     fn invoke(self, block: P<ast::Block>) -> F::Result {
         self.builder.build_expr_kind(ast::ExprKind::Loop(block, self.label))
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprForBuilder<F> {
+    builder: ExprBuilder<F>,
+}
+
+impl<F> Invoke<P<ast::Pat>> for ExprForBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = ExprBuilder<ExprForItBuilder<F>>;
+
+    fn invoke(self, pat: P<ast::Pat>) -> ExprBuilder<ExprForItBuilder<F>> {
+        ExprBuilder::with_callback(
+            ExprForItBuilder {
+                builder: self.builder,
+                pat: pat        
+            })
+    }
+}
+
+pub struct ExprForItBuilder<F> {
+    builder: ExprBuilder<F>,
+    pat: P<ast::Pat>,
+}
+
+impl<F> Invoke<P<ast::Expr>> for ExprForItBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = ExprForBlockBuilder<F>;
+
+    fn invoke(self, it: P<ast::Expr>) -> ExprForBlockBuilder<F> {
+        ExprForBlockBuilder {
+            span: self.builder.span,                    
+            builder: self.builder,
+            pat: self.pat,
+            it: it,
+            label: None,            
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct ExprForBlockBuilder<F> {
+    builder: ExprBuilder<F>,
+    pat: P<ast::Pat>,
+    it: P<ast::Expr>,
+    span: Span,
+    label: Option<Spanned<ast::Ident>>,
+}
+
+impl<F> ExprForBlockBuilder<F> {
+    pub fn span(mut self, span: Span) -> Self {
+        self.span = span;
+        self
+    }
+
+    pub fn label<I>(mut self, id: I) -> Self
+        where I: ToIdent,
+    {
+        self.label = Some(respan(self.span, id.to_ident()));
+        self
+    }
+
+    pub fn pat(self) -> PatBuilder<Self> {
+        PatBuilder::with_callback(self)
+    }
+
+    pub fn it(self) -> ExprBuilder<Self> {
+        ExprBuilder::with_callback(self)
+    }
+
+    pub fn build_pat(mut self, pat: P<ast::Pat>) -> Self {
+        self.pat = pat;
+        self
+    }
+
+    pub fn build_it(mut self, it: P<ast::Expr>) -> Self {
+        self.it = it;
+        self
+    }
+}
+
+impl<F> ExprForBlockBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    pub fn block(self) -> BlockBuilder<Self> {
+        BlockBuilder::with_callback(self)
+    }
+
+    pub fn build_block(self, block: P<ast::Block>) -> F::Result {
+        self.builder.build_expr_kind(ast::ExprKind::ForLoop(self.pat, self.it, block, self.label))
+    }
+}
+
+impl<F> Invoke<P<ast::Pat>> for ExprForBlockBuilder<F> {
+    type Result = Self;
+
+    fn invoke(self, pat: P<ast::Pat>) -> Self {
+        self.build_pat(pat)
+    }
+}
+
+impl<F> Invoke<P<ast::Expr>> for ExprForBlockBuilder<F> {
+    type Result = Self;
+
+    fn invoke(self, expr: P<ast::Expr>) -> Self {
+        self.build_it(expr)
+    }
+}
+
+
+impl<F> Invoke<P<ast::Block>> for ExprForBlockBuilder<F>
+    where F: Invoke<P<ast::Expr>>,
+{
+    type Result = F::Result;
+
+    fn invoke(self, block: P<ast::Block>) -> F::Result {
+        self.build_block(block)
     }
 }
 
