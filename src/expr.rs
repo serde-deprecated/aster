@@ -1612,10 +1612,10 @@ impl<F> Invoke<P<ast::Pat>> for ExprForBuilder<F>
 
     fn invoke(self, pat: P<ast::Pat>) -> ExprBuilder<ExprForItBuilder<F>> {
         ExprBuilder::with_callback(
-        ExprForItBuilder {
-            builder: self.builder,
-            pat: pat        
-        })
+            ExprForItBuilder {
+                builder: self.builder,
+                pat: pat        
+            })
     }
 }
 
@@ -1718,7 +1718,6 @@ impl<F> Invoke<P<ast::Block>> for ExprForBlockBuilder<F>
 
     fn invoke(self, block: P<ast::Block>) -> F::Result {
         self.build_block(block)
-        //self.builder.build_expr_kind(ast::ExprKind::ForLoop(self.pat, self.it, block, self.label))
     }
 }
 
