@@ -303,6 +303,7 @@ impl<F> PathSegmentBuilder<F>
         self.callback.invoke(ast::PathSegment {
             identifier: self.id,
             parameters: parameters,
+            span: self.span,
         })
     }
 
@@ -324,6 +325,7 @@ impl<F> PathSegmentBuilder<F>
         self.callback.invoke(ast::PathSegment {
             identifier: self.id,
             parameters: parameters,
+            span: self.span,
         })
     }
 }

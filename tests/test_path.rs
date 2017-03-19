@@ -17,6 +17,7 @@ fn test_id() {
                 ast::PathSegment {
                     identifier: builder.id("isize"),
                     parameters: None,
+                    span: DUMMY_SP,
                 },
             ]
         }
@@ -38,6 +39,7 @@ fn test_single_segment() {
                 ast::PathSegment {
                     identifier: builder.id("isize"),
                     parameters: None,
+                    span: DUMMY_SP,
                 },
             ]
         }
@@ -62,14 +64,17 @@ fn test_multiple_segments() {
                 ast::PathSegment {
                     identifier: builder.id("std"),
                     parameters: None,
+                    span: DUMMY_SP,
                 },
                 ast::PathSegment {
                     identifier: builder.id("thread"),
                     parameters: None,
+                    span: DUMMY_SP,
                 },
                 ast::PathSegment {
                     identifier: builder.id("Thread"),
                     parameters: None,
+                    span: DUMMY_SP,
                 },
             ]
         }
@@ -96,10 +101,12 @@ fn test_option() {
                 ast::PathSegment {
                     identifier: builder.id("std"),
                     parameters: None,
+                    span: DUMMY_SP,
                 },
                 ast::PathSegment {
                     identifier: builder.id("option"),
                     parameters: None,
+                    span: DUMMY_SP,
                 },
                 ast::PathSegment {
                     identifier: builder.id("Option"),
@@ -110,6 +117,7 @@ fn test_option() {
                         ],
                         bindings: vec![],
                     }))),
+                    span: DUMMY_SP,
                 },
             ]
         }
@@ -139,6 +147,7 @@ fn test_lifetimes() {
                         types: vec![],
                         bindings: vec![],
                     }))),
+                    span: DUMMY_SP,
                 },
             ]
         }
@@ -164,6 +173,7 @@ fn test_parenthesized_no_return() {
                             output: None,
                         }
                     ))),
+                    span: DUMMY_SP,
                 },
             ]
         }
@@ -189,6 +199,7 @@ fn test_parenthesized_with_return() {
                             output: Some(builder.ty().u32()),
                         }
                     ))),
+                    span: DUMMY_SP,
                 },
             ]
         }

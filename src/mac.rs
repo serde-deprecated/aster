@@ -5,7 +5,7 @@ use syntax::ext::expand;
 use syntax::ext::quote::rt::ToTokens;
 use syntax::parse::ParseSess;
 use syntax::ptr::P;
-use syntax::tokenstream::TokenTree;
+use syntax::tokenstream::{TokenTree, TokenStream};
 
 use expr::ExprBuilder;
 use invoke::{Invoke, Identity};
@@ -107,7 +107,7 @@ impl<F> MacPathBuilder<F>
     pub fn build(self) -> F::Result {
         let mac = ast::Mac_ {
             path: self.path,
-            tts: self.tokens,
+            tts: TokenStream::concat(self.tokens.into_iter().map(|x| TokenStream::from(x)).collect()).into()
         };
         self.callback.invoke(respan(self.span, mac))
     }
