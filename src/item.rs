@@ -469,6 +469,7 @@ impl<F> ItemUsePathListBuilder<F>
             name: keywords::SelfValue.ident(),
             rename: None,
             id: ast::DUMMY_NODE_ID,
+            rename: None,
         }));
         self
     }
@@ -480,6 +481,7 @@ impl<F> ItemUsePathListBuilder<F>
             name: id.to_ident(),
             rename: None,
             id: ast::DUMMY_NODE_ID,
+            rename: None,
         }));
         self
     }
