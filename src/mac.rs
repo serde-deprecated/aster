@@ -1,11 +1,11 @@
 use syntax::ast;
-use syntax::codemap::{self, DUMMY_SP, Span, respan};
+use syntax::codemap::{self, DUMMY_SP, FilePathMapping, Span, respan};
 use syntax::ext::base::{DummyResolver, ExtCtxt};
 use syntax::ext::expand;
 use syntax::ext::quote::rt::ToTokens;
 use syntax::parse::ParseSess;
 use syntax::ptr::P;
-use syntax::tokenstream::TokenTree;
+use syntax::tokenstream::{TokenStream, TokenTree};
 
 use expr::ExprBuilder;
 use invoke::{Invoke, Identity};
@@ -90,7 +90,7 @@ impl<F> MacPathBuilder<F>
     pub fn with_arg<T>(mut self, expr: T) -> Self
         where T: ToTokens
     {
-        let parse_sess = ParseSess::new();
+        let parse_sess = ParseSess::new(FilePathMapping::empty());
         let mut macro_loader = DummyResolver;
         let cx = make_ext_ctxt(&parse_sess, &mut macro_loader);
         let tokens = expr.to_tokens(&cx);
@@ -107,7 +107,7 @@ impl<F> MacPathBuilder<F>
     pub fn build(self) -> F::Result {
         let mac = ast::Mac_ {
             path: self.path,
-            tts: self.tokens,
+            tts: self.tokens.into_iter().map(TokenStream::from).collect::<TokenStream>().into(),
         };
         self.callback.invoke(respan(self.span, mac))
     }
@@ -137,8 +137,8 @@ fn make_ext_ctxt<'a>(sess: &'a ParseSess,
     };
 
     let ecfg = expand::ExpansionConfig::default(String::new());
-    let mut cx = ExtCtxt::new(sess, ecfg, macro_loader);
-    cx.bt_push(info);
+    let cx = ExtCtxt::new(sess, ecfg, macro_loader);
+    cx.current_expansion.mark.set_expn_info(info);
 
     cx
 }

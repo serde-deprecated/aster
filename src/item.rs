@@ -262,6 +262,7 @@ impl<F> ItemBuilder<F>
             builder: self,
             unsafety: ast::Unsafety::Normal,
             polarity: ast::ImplPolarity::Positive,
+            defaultness: ast::Defaultness::Final,
             generics: generics,
             trait_ref: None,
             items: vec![],
@@ -1167,6 +1168,7 @@ pub struct ItemImplBuilder<F> {
     builder: ItemBuilder<F>,
     unsafety: ast::Unsafety,
     polarity: ast::ImplPolarity,
+    defaultness: ast::Defaultness,
     generics: ast::Generics,
     trait_ref: Option<ast::TraitRef>,
     items: Vec<ast::ImplItem>,
@@ -1212,6 +1214,7 @@ impl<F> ItemImplBuilder<F>
         let ty_ = ast::ItemKind::Impl(
             self.unsafety,
             self.polarity,
+            self.defaultness,
             self.generics,
             self.trait_ref,
             ty,
