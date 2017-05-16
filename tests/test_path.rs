@@ -16,6 +16,7 @@ fn test_id() {
             segments: vec![
                 ast::PathSegment {
                     identifier: builder.id("isize"),
+                    span: DUMMY_SP,
                     parameters: None,
                 },
             ]
@@ -37,6 +38,7 @@ fn test_single_segment() {
             segments: vec![
                 ast::PathSegment {
                     identifier: builder.id("isize"),
+                    span: DUMMY_SP,
                     parameters: None,
                 },
             ]
@@ -61,14 +63,17 @@ fn test_multiple_segments() {
                 ast::PathSegment::crate_root(),
                 ast::PathSegment {
                     identifier: builder.id("std"),
+                    span: DUMMY_SP,
                     parameters: None,
                 },
                 ast::PathSegment {
                     identifier: builder.id("thread"),
+                    span: DUMMY_SP,
                     parameters: None,
                 },
                 ast::PathSegment {
                     identifier: builder.id("Thread"),
+                    span: DUMMY_SP,
                     parameters: None,
                 },
             ]
@@ -95,14 +100,17 @@ fn test_option() {
                 ast::PathSegment::crate_root(),
                 ast::PathSegment {
                     identifier: builder.id("std"),
+                    span: DUMMY_SP,
                     parameters: None,
                 },
                 ast::PathSegment {
                     identifier: builder.id("option"),
+                    span: DUMMY_SP,
                     parameters: None,
                 },
                 ast::PathSegment {
                     identifier: builder.id("Option"),
+                    span: DUMMY_SP,
                     parameters: Some(P(ast::AngleBracketed(ast::AngleBracketedParameterData {
                         lifetimes: vec![],
                         types: vec![
@@ -132,6 +140,7 @@ fn test_lifetimes() {
             segments: vec![
                 ast::PathSegment {
                     identifier: builder.id("Foo"),
+                    span: DUMMY_SP,
                     parameters: Some(P(ast::AngleBracketed(ast::AngleBracketedParameterData {
                         lifetimes: vec![
                             builder.lifetime("'a"),
@@ -157,6 +166,7 @@ fn test_parenthesized_no_return() {
             segments: vec![
                 ast::PathSegment {
                     identifier: builder.id("Fn"),
+                    span: DUMMY_SP,
                     parameters: Some(P(ast::PathParameters::Parenthesized(
                         ast::ParenthesizedParameterData {
                             span: DUMMY_SP,
@@ -182,6 +192,7 @@ fn test_parenthesized_with_return() {
             segments: vec![
                 ast::PathSegment {
                     identifier: builder.id("FnMut"),
+                    span: DUMMY_SP,
                     parameters: Some(P(ast::PathParameters::Parenthesized(
                         ast::ParenthesizedParameterData {
                             span: DUMMY_SP,

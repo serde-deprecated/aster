@@ -56,7 +56,8 @@ impl<F> AttrBuilder<F>
         let attr = ast::Attribute {
             id: attr::mk_attr_id(),
             style: self.style,
-            value: item,
+            path: ast::Path::from_ident(item.span, ast::Ident::with_empty_ctxt(item.name)),
+            tokens: item.node.tokens(item.span),
             is_sugared_doc: self.is_sugared_doc,
             span: self.span,
         };
